@@ -1,0 +1,11 @@
+{
+    "development": {
+        "uri": ""
+    },
+    "staging": {
+        "uri": ""
+    },
+    "production": {
+        "uri": ""
+    }
+}
