@@ -52,64 +52,98 @@ exports.managePointer =async (id, isApplyToAll,isPreview,frame,req,res) =>{
                 }
             });
             await new Promise((resolve) => setTimeout(resolve, 50));
-               const TempFolInPtr=1
-               const srcVideoFolInPtr = project.videoFolInPtr
-                videoFolInPtr = (project.videoFolInPtr % project.totalVideoFolderSet) + 1
-                imageFolInPtr = 1
-                videoPossibleUndoCount = project.videoPossibleUndoCount
-                imagePossibleUndoCount = project.imagePossibleUndoCount
-                videoPossibleRedoCount = project.videoPossibleRedoCount
-                imagePossibleRedoCount = project.imagePossibleRedoCount
-                handoverPossibleImageToVideoFlag = true
+            const curDisplayPreviewFolType = TempFolder
+            let curDisplayPreviewFolPtr = 1;
+                if(processingGoingOnVideoOrFrameFlag == true)
+                    curDisplayPreviewFolPtr = 2
+                else
+                    curDisplayPreviewFolPtr = 1
 
-                return (  {'proDetails': {
-                    'statusCode': 200,
-                    'curFrameId':defaultImg,
-                    'srcFolType':(project.operatePossibleOnVideoFlag)?VideoFolderSet:ImageFolderSet,
-                    'srcFolPtr':(project.operatePossibleOnVideoFlag)?project.videoFolInPtr:project.imageFolInPtr,
-                    'dstFolType':TempFolder,
-                    'dstFolPtr':TempFolInPtr,
-                    'videoToFrameWarmPopUp':true,
-                    'handoverPossibleImageToVideoFlag':handoverPossibleImageToVideoFlag,
-                    'updateThumbnail' : true ,
-                    'operatePossibleOnVideoFlag':true
-                        }
-                    }
-                    )
+            //    const TempFolInPtr=1
+            //    const srcVideoFolInPtr = project.videoFolInPtr
+            //     videoFolInPtr = (project.videoFolInPtr % project.totalVideoFolderSet) + 1
+            //     imageFolInPtr = 1
+            //     videoPossibleUndoCount = project.videoPossibleUndoCount
+            //     imagePossibleUndoCount = project.imagePossibleUndoCount
+            //     videoPossibleRedoCount = project.videoPossibleRedoCount
+            //     imagePossibleRedoCount = project.imagePossibleRedoCount
+            //     handoverPossibleImageToVideoFlag = true
+
+            //     return (  {'proDetails': {
+            //         'statusCode': 200,
+            //         'curFrameId':defaultImg,
+            //         'srcFolType':(project.operatePossibleOnVideoFlag)?VideoFolderSet:ImageFolderSet,
+            //         'srcFolPtr':(project.operatePossibleOnVideoFlag)?project.videoFolInPtr:project.imageFolInPtr,
+            //         'dstFolType':TempFolder,
+            //         'dstFolPtr':TempFolInPtr,
+            //         'videoToFrameWarmPopUp':true,
+            //         'handoverPossibleImageToVideoFlag':handoverPossibleImageToVideoFlag,
+            //         'operatePossibleOnVideoFlag':true
+            //             }
+            //         }
+            //         )
                 
         }
 
         if(isApplyToAll){
 
             if (project.operatePossibleOnVideoFlag){
-               const srcVideoFolInPtr = project.videoFolInPtr
-                videoFolInPtr = (project.videoFolInPtr % project.totalVideoFolderSet) + 1
-                imageFolInPtr = 1
-                videoPossibleUndoCount = Math.min((project.videoPossibleUndoCount + 1), project.undoVideoLimit)
-                imagePossibleUndoCount = 0
-                videoPossibleRedoCount = 0
-                imagePossibleRedoCount = 0
-                handoverPossibleImageToVideoFlag = true
+
+                    const srcVideoFolInPtr = project.videoFolInPtr
+                    videoFolInPtr = (project.videoFolInPtr % project.totalVideoFolderSet) + 1
+                    imageFolInPtr = 1
+                    videoPossibleUndoCount = Math.min((project.videoPossibleUndoCount + 1), project.undoVideoLimit)
+                    imagePossibleUndoCount = 0
+                    videoPossibleRedoCount = 0
+                    imagePossibleRedoCount = 0
+                    
+                    handoverPossibleImageToVideoFlag = true	
+
+                    curProcessingSourceFolType = VideoFolderSet
+                    curProcessingSourceFolPtr = srcVideoFolInPtr	
+                    curProcessingDestinationFolType = VideoFolderSet
+                    curProcessingDestinationFolPtr = videoFolInPtr
+
+                    processingGoingOnVideoOrFrameFlag = true
+                    processingGoingOnVideoNotFrame = true
+                    videoToFrameWarningPopUp = false
+                    
+                    curDisplayPreviewFolType = TempFolder
+                    curDisplayPreviewFolPtr = 1
+                    
+                    curProcessingPreviewSourceFolType = TempFolder
+                    curProcessingPreviewSourceFolPtr = 1
+                    curProcessingPreviewDestinationFolType = TempFolder
+                    curProcessingPreviewDestinationFolPtr = 2
+
+                    operatePossibleOnVideoFlag=project.operatePossibleOnVideoFlag
 
                 return (  {'proDetails': {
                     'statusCode': 200,
                     'curFrameId':defaultImg,
-                    'srcFolType':VideoFolderSet,
-                    'srcFolPtr':srcVideoFolInPtr,
-                    'dstFolType':VideoFolderSet,
-                    'dstFolPtr':videoFolInPtr,
-                    'videoPossibleUndoCount':videoPossibleUndoCount,
-                    'imagePossibleUndoCount':imagePossibleUndoCount,
-                    'videoPossibleRedoCount':imagePossibleRedoCount,
-                    'imagePossibleRedoCount':videoPossibleUndoCount,
-                    'videoToFrameWarmPopUp':false,
-                    'handoverPossibleImageToVideoFlag':handoverPossibleImageToVideoFlag,
-                    'updateThumbnail' : true ,
-                    'operatePossibleOnVideoFlag':true,
-                    'curThumbFolPtr':videoFolInPtr,
-                    'curThumbFolType':VideoFolderSet,
-                    'curFrameFolPtr':videoFolInPtr,
-                    'curFrameFolType':VideoFolderSet
+                    
+                    imageFolInPtr,
+                    imagePossibleUndoCount,
+                    imagePossibleRedoCount,
+                    operatePossibleOnVideoFlag,
+                    handoverPossibleImageToVideoFlag,
+                    curProcessingSourceFolType,
+                    curProcessingSourceFolPtr,
+                    curProcessingDestinationFolType,
+                    curProcessingDestinationFolPtr,
+                    videoPossibleUndoCount,
+
+                    videoToFrameWarningPopUp,
+                    processingGoingOnVideoOrFrameFlag,
+                    processingGoingOnVideoNotFrame,
+
+                    curDisplayPreviewFolType,
+                    curDisplayPreviewFolPtr,
+
+                    curProcessingPreviewSourceFolType,
+                    curProcessingPreviewSourceFolPtr,
+                    curProcessingPreviewDestinationFolType,
+                    curProcessingPreviewDestinationFolPtr,
                         }
                     }
                     )
@@ -126,30 +160,64 @@ exports.managePointer =async (id, isApplyToAll,isPreview,frame,req,res) =>{
             videoPossibleRedoCount = 0
             imagePossibleRedoCount = 0
 
+            processingGoingOnVideoOrFrameFlag = true
+            processingGoingOnVideoNotFrame = false
+            refreshThumbnailFlag = false
+
+            curDisplayPreviewFolType = TempFolder
+            curDisplayPreviewFolPtr = 1
+
+            curProcessingPreviewSourceFolType = TempFolder
+            curProcessingPreviewSourceFolPtr = 1
+            curProcessingPreviewDestinationFolType = TempFolder
+            curProcessingPreviewDestinationFolPtr = 2
+
+
+
             if (project.operatePossibleOnVideoFlag){
                 imageFolInPtr = 1
                 videoPossibleUndoCount = project.videoPossibleUndoCount
                 imagePossibleUndoCount = 1
                 operatePossibleOnVideoFlag = false
+                curProcessingSourceFolType = VideoFolderSet
+                curProcessingSourceFolPtr = project.videoFolInPtr	
+                curProcessingDestinationFolType = ImageFolderSet
+                curProcessingDestinationFolPtr = imageFolInPtr
+
+                handoverPossibleImageToVideoFlag=project.handoverPossibleImageToVideoFlag
+                
+                videoToFrameWarningPopUp = true
+
+
+                
+
                 return (   {'proDetails': {
                         'statusCode': 200,
                         'curFrameId':defaultImg,
-                        'srcFolType':VideoFolderSet,
-                        'srcFolPtr':project.videoFolInPtr,
-                        'dstFolType':ImageFolderSet,
-                        'dstFolPtr':imageFolInPtr,
-                        'videoToFrameWarmPopUp':true,
-                        'videoPossibleUndoCount':imagePossibleUndoCount,
-                        'imagePossibleUndoCount':videoPossibleUndoCount,
-                        'videoPossibleRedoCount':imagePossibleRedoCount,
-                        'imagePossibleRedoCount':videoPossibleUndoCount,
-                        'handoverPossibleImageToVideoFlag':handoverPossibleImageToVideoFlag,
-                        'updateThumbnail' : false,
-                        'operatePossibleOnVideoFlag':operatePossibleOnVideoFlag,
-                        'curThumbFolPtr':project.curThumbFolPtr,
-                        'curThumbFolType':VideoFolderSet,
-                        'curFrameFolPtr':imageFolInPtr,
-                        'curFrameFolType':ImageFolderSet
+                        imagePossibleUndoCount,
+                        operatePossibleOnVideoFlag,
+                        handoverPossibleImageToVideoFlag,
+                        curProcessingSourceFolType,
+                        curProcessingSourceFolPtr,
+                        curProcessingDestinationFolType,
+                        curProcessingDestinationFolPtr,
+                        videoPossibleUndoCount,
+
+                        videoToFrameWarningPopUp,
+                        processingGoingOnVideoOrFrameFlag:project.processingGoingOnVideoOrFrameFlag,
+                        processingGoingOnVideoNotFrame:project.processingGoingOnVideoNotFrame,
+
+                        imageFolInPtr:project.imageFolInPtr,
+                        imagePossibleRedoCount:project.imagePossibleRedoCount,
+
+                        curDisplayPreviewFolType:project.curDisplayPreviewFolType,
+                        curDisplayPreviewFolPtr:project.curDisplayPreviewFolPtr,
+
+                        curProcessingPreviewSourceFolType:project.curProcessingPreviewSourceFolType,
+                        curProcessingPreviewSourceFolPtr:project.curProcessingPreviewSourceFolPtr,
+                        curProcessingPreviewDestinationFolType:project.curProcessingPreviewDestinationFolType,
+                        curProcessingPreviewDestinationFolPtr:project.curProcessingPreviewDestinationFolPtr,
+
                             }
                         }
                         )
@@ -160,28 +228,45 @@ exports.managePointer =async (id, isApplyToAll,isPreview,frame,req,res) =>{
                  imagePossibleUndoCount = Math.min((project.imagePossibleUndoCount + 1), project.undoImageLimit)
                 if (imagePossibleUndoCount == project.undoImageLimit)
                     handoverPossibleImageToVideoFlag = false
+
+                curProcessingSourceFolType = ImageFolderSet
+                curProcessingSourceFolPtr = srcImageFolInPtr	
+                curProcessingDestinationFolType = ImageFolderSet
+                curProcessingDestinationFolPtr = imageFolInPtr
+
+                videoToFrameWarningPopUp = false
                 
                 videoPossibleUndoCount = project.videoPossibleUndoCount
+
+                
                 
                 return ({'proDetails': {
                     'statusCode': 200,
                     'curFrameId':defaultImg,
-                    'srcFolType':ImageFolderSet,
-                    'srcFolPtr':srcImageFolInPtr,
-                    'dstFolType':ImageFolderSet,
-                    'dstFolPtr':imageFolInPtr,
-                    'videoToFrameWarmPopUp':false,
-                    'videoPossibleUndoCount':imagePossibleRedoCount,
-                    'imagePossibleUndoCount':videoPossibleUndoCount,
-                    'videoPossibleRedoCount':imagePossibleRedoCount,
-                    'imagePossibleRedoCount':videoPossibleUndoCount,
-                    'handoverPossibleImageToVideoFlag':handoverPossibleImageToVideoFlag,
-                    'updateThumbnail' : false,
-                    'operatePossibleOnVideoFlag':project.operatePossibleOnVideoFlag,
-                    'curThumbFolPtr':project.curThumbFolPtr,
-                    'curThumbFolType':VideoFolderSet,
-                    'curFrameFolPtr':imageFolInPtr,
-                    'curFrameFolType':ImageFolderSet 
+                    handoverPossibleImageToVideoFlag,
+                    curProcessingSourceFolType,
+                    curProcessingSourceFolPtr,
+                    curProcessingDestinationFolType,
+                    curProcessingDestinationFolPtr,
+                    videoPossibleUndoCount,
+                    videoToFrameWarningPopUp,
+                    processingGoingOnVideoOrFrameFlag:project.processingGoingOnVideoOrFrameFlag,
+                    processingGoingOnVideoNotFrame:project.processingGoingOnVideoNotFrame,
+
+                    imageFolInPtr:project.imageFolInPtr,
+                    imagePossibleUndoCount:project.imagePossibleUndoCount,
+                    imagePossibleRedoCount:project.imagePossibleRedoCount,
+                    operatePossibleOnVideoFlag:project.operatePossibleOnVideoFlag,
+                    
+                    curDisplayPreviewFolType:project.curDisplayPreviewFolType,
+                    curDisplayPreviewFolPtr:project.curDisplayPreviewFolPtr,
+
+                    curProcessingPreviewSourceFolType:project.curProcessingPreviewSourceFolType,
+                    curProcessingPreviewSourceFolPtr:project.curProcessingPreviewSourceFolPtr,
+                    curProcessingPreviewDestinationFolType:project.curProcessingPreviewDestinationFolType,
+                    curProcessingPreviewDestinationFolPtr:project.curProcessingPreviewDestinationFolPtr,
+
+
                         }}
                     )
                 
@@ -237,55 +322,64 @@ exports.savePointer =async (id, isApplyToAll,isPreview,frame,req,res,proDetails,
         const rootPath = `${req.user.id}/${id}`;
         let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_1.png';
         // Determine the filter type based on the `isApplyToAll` flag
-        if(!isPreview){
+        // if(!isPreview){
 
-            if(isApplyToAll){
+            // if(isApplyToAll){
+
+                
                 const project = await Project.findByIdAndUpdate(id, {
                     'currentFrameId':frameName,
-                    'videoFolInPtr':proDetails.dstFolPtr,
-                    'videoToFrameWarmPopUp':proDetails.videoToFrameWarmPopUp,
-                    'handoverPossibleImageToVideoFlag':proDetails.handoverPossibleImageToVideoFlag,
-                    'operatePossibleOnVideoFlag':proDetails.operatePossibleOnVideoFlag,
-                    'videoPossibleUndoCount':proDetails.imagePossibleUndoCount,
-                    'imagePossibleUndoCount':proDetails.videoPossibleRedoCount,
-                    'videoPossibleRedoCount':proDetails.videoPossibleRedoCount,
-                    'imagePossibleRedoCount':proDetails.imagePossibleUndoCount,
-                    'srcFolType':proDetails.srcFolType,
-                    'srcFolPtr':proDetails.srcFolPtr,
-                    'dstFolType':proDetails.dstFolType,
-                    'dstFolPtr':proDetails.dstFolPtr,
-                    'updateThumbnail' : proDetails.updateThumbnail,
-                    'curThumbFolPtr':proDetails.curThumbFolPtr,
-                    'curThumbFolType':proDetails.curThumbFolType,
-                    'curFrameFolPtr':proDetails.curFrameFolPtr,
-                    'curFrameFolType':proDetails.curFrameFolType
-                    
-                }, { new: true });
-            }else{
-                const project = await Project.findByIdAndUpdate(id, {
-                    'currentFrameId':frameName,
-                    'imageFolInPtr':proDetails.dstFolPtr,
-                    'videoToFrameWarmPopUp':proDetails.videoToFrameWarmPopUp,
-                    'handoverPossibleImageToVideoFlag':proDetails.handoverPossibleImageToVideoFlag,
-                    'operatePossibleOnVideoFlag':proDetails.operatePossibleOnVideoFlag,
-                    'videoPossibleUndoCount':proDetails.videoPossibleUndoCount,
-                    'imagePossibleUndoCount':proDetails.imagePossibleUndoCount,
-                    'videoPossibleRedoCount':proDetails.videoPossibleRedoCount,
-                    'imagePossibleRedoCount':proDetails.imagePossibleRedoCount,
-                    'srcFolType':proDetails.srcFolType,
-                    'srcFolPtr':proDetails.srcFolPtr,
-                    'dstFolType':proDetails.dstFolType,
-                    'dstFolPtr':proDetails.dstFolPtr,
-                    'updateThumbnail' : proDetails.updateThumbnail,
-                    'curThumbFolPtr':proDetails.curThumbFolPtr,
-                    'curThumbFolType':proDetails.curThumbFolType,
-                    'curFrameFolPtr':proDetails.curFrameFolPtr,
-                    'curFrameFolType':proDetails.curFrameFolType
-                    
-                }, { new: true });
-            }
+                    imageFolInPtr : proDetails.imageFolInPtr,
+                    imagePossibleUndoCount : proDetails.imagePossibleUndoCount,
+                    imagePossibleRedoCount : proDetails.imagePossibleRedoCount,
+                    operatePossibleOnVideoFlag : proDetails.operatePossibleOnVideoFlag,
+                    handoverPossibleImageToVideoFlag : proDetails.handoverPossibleImageToVideoFlag,
+                    curProcessingSourceFolType : proDetails.curProcessingSourceFolType,
+                    curProcessingSourceFolPtr : proDetails.curProcessingSourceFolPtr,
+                    curProcessingDestinationFolType : proDetails.curProcessingDestinationFolType,
+                    curProcessingDestinationFolPtr : proDetails.curProcessingDestinationFolPtr,
+                    videoPossibleUndoCount : proDetails.videoPossibleUndoCount,
 
-        }else{
+                    videoToFrameWarningPopUp : proDetails.videoToFrameWarningPopUp,
+                    processingGoingOnVideoOrFrameFlag : proDetails.processingGoingOnVideoOrFrameFlag,
+                    processingGoingOnVideoNotFrame : proDetails.processingGoingOnVideoNotFrame,
+
+                    curDisplayPreviewFolType : proDetails.curDisplayPreviewFolType,
+                    curDisplayPreviewFolPtr : proDetails.curDisplayPreviewFolPtr,
+
+                    curProcessingPreviewSourceFolType : proDetails.curProcessingPreviewSourceFolType,
+                    curProcessingPreviewSourceFolPtr : proDetails.curProcessingPreviewSourceFolPtr,
+                    curProcessingPreviewDestinationFolType : proDetails.curProcessingPreviewDestinationFolType,
+                    curProcessingPreviewDestinationFolPtr : proDetails.curProcessingPreviewDestinationFolPtr,
+                    
+                }, { new: true });
+            // }else{
+            //     const project = await Project.findByIdAndUpdate(id, {
+            //         'currentFrameId':frameName,
+            //         'imageFolInPtr':proDetails.dstFolPtr,
+            //         'videoToFrameWarmPopUp':proDetails.videoToFrameWarmPopUp,
+            //         'handoverPossibleImageToVideoFlag':proDetails.handoverPossibleImageToVideoFlag,
+            //         'operatePossibleOnVideoFlag':proDetails.operatePossibleOnVideoFlag,
+            //         'videoPossibleUndoCount':proDetails.videoPossibleUndoCount,
+            //         'imagePossibleUndoCount':proDetails.imagePossibleUndoCount,
+            //         'videoPossibleRedoCount':proDetails.videoPossibleRedoCount,
+            //         'imagePossibleRedoCount':proDetails.imagePossibleRedoCount,
+            //         'srcFolType':proDetails.srcFolType,
+            //         'srcFolPtr':proDetails.srcFolPtr,
+            //         'dstFolType':proDetails.dstFolType,
+            //         'dstFolPtr':proDetails.dstFolPtr,
+            //         'updateThumbnail' : proDetails.updateThumbnail,
+            //         'curThumbFolPtr':proDetails.curThumbFolPtr,
+            //         'curThumbFolType':proDetails.curThumbFolType,
+            //         'curFrameFolPtr':proDetails.curFrameFolPtr,
+            //         'curFrameFolType':proDetails.curFrameFolType
+                    
+            //     }, { new: true });
+            // }
+
+        // }else{
+
+        if(isPreview){
 
             await new Promise((resolve) => setTimeout(resolve, 100));
             const rootPath = `${req.user.id}/${id}`;
@@ -334,16 +428,10 @@ exports.savePointer =async (id, isApplyToAll,isPreview,frame,req,res,proDetails,
                 job_id: response.job_id,
                 percentage: response.percentage,
                 'curFrameId':(proDetails.currentFrameId)?proDetails.currentFrameId:'',
-                'srcFolType':proDetails.dstFolType,
-                'srcFolPtr':proDetails.dstFolPtr,
-                'curThumbFolPtr':proDetails.curThumbFolPtr,
-                'curThumbFolType':proDetails.curThumbFolType,
-                'curFrameFolPtr':proDetails.curFrameFolPtr,
-                'curFrameFolType':proDetails.curFrameFolType,
                 total_input_images: response.total_input_images,
                 processed_image_count: response.processed_image_count,
                 status_message: response.status_message,
-                basePath: `${rootPath}/${proDetails.dstFolType}/${proDetails.dstFolPtr}/${frameName}`,
+                basePath: `${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}/${frameName}`,
                 // request:request
             }
         }
