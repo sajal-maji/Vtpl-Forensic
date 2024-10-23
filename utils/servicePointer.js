@@ -338,8 +338,8 @@ exports.folderPath =async (id, isApplyToAll,isPreview,proDetails,req,res) =>{
            
 
         const rootDir = path.resolve(__dirname, '..', '..');
-        const imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.srcFolType}/${proDetails.srcFolPtr}`);
-        const imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.dstFolType}/${proDetails.dstFolPtr}`);
+        const imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
+        const imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
         return ({imgBasePathFrom,imgBasePathTo})
 
     } catch (error) {
@@ -415,9 +415,9 @@ exports.savePointer =async (id, isApplyToAll,isPreview,frame,req,res,proDetails,
             await new Promise((resolve) => setTimeout(resolve, 100));
             const rootPath = `${req.user.id}/${id}`;
             const timestamp = Date.now();
-            const oldFilePath = `public/${rootPath}/${proDetails.dstFolType}/${proDetails.dstFolPtr}/${frameName}`;
+            const oldFilePath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}/${frameName}`;
             const newFileName = timestamp+'new_frame_name.png'; // Replace this with the new file name
-            const newFilePath = path.join(`public/${rootPath}/${proDetails.dstFolType}/${proDetails.dstFolPtr}`, newFileName);
+            const newFilePath = path.join(`public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`, newFileName);
             frameName=newFileName
             // Rename the file
             fs.rename(oldFilePath, newFilePath, (err) => {
@@ -566,23 +566,23 @@ exports.checkFile =async (id, isApplyToAll,proDetails,req,res) =>{
     try {
 
         const rootPath = `${req.user.id}/${id}`;
-        if (!fs.existsSync(`public/${rootPath}/${proDetails.srcFolType}/${proDetails.srcFolPtr}/${proDetails.curFrameId}`)) {
+        if (!fs.existsSync(`public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${proDetails.curFrameId}`)) {
 
             const project = await Project.findByIdAndUpdate(id, {
-                'imageFolInPtr':(proDetails.srcFolType=='image' && (proDetails.srcFolPtr > 1))?proDetails.srcFolPtr-1:proDetails.srcFolPtr,
-                'videoFolInPtr':(proDetails.srcFolType=='video' && (proDetails.srcFolPtr > 1))?proDetails.srcFolPtr-1:proDetails.srcFolPtr,
+                'imageFolInPtr':(proDetails.curProcessingSourceFolType=='image' && (proDetails.curProcessingSourceFolPtr > 1))?proDetails.curProcessingSourceFolPtr-1:proDetails.curProcessingSourceFolPtr,
+                'videoFolInPtr':(proDetails.curProcessingSourceFolType=='video' && (proDetails.curProcessingSourceFolPtr > 1))?proDetails.curProcessingSourceFolPtr-1:proDetails.curProcessingSourceFolPtr,
                 
             }, { new: true });
 
                 return {
                     errStatus: true,
-                    message: `Image file not found: public/${rootPath}/${proDetails.srcFolType}/${proDetails.srcFolPtr}/${proDetails.curFrameId}`
+                    message: `Image file not found: public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${proDetails.curFrameId}`
                 };
             
         } else{
             return {
                 status: false,
-                message: `Image file not found: public/${rootPath}/${proDetails.srcFolType}/${proDetails.srcFolPtr}/${proDetails.curFrameId}`
+                message: `Image file not found: public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${proDetails.curFrameId}`
             };
         }
 
