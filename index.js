@@ -37,7 +37,7 @@ app.use('/api/v1/', routes);
 app.use('*', handle404);
 app.use(handleError);
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5511;
 
 app.listen(port, () => {
     console.info(`Server is running on port ${port}.`)
