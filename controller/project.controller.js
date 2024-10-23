@@ -3,7 +3,7 @@ const projectService = require("../services/project.service");
 const createProject = async (req, res, next) => {
     const { projectName, catId } = req.body;
     try {
-        const response = await projectService.projectList(catId, projectName);
+        const response = await projectService.createProject(req, catId, projectName);
         res.status(201).json(response);
     } catch (error) {
         next(error);
@@ -34,7 +34,7 @@ const uploadFiles = async (req, res, next) => {
     const { catId } = req.query;
     const totalSeconds = (req.query.startTime) ? req.query.startTime : 0;
     try {
-        const response = await projectService.uploadFiles(catId, totalSeconds);
+        const response = await projectService.uploadFiles(req, catId, totalSeconds);
         res.status(201).json(response);
     } catch (error) {
         next(error);
@@ -44,7 +44,7 @@ const uploadFiles = async (req, res, next) => {
 const getProjectByCat = async (req, res, next) => {
     const { catId } = req.query;
     try {
-        const projectList = await projectService.projectList(catId);
+        const projectList = await projectService.projectList(req, catId);
         res.status(201).json(projectList)
     } catch (error) {
         next(error);
@@ -54,7 +54,7 @@ const getProjectByCat = async (req, res, next) => {
 const getProjectDetails = async (req, res, next) => {
     const { projectId: id } = req.query;
     try {
-        const projectDetails = await projectService.projectDetails(id);
+        const projectDetails = await projectService.projectDetails(req, id);
         res.status(201).json(projectDetails)
     } catch (error) {
         next(error);
@@ -79,7 +79,7 @@ const getAction = async (req, res, next) => {
 const selectFream = async (req, res, next) => {
     const { projectId: id, frameId } = req.body;
     try {
-        const selectThumbnailFrame = await projectService.selectThumbnailFrame(id, frameId);
+        const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frameId);
         res.status(201).json(selectThumbnailFrame)
     } catch (error) {
         next(error);
@@ -99,7 +99,7 @@ const discardFream = async (req, res, next) => {
 const saveSnapImage = async (req, res, next) => {
     const { projectId: id } = req.body;
     try {
-        const saveImage = await projectService.saveImage(id);
+        const saveImage = await projectService.saveImage(req, id);
         res.status(201).json(saveImage)
     } catch (error) {
         next(error);
