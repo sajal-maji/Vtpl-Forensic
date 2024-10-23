@@ -1,4 +1,15 @@
 const projectService = require("../services/project.service");
+const Project = require('../model/projects.model');
+const Casefolder = require('../model/casefolder.model');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+const ffmpeg = require('fluent-ffmpeg');
+const fsExtra = require('fs-extra');
+const { errorLogger } = require("../config/log.config");
+const VideoFolderSet = 'video'
+const ImageFolderSet = 'image'
+const TempFolder = 'temp'
 
 const createProject = async (req, res, next) => {
     const { projectName, catId } = req.body;
@@ -31,13 +42,205 @@ const deleteProject = async (req, res, next) => {
 };
 
 const uploadFiles = async (req, res, next) => {
-    const { catId } = req.query;
+    const { catId: id } = req.query;
     const totalSeconds = (req.query.startTime) ? req.query.startTime : 0;
     try {
-        const response = await projectService.uploadFiles(req, catId, totalSeconds);
-        res.status(201).json(response);
+        // Calculate hours, minutes, and seconds
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        // Format the result as 'hh:mm:ss'
+        const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+        if (id) {
+            var casefolder = await Casefolder.findById(id).select('folderName');
+            if (!casefolder) {
+                return res.status(404).json({
+                    statusCode: 404,
+                    status: 'Failed',
+                    message: 'Data not found'
+                });
+            }
+        } else {
+            var casefolder = new Casefolder({
+                folderName: 'anonymous',
+                userId: req.user.id,
+            })
+
+            await casefolder.save();
+        }
+
+        const project = new Project({
+            projectName: 'anonymous',
+            catId: casefolder.id,
+            catName: casefolder.folderName,
+            userId: req.user.id,
+        })
+        await project.save();
+        const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
+        const rootPath = `${req.user.id}/${project.id}`;
+        const baseUrl = `${process.env.BASE_URL}:${process.env.PORT}/`;
+
+        createFolder(`${basePath}/main`);
+        createFolder(`${basePath}/snap`);
+        createFolder(`${basePath}/temp/1`);
+
+        for (let i = 1; i <= project.totalVideoFolderSet; i++) {
+            const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
+            createFolder(dynamicFolderName);
+        }
+
+
+        for (let i = 1; i <= project.totalImageFolderSet; i++) {
+            const dynamicFolderNameImg = `${basePath}/image/${i}`; // Create a folder with the project limit
+            createFolder(dynamicFolderNameImg);
+        }
+
+        const storage = multer.diskStorage({
+            destination: function (req, file, cb) {
+                cb(null, 'public/uploads');  // Folder where the videos will be stored
+            },
+            filename: function (req, file, cb) {
+                cb(null, Date.now() + path.extname(file.originalname));  // Append timestamp to the file name
+            }
+        });
+
+        const fileFilter = (req, file, cb) => {
+            const allowedFileTypes = /mp4|mkv|avi|mov|wmv/;
+            const extName = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
+            const mimeType = allowedFileTypes.test(file.mimetype);
+            if (mimeType && extName) {
+                cb(null, true);
+            } else {
+                cb(new Error('Only videos are allowed'), false);
+            }
+        };
+
+        const upload = multer({
+            storage: storage,
+            limits: { fileSize: 1000000000 },  // 1GB
+            fileFilter: fileFilter
+        });
+
+        // Handle the file upload
+        upload.single('video')(req, res, async (err) => {  // Mark this callback as async
+            if (err) {
+                const errorMessage = err.code === 'LIMIT_FILE_SIZE' ? 'File too large. Max limit is 1GB' : err.message;
+                return res.status(400).json({
+                    statusCode: 400,
+                    status: 'Failed',
+                    message: errorMessage,
+                });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({
+                    statusCode: 400,
+                    status: 'Failed',
+                    message: 'Please upload a video.',
+                });
+            }
+
+            const rootDir = path.resolve(__dirname, '..', '..');
+            const inputPath = req.file.path; //path.join(rootDir, req.file.path);
+            let outputPath = `public/uploads/crop/${req.file.filename}`;//path.join(rootDir, `public/uploads/videos/crop/${req.file.filename}`);
+
+            try {
+                const fileMetadata = await getVideoDuration(inputPath);  // Await inside async function
+                const videoDuration = fileMetadata.format.duration;
+                console.log(`Video duration: ${videoDuration} seconds`);
+
+                const maxDuration = 120; // 2 minutes in seconds
+                const startTime = formattedTime; // Start 3 seconds into the video
+                const cutDuration = 120; // Cut 10 seconds of the video
+
+                // Cut the video if it's longer than 2 minutes
+                if (videoDuration > maxDuration) {
+                    console.log(`Video is longer than 2 minutes, cutting it to ${maxDuration} seconds.`);
+                    await cutVideo(inputPath, outputPath, startTime, cutDuration);  // Await async function
+                } else {
+                    console.log('Video is 2 minutes or less, no cutting needed.');
+                }
+
+                // Convert the video to frames
+                if (videoDuration < maxDuration) {
+                    fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
+                        if (err) return console.error('Error copying the file:', err);
+                        console.log('File copied successfully.');
+                    });
+                    outputPath = inputPath;
+                }
+
+                const frameNumber = 0; // Example frame number
+                const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
+
+                const frameOutputDir = `${basePath}/main/frame_%d.png`; // %d will be replaced by frame number
+                const videoCon = await convertVideo(outputPath, frameOutputDir);  // Await async function
+
+                const dataFiles = await getTotalFiles(`${basePath}/main`);
+
+
+
+                fsExtra.unlink(inputPath, (unlinkErr) => {
+                    console.log('Video file deleted successfully.');
+                });
+                // Success response
+
+                fsExtra.copy(`${basePath}/main`, `${basePath}/video/1`, (err) => {
+                    if (err) return console.error('Error copying the file:', err);
+                    console.log('File copied successfully.');
+                });
+                $projectDetails = {
+                    "fileName": req.file.filename,
+                    "fileSize": fileMetadata.format.size,
+                    "fileResolution": fileMetadata.format.bit_rate,
+                    "fileDuration": fileMetadata.format.duration,
+                    "fileFrameRate": '',
+                    "fileAspectRatio": '',
+                    "createOn": ''
+                }
+
+                dataFiles.filesName.sort((a, b) => {
+                    // Extract the numbers from the file names
+                    const numA = parseInt(a.match(/\d+/)[0]);
+                    const numB = parseInt(b.match(/\d+/)[0]);
+
+                    // Sort numerically
+                    return numA - numB;
+                });
+
+                const updateproject = await Project.findByIdAndUpdate(project.id,
+                    {
+                        'filesName': JSON.stringify(dataFiles.filesName),
+                        'currentFrameId': 'frame_1.png',
+                        'projectDetails': JSON.stringify($projectDetails)
+                    }, { new: true });
+
+                res.status(201).json({
+                    statusCode: 200,
+                    status: 'Success',
+                    message: 'Video uploaded and processed successfully.',
+                    data: {
+                        totalFiles: dataFiles.totalFiles,
+                        'folderId': updateproject.catId,
+                        'projectId': updateproject.id,
+                        'curFrameId': updateproject.currentFrameId,
+                        'srcFolType': VideoFolderSet,
+                        'srcFolPtr': updateproject.videoFolInPtr,
+                        'videoToFrameWarmPopUp': true,
+                        'filesName': dataFiles.filesName,
+                        projectDetails: $projectDetails
+                    }
+
+                });
+            } catch (error) {
+                res.status(500).json({ message: 'Server error', error: error.message });
+            }
+
+        });
     } catch (error) {
-        next(error);
+        errorLogger.info(error);
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
