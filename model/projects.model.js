@@ -15,6 +15,16 @@ const projectsSchema = new mongoose.Schema({
     currentFrameId: {
         type: String,
     },
+    userId: {
+        type: String,
+        required: true,
+    },
+    projectDetails: {
+        type: String,
+    },
+    filesName: {
+        type: String,
+    },
     undoVideoLimit: {
         type: Number,
         default: 3
@@ -31,87 +41,100 @@ const projectsSchema = new mongoose.Schema({
         type: Number,
         default: 10
     },
-    videoFolInPtr:{
+    totalTempFolderSet: {
+        type: Number,
+        default: 2
+    },
+    videoFolInPtr: {
         type: String,
         default: 1,
     },
-    imageFolInPtr:{
+    imageFolInPtr: {
         type: Number,
         default: 1,
     },
-    TempFolInPtr:{
-        type: Number,
-        default: 1,
-    },
-    videoPossibleUndoCount:{
+    videoPossibleUndoCount: {
         type: Number,
         default: 0,
     },
-    imagePossibleUndoCount:{
+    imagePossibleUndoCount: {
         type: Number,
         default: 0,
     },
-    videoPossibleRedoCount:{
+    videoPossibleRedoCount: {
         type: Number,
         default: 0,
     },
-    imagePossibleRedoCount:{
+    imagePossibleRedoCount: {
         type: Number,
         default: 0,
     },
-    operatePossibleOnVideoFlag:{
-        type: Boolean,
-        default: true
-    },
-    handoverPossibleImageToVideoFlag:{
-        type: Boolean,
-        default: true
-    },
-    userId:{
-        type: String,
-        required: true,
-    },
-    projectDetails: {
-        type: String,
-    },
-    filesName: {
-        type: String,
-    },
-    srcFolType: {
-        type: String,
-    },
-    srcFolPtr: {
-        type: Number,
-        default: 0,
-    },
-    dstFolType: {
-        type: String,
-    },
-    dstFolPtr: {
-        type: Number,
-        default: 0,
-    },
-    curThumbFolPtr: {
-        type: Number,
-        default: 1,
-    },
-    curThumbFolType: {
+    curDisplayThumbnailFolType: {
         type: String,
         default: 'video',
     },
-    curFrameFolPtr: {
+    curDisplayThumbnailFolPtr: {
         type: Number,
         default: 1,
     },
-    curFrameFolType: {
+    curDisplayPreviewFolType: {
         type: String,
         default: 'video',
     },
-    isProcessingGoingOn: {
+    curDisplayPreviewFolPtr: {
+        type: Number,
+        default: 1,
+    },
+    curProcessingSourceFolType: {
+        type: String,
+    },
+    curProcessingSourceFolPtr: {
+        type: Number,
+        default: 0,
+    },
+    curProcessingDestinationFolType: {
+        type: String,
+    },
+    curProcessingDestinationFolPtr: {
+        type: Number,
+        default: 0,
+    },
+    curProcessingPreviewSourceFolType: {
+        type: String,
+        default: 'video',
+    },
+    curProcessingPreviewSourceFolPtr: {
+        type: Number,
+        default: 1,
+    },
+    curProcessingPreviewDestinationFolType: {
+        type: String,
+        default: 'temp',
+    },
+    curProcessingPreviewDestinationFolPtr: {
+        type: Number,
+        default: 1,
+    },
+    operatePossibleOnVideoFlag: {
+        type: Boolean,
+        default: true
+    },
+    handoverPossibleImageToVideoFlag: {
+        type: Boolean,
+        default: true
+    },
+    processingGoingOnVideoOrFrameFlag: {
         type: Boolean,
         default: false,
     },
-    refreshThumbnail: {
+    processingGoingOnVideoNotFrame: {
+        type: String,
+    },
+    refreshThumbnailFlag: {
+        type: Boolean,
+        default: true
+    },
+    videoToFrameWarningPopUp: {
         type: Boolean,
         default: true
     },
