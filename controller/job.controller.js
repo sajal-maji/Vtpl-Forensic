@@ -1,6 +1,6 @@
-const {channelServiceClient} = require('../grpcClient');
+const { channelServiceClient } = require('../grpcClient');
 // Function to get job status
-exports.getJobStatus = async (req, res,next) => {
+exports.getJobStatus = async (req, res, next) => {
     try {
         const { job_id } = req.query; // Extract job_id from the request body
 
@@ -10,7 +10,7 @@ exports.getJobStatus = async (req, res,next) => {
         }
 
         // Create the request object
-        const request = { job_id }; 
+        const request = { job_id };
 
         // Call the gRPC method
         channelServiceClient.GetJobStatus(request, (error, response) => {
@@ -20,7 +20,7 @@ exports.getJobStatus = async (req, res,next) => {
             }
             // Send the response back to the client
             res.json({
-               response:response
+                response: response
             });
         });
     } catch (error) {
