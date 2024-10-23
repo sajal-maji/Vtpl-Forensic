@@ -10,7 +10,7 @@ const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
 const TempFolder = 'temp'
 
-const createProject = async (catId, projectName) => {
+const createProject = async (req, catId, projectName) => {
     let casefolder = await Casefolder.findById(catId);
     if (!casefolder) {
         casefolder = new Casefolder({
@@ -51,11 +51,11 @@ const createProject = async (catId, projectName) => {
 const updateProject = async (id, projectName) => {
     const projectDetails = await Project.findById(id);
     if (!projectDetails) {
-        return res.status(404).json({
+        return {
             statusCode: 404,
             status: 'Failed',
             message: 'Data not found'
-        });
+        };
     }
     const project = await Project.findByIdAndUpdate(id, {
         'projectName': projectName
@@ -71,11 +71,11 @@ const updateProject = async (id, projectName) => {
 const deleteProject = async (id) => {
     const project = await Project.findByIdAndDelete(id);
     if (!project) {
-        return res.status(404).json({
+        return {
             statusCode: 404,
             status: 'Failed',
             message: 'Project not found',
-        });
+        };
     }
 
     return {
@@ -85,7 +85,7 @@ const deleteProject = async (id) => {
     };
 };
 
-const uploadFiles = async (id, totalSeconds) => {
+const uploadFiles = async (req, id, totalSeconds) => {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
@@ -93,11 +93,11 @@ const uploadFiles = async (id, totalSeconds) => {
     if (id) {
         var casefolder = await Casefolder.findById(id).select('folderName');
         if (!casefolder) {
-            return res.status(404).json({
+            return {
                 statusCode: 404,
                 status: 'Failed',
                 message: 'Data not found'
-            });
+            };
         }
     } else {
         var casefolder = new Casefolder({
@@ -158,22 +158,23 @@ const uploadFiles = async (id, totalSeconds) => {
         fileFilter: fileFilter
     });
 
-    upload.single('video')(req, res, async (err) => {
+    const upFiles= upload.single('video')(req, async (err) => {
+        console.log(12333)
         if (err) {
             const errorMessage = err.code === 'LIMIT_FILE_SIZE' ? 'File too large. Max limit is 1GB' : err.message;
-            return res.status(400).json({
+            return {
                 statusCode: 400,
                 status: 'Failed',
                 message: errorMessage,
-            });
+            };
         }
 
         if (!req.file) {
-            return res.status(400).json({
+            return {
                 statusCode: 400,
                 status: 'Failed',
                 message: 'Please upload a video.',
-            });
+            };
         }
 
         const rootDir = path.resolve(__dirname, '..', '..');
@@ -225,7 +226,7 @@ const uploadFiles = async (id, totalSeconds) => {
                 if (err) return console.error('Error copying the file:', err);
                 console.log('File copied successfully.');
             });
-            $projectDetails = {
+            const projectDetails = {
                 "fileName": req.file.filename,
                 "fileSize": fileMetadata.format.size,
                 "fileResolution": fileMetadata.format.bit_rate,
@@ -245,10 +246,10 @@ const uploadFiles = async (id, totalSeconds) => {
                 {
                     'filesName': JSON.stringify(dataFiles.filesName),
                     'currentFrameId': 'frame_1.png',
-                    'projectDetails': JSON.stringify($projectDetails)
+                    'projectDetails': JSON.stringify(projectDetails)
                 }, { new: true });
 
-            res.status(201).json({
+            return {
                 statusCode: 200,
                 status: 'Success',
                 message: 'Video uploaded and processed successfully.',
@@ -261,16 +262,17 @@ const uploadFiles = async (id, totalSeconds) => {
                     'srcFolPtr': updateproject.videoFolInPtr,
                     'videoToFrameWarmPopUp': true,
                     'filesName': dataFiles.filesName,
-                    projectDetails: $projectDetails
+                    projectDetails: projectDetails
                 }
-            });
+            };
         } catch (error) {
-            res.status(500).json({ message: 'Server error', error: error.message });
+            return { message: 'Server error', error: error.message };
         }
     });
+    return {error:upFiles};
 };
 
-const projectList = async (catId) => {
+const projectList = async (req, catId) => {
     const project = await Project.find({ 'catId': catId }).sort({ updateAt: -1 });
     if (!project) {
         return {
@@ -304,7 +306,7 @@ const projectList = async (catId) => {
     }
 };
 
-const projectDetails = async (id) => {
+const projectDetails = async (req, id) => {
     const projectDetails = await Project.findById(id);
     if (!projectDetails) {
         return {
@@ -573,7 +575,7 @@ const applyRedoAction = async (id) => {
     };
 };
 
-const selectThumbnailFrame = async (id, frameId) => {
+const selectThumbnailFrame = async (req, id, frameId) => {
     const project = await Project.findById(id);
     const rootPath = `${req.user.id}/${id}`;
     if (!project) {
@@ -688,7 +690,7 @@ const discardImage = async (id) => {
     }
 };
 
-const saveImage = async (id) => {
+const saveImage = async (req, id) => {
     const project = await Project.findById(id);
     if (!project) {
         return {
