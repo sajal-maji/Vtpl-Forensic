@@ -175,8 +175,8 @@ const projectDetails = async (req, id) => {
             'videoPossibleUndoCount': projectDetails.videoPossibleUndoCount,
             'imagePossibleUndoCount': projectDetails.imagePossibleUndoCount,
             'imagePossibleRedoCount': projectDetails.imagePossibleRedoCount,
-            'framePath': `${req.user.id}/${id}/${projectDetails.curFrameFolType}/${(projectDetails.curFrameFolPtr && projectDetails.curFrameFolPtr > 0) ? projectDetails.curFrameFolPtr : 1}`,
-            'basePath': `${req.user.id}/${id}/${projectDetails.curThumbFolType}/${(projectDetails.curThumbFolPtr && projectDetails.curThumbFolPtr > 0) ? projectDetails.curThumbFolPtr : 1}`,
+            'framePath': `${req.user.id}/${id}/${projectDetails.curDisplayPreviewFolType}/${(projectDetails.curDisplayPreviewFolType && projectDetails.curDisplayPreviewFolPtr > 0) ? projectDetails.curDisplayPreviewFolPtr : 1}`,
+            'basePath': `${req.user.id}/${id}/${projectDetails.curDisplayThumbnailFolType}/${(projectDetails.curDisplayThumbnailFolPtr && projectDetails.curDisplayThumbnailFolPtr > 0) ? projectDetails.curDisplayThumbnailFolPtr : 1}`,
             'projectDetails': JSON.parse(projectDetails.projectDetails),
             'filesName': (projectDetails.filesName) ? JSON.parse(projectDetails.filesName) : '',
         }
