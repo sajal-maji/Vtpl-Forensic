@@ -309,6 +309,88 @@ const saveSnapImage = async (req, res, next) => {
     }
 };
 
+function createFolder(folderPath) {
+    fs.mkdir(folderPath, { recursive: true }, (err) => {
+        if (err) {
+            return console.error(`Error creating folder: ${err.message}`);
+        }
+    });
+};
+
+function formatFrameNumber(number) {
+    return number.toString().padStart(5, '0');
+};
+
+async function cutVideo(inputPath, outputPath, startTime, duration) {
+    return new Promise((resolve, reject) => {
+        if (process.env.NODE_ENV === 'development') {
+            ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
+        }
+
+        ffmpeg(inputPath)
+            .setStartTime(startTime) // Start time in the format 'HH:MM:SS' or seconds
+            .setDuration(duration)   // Duration in seconds
+            .on('end', () => {
+                console.log('Video cutting finished!');
+                resolve(); // Resolve the promise when the operation completes
+            })
+            .on('error', (err) => {
+                reject(err); // Reject the promise in case of an error
+            })
+            .save(outputPath); // Save the output video to the specified path
+    });
+};
+
+async function convertVideo(inputPath, outputDir) {
+    return new Promise((resolve, reject) => {
+        if (`${process.env.NODE_ENV}` == 'development')
+            ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
+        ffmpeg(inputPath)
+            .on('end', () => {
+                console.log('Frames extracted successfully.');
+                resolve(1);
+            })
+            .on('error', (err) => {
+                reject(`Error extracting frames: ${err.message}`);
+            })
+            .outputOptions('-vf', 'fps=10')
+            .outputOptions('-q:v', '5')
+            .output(outputDir)
+            .run();
+    });
+
+};
+
+async function getVideoDuration(inputPath) {
+    return new Promise((resolve, reject) => {
+        if (`${process.env.NODE_ENV}` == 'development')
+            ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
+        ffmpeg.ffprobe(inputPath, (err, metadata) => {
+            if (err) {
+                reject(err);
+            } else {
+                console.log(metadata);
+                resolve(metadata); // returns duration in seconds
+            }
+        });
+    });
+};
+
+async function getTotalFiles(folderPath) {
+    return new Promise((resolve, reject) => {
+        fs.readdir(folderPath, (err, files) => {
+            if (err) {
+                return reject(err);
+            }
+            const filteredFiles = files.filter(file => {
+                return fs.statSync(path.join(folderPath, file)).isFile();
+            });
+            const totalFiles = filteredFiles.length;
+            resolve({ totalFiles, filesName: filteredFiles });
+        });
+    });
+};
+
 
 module.exports = {
     createProject,
