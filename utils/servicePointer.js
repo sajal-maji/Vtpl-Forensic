@@ -59,6 +59,37 @@ exports.managePointer =async (id, isApplyToAll,isPreview,frame,req,res) =>{
                 else
                     curDisplayPreviewFolPtr = 1
 
+                    return (   {'proDetails': {
+                        'statusCode': 200,
+                        'curFrameId':defaultImg,
+                        imagePossibleUndoCount : project.imagePossibleUndoCount,
+                        operatePossibleOnVideoFlag : project.operatePossibleOnVideoFlag,
+                        handoverPossibleImageToVideoFlag : project.handoverPossibleImageToVideoFlag,
+                        curProcessingSourceFolType : project.curProcessingSourceFolType,
+                        curProcessingSourceFolPtr : project.curProcessingSourceFolPtr,
+                        curProcessingDestinationFolType:project.curProcessingDestinationFolType,
+                        curProcessingDestinationFolPtr:project.curProcessingDestinationFolPtr,
+                        videoPossibleUndoCount:project.videoPossibleUndoCount,
+
+                        videoToFrameWarningPopUp:project.videoToFrameWarningPopUp,
+                        processingGoingOnVideoOrFrameFlag:project.processingGoingOnVideoOrFrameFlag,
+                        processingGoingOnVideoNotFrame:project.processingGoingOnVideoNotFrame,
+
+                        imageFolInPtr:project.imageFolInPtr,
+                        imagePossibleRedoCount:project.imagePossibleRedoCount,
+
+                        curDisplayPreviewFolType,
+                        curDisplayPreviewFolPtr,
+
+                        curProcessingPreviewSourceFolType:project.curProcessingPreviewSourceFolType,
+                        curProcessingPreviewSourceFolPtr:project.curProcessingPreviewSourceFolPtr,
+                        curProcessingPreviewDestinationFolType:project.curProcessingPreviewDestinationFolType,
+                        curProcessingPreviewDestinationFolPtr:project.curProcessingPreviewDestinationFolPtr,
+
+                            }
+                        }
+                        )
+
             //    const TempFolInPtr=1
             //    const srcVideoFolInPtr = project.videoFolInPtr
             //     videoFolInPtr = (project.videoFolInPtr % project.totalVideoFolderSet) + 1
