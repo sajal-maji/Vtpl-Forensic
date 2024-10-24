@@ -192,25 +192,25 @@ const applyUndoAction = async (id) => {
             message: 'Data not found'
         });
     };
-    let imagePossibleUndoCount = 0;
-    let imagePossibleRedoCount = 0;
-    let videoPossibleUndoCount = 0;
-    let videoPossibleRedoCount = 0;
-    let imageFolInPtr = '';
-    let videoFolInPtr = '';
-    let curDisplayPreviewFolType = '';
-    let curDisplayPreviewFolPtr = '';
-    let curProcessingPreviewSourceFolType = '';
-    let curProcessingPreviewSourceFolPtr = '';
-    let curProcessingPreviewDestinationFolType = '';
-    let curProcessingPreviewDestinationFolPtr = '';
-    let curDisplayThumbnailFolType = '';
-    let curDisplayThumbnailFolPtr = ''
-    let refreshThumbnailFlag = false;
+    let imagePossibleUndoCount = project.imagePossibleUndoCount;
+    let imagePossibleRedoCount = project.imagePossibleRedoCount;
+    let videoPossibleUndoCount = project.videoPossibleUndoCount;
+    let videoPossibleRedoCount = project.videoPossibleRedoCount;
+    let imageFolInPtr = project.imageFolInPtr;
+    let videoFolInPtr = project.videoFolInPtr;
+    let curDisplayPreviewFolType = project.curDisplayPreviewFolType;
+    let curDisplayPreviewFolPtr = project.curDisplayPreviewFolPtr;
+    let curProcessingPreviewSourceFolType = project.curProcessingPreviewSourceFolType;
+    let curProcessingPreviewSourceFolPtr = project.curProcessingPreviewSourceFolPtr;
+    let curProcessingPreviewDestinationFolType = project.curProcessingPreviewDestinationFolType;
+    let curProcessingPreviewDestinationFolPtr = project.curProcessingPreviewDestinationFolPtr;
+    let curDisplayThumbnailFolType = project.curDisplayThumbnailFolType;
+    let curDisplayThumbnailFolPtr = project.curDisplayThumbnailFolPtr
+    let refreshThumbnailFlag = project.refreshThumbnailFlag;
 
     if (project.imagePossibleUndoCount > 1) {
-        imagePossibleUndoCount = project.imagePossibleUndoCount--;
-        imagePossibleRedoCount = project.imagePossibleRedoCount++;
+        imagePossibleUndoCount = project.imagePossibleUndoCount-1;
+        imagePossibleRedoCount = project.imagePossibleRedoCount+1;
         imageFolInPtr = ((project.imageFolInPtr - 2 + project.totalImageFolderSet) % project.totalImageFolderSet) + 1
 
         curDisplayPreviewFolType = ImageFolderSet;
@@ -238,8 +238,8 @@ const applyUndoAction = async (id) => {
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
         } else {
-            imagePossibleUndoCount = project.imagePossibleUndoCount--;
-            imagePossibleRedoCount = project.imagePossibleRedoCount++;
+            imagePossibleUndoCount = project.imagePossibleUndoCount-1;
+            imagePossibleRedoCount = project.imagePossibleRedoCount+1;
             videoPossibleRedoCount = project.videoPossibleRedoCount
             imageFolInPtr = ((project.imageFolInPtr - 2 + project.totalImageFolderSet) % project.totalImageFolderSet) + 1;
 
@@ -254,8 +254,8 @@ const applyUndoAction = async (id) => {
         }
     } else {
         if ((project.handoverPossibleImageToVideoFlag) && (project.videoPossibleUndoCount > 0)) {
-            videoPossibleUndoCount = project.videoPossibleUndoCount--;
-            videoPossibleRedoCount = project.videoPossibleRedoCount++;
+            videoPossibleUndoCount = project.videoPossibleUndoCount-1;
+            videoPossibleRedoCount = project.videoPossibleRedoCount+1;
             videoFolInPtr = ((project.videoFolInPtr - 2 + project.totalVideoFolderSet) % project.totalVideoFolderSet) + 1;
 
             curDisplayThumbnailFolType = VideoFolderSet;
@@ -287,12 +287,13 @@ const applyUndoAction = async (id) => {
         curProcessingPreviewDestinationFolPtr,
         curDisplayThumbnailFolType,
         curDisplayThumbnailFolPtr,
-        'refreshThumbnail': refreshThumbnailFlag
+        refreshThumbnailFlag
     }, { new: true });
     return {
         statusCode: 200,
         status: 'Success',
-        message: 'Successfully authenticated.'
+        message: 'Successfully authenticated.',
+        projectUpdate
     };
 };
 
@@ -305,26 +306,27 @@ const applyRedoAction = async (id) => {
             message: 'Data not found'
         };
     }
-    let imagePossibleUndoCount = 1;
-    let imagePossibleRedoCount = 0;
-    let videoPossibleUndoCount = 0;
-    let videoPossibleRedoCount = 0;
+    let imagePossibleUndoCount = project.imagePossibleUndoCount;
+    let imagePossibleRedoCount = project.imagePossibleRedoCount;
+    let videoPossibleUndoCount = project.videoPossibleUndoCount;
+    let videoPossibleRedoCount = project.videoPossibleRedoCount;
     let imageFolInPtr = (project.imageFolInPtr % project.totalImageFolderSet) + 1;
-    let curDisplayThumbnailFolType = '';
-    let curDisplayThumbnailFolPtr = 0;
-    let curDisplayPreviewFolType = '';
-    let curDisplayPreviewFolPtr = 0;
-    let curProcessingPreviewSourceFolType = '';
-    let curProcessingPreviewSourceFolPtr = 0;
-    let curProcessingPreviewDestinationFolType = '';
-    let curProcessingPreviewDestinationFolPtr = 0;
-    let refreshThumbnailFlag = false;
+    let curDisplayThumbnailFolType = project.curDisplayThumbnailFolType;
+    let curDisplayThumbnailFolPtr = project.curDisplayThumbnailFolPtr;
+    let curDisplayPreviewFolType = project.curDisplayPreviewFolType;
+    let curDisplayPreviewFolPtr = project.curDisplayPreviewFolPtr;
+    let curProcessingPreviewSourceFolType = project.curProcessingPreviewSourceFolType
+    let curProcessingPreviewSourceFolPtr = project.curProcessingPreviewSourceFolPtr
+    let curProcessingPreviewDestinationFolType = project.curProcessingPreviewDestinationFolType
+    let curProcessingPreviewDestinationFolPtr = project.curProcessingPreviewDestinationFolPtr
+    let refreshThumbnailFlag = project.refreshThumbnailFlag;
+    let videoFolInPtr=project.videoFolInPtr
 
 
 
     if (project.imagePossibleRedoCount > 0) {
         if (project.handoverPossibleImageToVideoFlag && (project.imagePossibleUndoCount == 0)) {
-            imagePossibleRedoCount = project.imagePossibleRedoCount--;
+            imagePossibleRedoCount = project.imagePossibleRedoCount-1;
             curDisplayPreviewFolType = ImageFolderSet;
             curDisplayPreviewFolPtr = imageFolInPtr;
 
@@ -333,9 +335,11 @@ const applyRedoAction = async (id) => {
 
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
+            refreshThumbnailFlag = false;
         } else {
-            imagePossibleRedoCount = project.imagePossibleRedoCount--;
-            imagePossibleUndoCount = project.imagePossibleUndoCount++;
+            imagePossibleRedoCount = project.imagePossibleRedoCount-1;
+            imagePossibleUndoCount = project.imagePossibleUndoCount+1;
+            imageFolInPtr = (imageFolInPtr % project.totalImageFolderSet ) + 1
 
             curDisplayPreviewFolType = ImageFolderSet;
             curDisplayPreviewFolPtr = imageFolInPtr;
@@ -345,10 +349,12 @@ const applyRedoAction = async (id) => {
 
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
+            refreshThumbnailFlag = false;
         }
     } else if (project.handoverPossibleImageToVideoFlag && (project.videoPossibleRedoCount > 0)) {
-        videoPossibleRedoCount = project.videoPossibleRedoCount--;
-        videoPossibleUndoCount = project.videoPossibleUndoCount++;
+        videoPossibleRedoCount = project.videoPossibleRedoCount-1;
+        videoPossibleUndoCount = project.videoPossibleUndoCount+1;
+        videoFolInPtr = (videoFolInPtr % project.totalVideoFolderSet ) + 1
 
         curDisplayThumbnailFolType = VideoFolderSet;
         curDisplayThumbnailFolPtr = videoFolInPtr;
@@ -364,7 +370,7 @@ const applyRedoAction = async (id) => {
 
         refreshThumbnailFlag = true;
     }
-    await Project.findByIdAndUpdate(id, {
+    const projectDetails=await Project.findByIdAndUpdate(id, {
         imagePossibleUndoCount,
         imagePossibleRedoCount,
         videoPossibleUndoCount,
@@ -384,7 +390,8 @@ const applyRedoAction = async (id) => {
     return {
         statusCode: 200,
         status: 'Success',
-        message: 'Successfully authenticated.'
+        message: 'Successfully authenticated.',
+        projectDetails
     };
 };
 
@@ -461,11 +468,11 @@ const discardImage = async (id) => {
         let videoPossibleRedoCount = 0
         let imagePossibleRedoCount = 0
         let curDisplayThumbnailFolType = VideoFolderSet
-        let curDisplayThumbnailFolPtr = videoFolInPtr
+        let curDisplayThumbnailFolPtr = project.videoFolInPtr
         let curDisplayPreviewFolType = VideoFolderSet
-        let curDisplayPreviewFolPtr = videoFolInPtr
+        let curDisplayPreviewFolPtr = project.videoFolInPtr
         let curProcessingPreviewSourceFolType = VideoFolderSet
-        let curProcessingPreviewSourceFolPtr = videoFolInPtr
+        let curProcessingPreviewSourceFolPtr = project.videoFolInPtr
         let curProcessingPreviewDestinationFolType = TempFolder
         let curProcessingPreviewDestinationFolPtr = 1
         let operatePossibleOnVideoFlag = true

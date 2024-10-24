@@ -53,30 +53,36 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
             await new Promise((resolve) => setTimeout(resolve, 50));
             const curDisplayPreviewFolType = TempFolder
             let curDisplayPreviewFolPtr = 1;
-            if (processingGoingOnVideoOrFrameFlag == true)
+            if (project.processingGoingOnVideoOrFrameFlag == true)
                 curDisplayPreviewFolPtr = 2
             else
                 curDisplayPreviewFolPtr = 1
-
+            
             return ({
                 'proDetails': {
                     'statusCode': 200,
                     'curFrameId': defaultImg,
-                    imagePossibleUndoCount: project.imagePossibleUndoCount,
+                    
                     operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
                     handoverPossibleImageToVideoFlag: project.handoverPossibleImageToVideoFlag,
+
                     curProcessingSourceFolType: project.curProcessingSourceFolType,
                     curProcessingSourceFolPtr: project.curProcessingSourceFolPtr,
                     curProcessingDestinationFolType: project.curProcessingDestinationFolType,
                     curProcessingDestinationFolPtr: project.curProcessingDestinationFolPtr,
+
+                    imagePossibleUndoCount: project.imagePossibleUndoCount,
                     videoPossibleUndoCount: project.videoPossibleUndoCount,
+                    videoPossibleRedoCount: project.videoPossibleRedoCount,
+                    imagePossibleRedoCount: project.imagePossibleRedoCount,
 
                     videoToFrameWarningPopUp: project.videoToFrameWarningPopUp,
                     processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
                     processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
 
                     imageFolInPtr: project.imageFolInPtr,
-                    imagePossibleRedoCount: project.imagePossibleRedoCount,
+                    videoFolInPtr: project.videoFolInPtr,
+                    
 
                     curDisplayPreviewFolType,
                     curDisplayPreviewFolPtr,
@@ -123,12 +129,14 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                 const srcVideoFolInPtr = project.videoFolInPtr
                 videoFolInPtr = (project.videoFolInPtr % project.totalVideoFolderSet) + 1
                 imageFolInPtr = 1
+
                 videoPossibleUndoCount = Math.min((project.videoPossibleUndoCount + 1), project.undoVideoLimit)
                 imagePossibleUndoCount = 0
                 videoPossibleRedoCount = 0
                 imagePossibleRedoCount = 0
 
                 handoverPossibleImageToVideoFlag = true
+                operatePossibleOnVideoFlag = project.operatePossibleOnVideoFlag
 
                 curProcessingSourceFolType = VideoFolderSet
                 curProcessingSourceFolPtr = srcVideoFolInPtr
@@ -147,7 +155,7 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                 curProcessingPreviewDestinationFolType = TempFolder
                 curProcessingPreviewDestinationFolPtr = 2
 
-                operatePossibleOnVideoFlag = project.operatePossibleOnVideoFlag
+                
 
                 return ({
                     'proDetails': {
@@ -155,15 +163,21 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                         'curFrameId': defaultImg,
 
                         imageFolInPtr,
+                        videoFolInPtr,
+
                         imagePossibleUndoCount,
                         imagePossibleRedoCount,
+                        videoPossibleUndoCount,
+                        videoPossibleRedoCount,
+
                         operatePossibleOnVideoFlag,
                         handoverPossibleImageToVideoFlag,
+
                         curProcessingSourceFolType,
                         curProcessingSourceFolPtr,
                         curProcessingDestinationFolType,
                         curProcessingDestinationFolPtr,
-                        videoPossibleUndoCount,
+                        
 
                         videoToFrameWarningPopUp,
                         processingGoingOnVideoOrFrameFlag,
@@ -212,6 +226,7 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                 imageFolInPtr = 1
                 videoPossibleUndoCount = project.videoPossibleUndoCount
                 imagePossibleUndoCount = 1
+
                 operatePossibleOnVideoFlag = false
                 curProcessingSourceFolType = VideoFolderSet
                 curProcessingSourceFolPtr = project.videoFolInPtr
@@ -229,24 +244,29 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                     'proDetails': {
                         'statusCode': 200,
                         'curFrameId': defaultImg,
-                        imagePossibleUndoCount,
+                       
                         operatePossibleOnVideoFlag,
                         handoverPossibleImageToVideoFlag,
+
                         curProcessingSourceFolType,
                         curProcessingSourceFolPtr,
                         curProcessingDestinationFolType,
                         curProcessingDestinationFolPtr,
+
                         videoPossibleUndoCount,
+                        videoPossibleRedoCount,
+                        imagePossibleUndoCount,
+                        imagePossibleRedodoCount,
 
                         videoToFrameWarningPopUp,
                         processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
                         processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
 
                         imageFolInPtr: project.imageFolInPtr,
-                        imagePossibleRedoCount: project.imagePossibleRedoCount,
+                        videoFolInPtr:project.videoFolInPtr,
 
                         curDisplayPreviewFolType: project.curDisplayPreviewFolType,
-                        curDisplayPreviewFolPtr: project.curDisplayPreviewFolPtr,
+                        curDisplayPreviewFolPtr,
 
                         curProcessingPreviewSourceFolType: project.curProcessingPreviewSourceFolType,
                         curProcessingPreviewSourceFolPtr: project.curProcessingPreviewSourceFolPtr,
@@ -279,23 +299,31 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                     'proDetails': {
                         'statusCode': 200,
                         'curFrameId': defaultImg,
+
                         handoverPossibleImageToVideoFlag,
+                        operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
+
                         curProcessingSourceFolType,
                         curProcessingSourceFolPtr,
                         curProcessingDestinationFolType,
                         curProcessingDestinationFolPtr,
+
                         videoPossibleUndoCount,
+                        videoPossibleRedoCount,
+                        imagePossibleUndoCount,
+                        imagePossibleRedodoCount,
+
                         videoToFrameWarningPopUp,
                         processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
                         processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
 
-                        imageFolInPtr: project.imageFolInPtr,
-                        imagePossibleUndoCount: project.imagePossibleUndoCount,
-                        imagePossibleRedoCount: project.imagePossibleRedoCount,
-                        operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
+                        imageFolInPtr,
+                        videoFolInPtr:project.videoFolInPtr,
+
+                        
 
                         curDisplayPreviewFolType: project.curDisplayPreviewFolType,
-                        curDisplayPreviewFolPtr: project.curDisplayPreviewFolPtr,
+                        curDisplayPreviewFolPtr,
 
                         curProcessingPreviewSourceFolType: project.curProcessingPreviewSourceFolType,
                         curProcessingPreviewSourceFolPtr: project.curProcessingPreviewSourceFolPtr,
@@ -354,7 +382,7 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
 
 };
 
-const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response) => {
+const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails) => {
     try {
         const rootPath = `${req.user.id}/${id}`;
         let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_1.png';
@@ -367,6 +395,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         const project = await Project.findByIdAndUpdate(id, {
             'currentFrameId': frameName,
             imageFolInPtr: proDetails.imageFolInPtr,
+            videoFolInPtr:proDetails.videoFolInPtr,
             imagePossibleUndoCount: proDetails.imagePossibleUndoCount,
             imagePossibleRedoCount: proDetails.imagePossibleRedoCount,
             operatePossibleOnVideoFlag: proDetails.operatePossibleOnVideoFlag,
@@ -462,13 +491,14 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         await new Promise((resolve) => setTimeout(resolve, 100));
         return {
             'colData': {
-                job_id: response.job_id,
-                percentage: response.percentage,
+                // job_id: response.job_id,
+                // percentage: response.percentage,
                 'curFrameId': (proDetails.currentFrameId) ? proDetails.currentFrameId : '',
-                total_input_images: response.total_input_images,
-                processed_image_count: response.processed_image_count,
-                status_message: response.status_message,
-                basePath: `${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}/${frameName}`,
+                'project':project,
+                // total_input_images: response.total_input_images,
+                // processed_image_count: response.processed_image_count,
+                // status_message: response.status_message,
+                // basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
                 // request:request
             }
         }

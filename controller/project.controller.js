@@ -190,7 +190,7 @@ const uploadFiles = async (req, res, next) => {
                     if (err) return console.error('Error copying the file:', err);
                     console.log('File copied successfully.');
                 });
-                $projectDetails = {
+                const projectDetails = {
                     "fileName": req.file.filename,
                     "fileSize": fileMetadata.format.size,
                     "fileResolution": fileMetadata.format.bit_rate,
@@ -213,7 +213,7 @@ const uploadFiles = async (req, res, next) => {
                     {
                         'filesName': JSON.stringify(dataFiles.filesName),
                         'currentFrameId': 'frame_1.png',
-                        'projectDetails': JSON.stringify($projectDetails)
+                        'projectDetails': JSON.stringify(projectDetails)
                     }, { new: true });
 
                 res.status(201).json({
@@ -229,7 +229,7 @@ const uploadFiles = async (req, res, next) => {
                         'srcFolPtr': updateproject.videoFolInPtr,
                         'videoToFrameWarmPopUp': true,
                         'filesName': dataFiles.filesName,
-                        projectDetails: $projectDetails
+                        projectDetails: projectDetails
                     }
 
                 });
@@ -267,10 +267,10 @@ const getProjectDetails = async (req, res, next) => {
 const getAction = async (req, res, next) => {
     const { projectId: id, actionType } = req.body;
     try {
-        const applyChanges = '';
-        if (actionType === 'Undo') {
+        let applyChanges = '';
+        if (actionType === 'undo') {
             applyChanges = await projectService.applyUndoAction(id, actionType);
-        } else if (actionType === 'Redo') {
+        } else if (actionType === 'redo') {
             applyChanges = await projectService.applyRedoAction(id, actionType);
         }
         res.status(201).json(applyChanges)
