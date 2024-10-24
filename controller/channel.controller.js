@@ -186,13 +186,13 @@ exports.colorConversion = async (req, res, next) => {
 
             const {errStatus,message} = await checkFile(id,isApplyToAll,proDetails,req,res);
        
-            // if(errStatus){
-            //     return res.status(404).json({
-            //         statusCode: 404,
-            //         status: 'Failed',
-            //         message
-            //     });
-            // }
+            if(errStatus){
+                return res.status(404).json({
+                    statusCode: 404,
+                    status: 'Failed',
+                    message
+                });
+            }
         
 
         const {imgBasePathFrom,imgBasePathTo} = await folderPath(id,isApplyToAll,isPreview,proDetails,req,res);
@@ -206,11 +206,6 @@ exports.colorConversion = async (req, res, next) => {
             sub_process_mid:subProcessMid       // Output image path
         };
         
-        const {colData} = await savePointer(id,isApplyToAll,isPreview,frame,req,res,proDetails);
-        return res.status(200).json({
-            message: 'Processing successfully Done',
-            data: colData,
-        });
 
         // Make the gRPC request to the grayscale method (modify according to your method name)
         channelServiceClient.ColorConversionFilter(request, async (error, response) => {

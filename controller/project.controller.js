@@ -77,6 +77,7 @@ const uploadFiles = async (req, res, next) => {
             userId: req.user.id,
         })
         await project.save();
+        
         const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
         const rootPath = `${req.user.id}/${project.id}`;
         const baseUrl = `${process.env.BASE_URL}:${process.env.PORT}/`;
@@ -84,6 +85,8 @@ const uploadFiles = async (req, res, next) => {
         createFolder(`${basePath}/main`);
         createFolder(`${basePath}/snap`);
         createFolder(`${basePath}/temp/1`);
+        createFolder(`${basePath}/temp/2`);
+        
 
         for (let i = 1; i <= project.totalVideoFolderSet; i++) {
             const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
