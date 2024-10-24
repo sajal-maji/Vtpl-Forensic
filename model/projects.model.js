@@ -87,6 +87,7 @@ const projectsSchema = new mongoose.Schema({
     },
     curProcessingSourceFolType: {
         type: String,
+        default: 'video',
     },
     curProcessingSourceFolPtr: {
         type: Number,
@@ -94,6 +95,7 @@ const projectsSchema = new mongoose.Schema({
     },
     curProcessingDestinationFolType: {
         type: String,
+        default: 'video',
     },
     curProcessingDestinationFolPtr: {
         type: Number,
