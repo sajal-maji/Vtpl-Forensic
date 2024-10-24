@@ -1,5 +1,6 @@
 const Imagefilter = require('../model/imagefilter.model');
 const Project = require('../model/projects.model');
+const JobProject = require('../model/jobprojects.model');
 const path = require('path');
 const fsExtra = require('fs-extra');
 const fs = require('fs');
@@ -372,13 +373,12 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
 
 
         const rootDir = path.resolve(__dirname, '..', '..');
-        const imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
-        const imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
+        let imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
+        let imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
        
         if(isPreview){
-            const rootDir = path.resolve(__dirname, '..', '..');
-            const imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
-            const imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
+            let imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
+            let imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
         }
        
         return ({ imgBasePathFrom, imgBasePathTo })
@@ -397,35 +397,43 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         // if(!isPreview){
 
         // if(isApplyToAll){
+const proArr={
+        'currentFrameId': frameName,
+        imageFolInPtr: proDetails.imageFolInPtr,
+        videoFolInPtr:proDetails.videoFolInPtr,
+        imagePossibleUndoCount: proDetails.imagePossibleUndoCount,
+        imagePossibleRedoCount: proDetails.imagePossibleRedoCount,
+        operatePossibleOnVideoFlag: proDetails.operatePossibleOnVideoFlag,
+        handoverPossibleImageToVideoFlag: proDetails.handoverPossibleImageToVideoFlag,
+        curProcessingSourceFolType: proDetails.curProcessingSourceFolType,
+        curProcessingSourceFolPtr: proDetails.curProcessingSourceFolPtr,
+        curProcessingDestinationFolType: proDetails.curProcessingDestinationFolType,
+        curProcessingDestinationFolPtr: proDetails.curProcessingDestinationFolPtr,
+        videoPossibleUndoCount: proDetails.videoPossibleUndoCount,
 
+        videoToFrameWarningPopUp: proDetails.videoToFrameWarningPopUp,
+        processingGoingOnVideoOrFrameFlag: proDetails.processingGoingOnVideoOrFrameFlag,
+        processingGoingOnVideoNotFrame: proDetails.processingGoingOnVideoNotFrame,
 
-        const project = await Project.findByIdAndUpdate(id, {
-            'currentFrameId': frameName,
-            imageFolInPtr: proDetails.imageFolInPtr,
-            videoFolInPtr:proDetails.videoFolInPtr,
-            imagePossibleUndoCount: proDetails.imagePossibleUndoCount,
-            imagePossibleRedoCount: proDetails.imagePossibleRedoCount,
-            operatePossibleOnVideoFlag: proDetails.operatePossibleOnVideoFlag,
-            handoverPossibleImageToVideoFlag: proDetails.handoverPossibleImageToVideoFlag,
-            curProcessingSourceFolType: proDetails.curProcessingSourceFolType,
-            curProcessingSourceFolPtr: proDetails.curProcessingSourceFolPtr,
-            curProcessingDestinationFolType: proDetails.curProcessingDestinationFolType,
-            curProcessingDestinationFolPtr: proDetails.curProcessingDestinationFolPtr,
-            videoPossibleUndoCount: proDetails.videoPossibleUndoCount,
+        curDisplayPreviewFolType: proDetails.curDisplayPreviewFolType,
+        curDisplayPreviewFolPtr: proDetails.curDisplayPreviewFolPtr,
 
-            videoToFrameWarningPopUp: proDetails.videoToFrameWarningPopUp,
-            processingGoingOnVideoOrFrameFlag: proDetails.processingGoingOnVideoOrFrameFlag,
-            processingGoingOnVideoNotFrame: proDetails.processingGoingOnVideoNotFrame,
+        curProcessingPreviewSourceFolType: proDetails.curProcessingPreviewSourceFolType,
+        curProcessingPreviewSourceFolPtr: proDetails.curProcessingPreviewSourceFolPtr,
+        curProcessingPreviewDestinationFolType: proDetails.curProcessingPreviewDestinationFolType,
+        curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
 
-            curDisplayPreviewFolType: proDetails.curDisplayPreviewFolType,
-            curDisplayPreviewFolPtr: proDetails.curDisplayPreviewFolPtr,
+    }
 
-            curProcessingPreviewSourceFolType: proDetails.curProcessingPreviewSourceFolType,
-            curProcessingPreviewSourceFolPtr: proDetails.curProcessingPreviewSourceFolPtr,
-            curProcessingPreviewDestinationFolType: proDetails.curProcessingPreviewDestinationFolType,
-            curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
-
-        }, { new: true });
+    if(isPreview){
+        const project = await Project.findByIdAndUpdate(id,proArr , { new: true });
+    }else{
+        const jobArr = { jobId: response.job_id };
+        const mergedArr = Object.assign({}, proArr, jobArr);
+        await Project.findByIdAndUpdate(id,proArr , { new: true });
+        const project =  new JobProject(mergedArr);
+    }
+        
         // }else{
         //     const project = await Project.findByIdAndUpdate(id, {
         //         'currentFrameId':frameName,
