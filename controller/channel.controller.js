@@ -1,4 +1,5 @@
 const {channelServiceClient} = require('../grpcClient'); // Import gRPC client
+const projectService = require("../services/project.service");
 const Imagefilter = require('../model/imagefilter.model');
 const Project = require('../model/projects.model');
 const path = require('path');
@@ -184,7 +185,9 @@ exports.colorConversion = async (req, res, next) => {
                 });
             }
 
-            const {errStatus,message} = await checkFile(id,isApplyToAll,proDetails,req,res);
+            const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
+
+            const {errStatus,message} = await checkFile(id,isApplyToAll,isPreview,proDetails,req,res);
        
             if(errStatus){
                 return res.status(404).json({
