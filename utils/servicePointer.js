@@ -374,6 +374,13 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
         const rootDir = path.resolve(__dirname, '..', '..');
         const imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
         const imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
+       
+        if(isPreview){
+            const rootDir = path.resolve(__dirname, '..', '..');
+            const imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
+            const imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
+        }
+       
         return ({ imgBasePathFrom, imgBasePathTo })
 
     } catch (error) {
@@ -382,7 +389,7 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
 
 };
 
-const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails) => {
+const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails,response) => {
     try {
         const rootPath = `${req.user.id}/${id}`;
         let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_1.png';
@@ -446,13 +453,12 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         // }else{
 
         if (isPreview) {
-
             await new Promise((resolve) => setTimeout(resolve, 100));
             const rootPath = `${req.user.id}/${id}`;
             const timestamp = Date.now();
-            const oldFilePath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}/${frameName}`;
+            const oldFilePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`;
             const newFileName = timestamp + 'new_frame_name.png'; // Replace this with the new file name
-            const newFilePath = path.join(`public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`, newFileName);
+            const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
             frameName = newFileName
             // Rename the file
             fs.rename(oldFilePath, newFilePath, (err) => {
@@ -491,15 +497,15 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         await new Promise((resolve) => setTimeout(resolve, 100));
         return {
             'colData': {
-                // job_id: response.job_id,
-                // percentage: response.percentage,
+                job_id: response.job_id,
+                percentage: response.percentage,
                 'curFrameId': (proDetails.currentFrameId) ? proDetails.currentFrameId : '',
-                'project':project,
-                // total_input_images: response.total_input_images,
-                // processed_image_count: response.processed_image_count,
-                // status_message: response.status_message,
-                // basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
-                // request:request
+                // 'project':project,
+                total_input_images: response.total_input_images,
+                processed_image_count: response.processed_image_count,
+                status_message: response.status_message,
+                basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
+                request:request
             }
         }
 
