@@ -4,6 +4,9 @@ const projectsSchema = new mongoose.Schema({
     jobId: {
         type: String
     },
+    projectId: {
+        type: String
+    },
     currentFrameId: {
         type: String,
     },

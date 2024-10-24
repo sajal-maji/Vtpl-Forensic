@@ -58,12 +58,12 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                 curDisplayPreviewFolPtr = 2
             else
                 curDisplayPreviewFolPtr = 1
-            
+
             return ({
                 'proDetails': {
                     'statusCode': 200,
                     'curFrameId': defaultImg,
-                    
+
                     operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
                     handoverPossibleImageToVideoFlag: project.handoverPossibleImageToVideoFlag,
 
@@ -83,7 +83,7 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
 
                     imageFolInPtr: project.imageFolInPtr,
                     videoFolInPtr: project.videoFolInPtr,
-                    
+
 
                     curDisplayPreviewFolType,
                     curDisplayPreviewFolPtr,
@@ -156,7 +156,7 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                 curProcessingPreviewDestinationFolType = TempFolder
                 curProcessingPreviewDestinationFolPtr = 2
 
-                
+
 
                 return ({
                     'proDetails': {
@@ -178,7 +178,7 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                         curProcessingSourceFolPtr,
                         curProcessingDestinationFolType,
                         curProcessingDestinationFolPtr,
-                        
+
 
                         videoToFrameWarningPopUp,
                         processingGoingOnVideoOrFrameFlag,
@@ -245,7 +245,7 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                     'proDetails': {
                         'statusCode': 200,
                         'curFrameId': defaultImg,
-                       
+
                         operatePossibleOnVideoFlag,
                         handoverPossibleImageToVideoFlag,
 
@@ -264,7 +264,7 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                         processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
 
                         imageFolInPtr: project.imageFolInPtr,
-                        videoFolInPtr:project.videoFolInPtr,
+                        videoFolInPtr: project.videoFolInPtr,
 
                         curDisplayPreviewFolType: project.curDisplayPreviewFolType,
                         curDisplayPreviewFolPtr,
@@ -319,9 +319,9 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                         processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
 
                         imageFolInPtr,
-                        videoFolInPtr:project.videoFolInPtr,
+                        videoFolInPtr: project.videoFolInPtr,
 
-                        
+
 
                         curDisplayPreviewFolType: project.curDisplayPreviewFolType,
                         curDisplayPreviewFolPtr,
@@ -375,12 +375,12 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
         const rootDir = path.resolve(__dirname, '..', '..');
         let imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
         let imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
-       
-        if(isPreview){
+
+        if (isPreview) {
             let imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
             let imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
         }
-       
+
         return ({ imgBasePathFrom, imgBasePathTo })
 
     } catch (error) {
@@ -389,7 +389,7 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
 
 };
 
-const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails,response) => {
+const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response) => {
     try {
         const rootPath = `${req.user.id}/${id}`;
         let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_1.png';
@@ -397,43 +397,43 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         // if(!isPreview){
 
         // if(isApplyToAll){
-const proArr={
-        'currentFrameId': frameName,
-        imageFolInPtr: proDetails.imageFolInPtr,
-        videoFolInPtr:proDetails.videoFolInPtr,
-        imagePossibleUndoCount: proDetails.imagePossibleUndoCount,
-        imagePossibleRedoCount: proDetails.imagePossibleRedoCount,
-        operatePossibleOnVideoFlag: proDetails.operatePossibleOnVideoFlag,
-        handoverPossibleImageToVideoFlag: proDetails.handoverPossibleImageToVideoFlag,
-        curProcessingSourceFolType: proDetails.curProcessingSourceFolType,
-        curProcessingSourceFolPtr: proDetails.curProcessingSourceFolPtr,
-        curProcessingDestinationFolType: proDetails.curProcessingDestinationFolType,
-        curProcessingDestinationFolPtr: proDetails.curProcessingDestinationFolPtr,
-        videoPossibleUndoCount: proDetails.videoPossibleUndoCount,
+        const proArr = {
+            'currentFrameId': frameName,
+            imageFolInPtr: proDetails.imageFolInPtr,
+            videoFolInPtr: proDetails.videoFolInPtr,
+            imagePossibleUndoCount: proDetails.imagePossibleUndoCount,
+            imagePossibleRedoCount: proDetails.imagePossibleRedoCount,
+            operatePossibleOnVideoFlag: proDetails.operatePossibleOnVideoFlag,
+            handoverPossibleImageToVideoFlag: proDetails.handoverPossibleImageToVideoFlag,
+            curProcessingSourceFolType: proDetails.curProcessingSourceFolType,
+            curProcessingSourceFolPtr: proDetails.curProcessingSourceFolPtr,
+            curProcessingDestinationFolType: proDetails.curProcessingDestinationFolType,
+            curProcessingDestinationFolPtr: proDetails.curProcessingDestinationFolPtr,
+            videoPossibleUndoCount: proDetails.videoPossibleUndoCount,
 
-        videoToFrameWarningPopUp: proDetails.videoToFrameWarningPopUp,
-        processingGoingOnVideoOrFrameFlag: proDetails.processingGoingOnVideoOrFrameFlag,
-        processingGoingOnVideoNotFrame: proDetails.processingGoingOnVideoNotFrame,
+            videoToFrameWarningPopUp: proDetails.videoToFrameWarningPopUp,
+            processingGoingOnVideoOrFrameFlag: proDetails.processingGoingOnVideoOrFrameFlag,
+            processingGoingOnVideoNotFrame: proDetails.processingGoingOnVideoNotFrame,
 
-        curDisplayPreviewFolType: proDetails.curDisplayPreviewFolType,
-        curDisplayPreviewFolPtr: proDetails.curDisplayPreviewFolPtr,
+            curDisplayPreviewFolType: proDetails.curDisplayPreviewFolType,
+            curDisplayPreviewFolPtr: proDetails.curDisplayPreviewFolPtr,
 
-        curProcessingPreviewSourceFolType: proDetails.curProcessingPreviewSourceFolType,
-        curProcessingPreviewSourceFolPtr: proDetails.curProcessingPreviewSourceFolPtr,
-        curProcessingPreviewDestinationFolType: proDetails.curProcessingPreviewDestinationFolType,
-        curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
+            curProcessingPreviewSourceFolType: proDetails.curProcessingPreviewSourceFolType,
+            curProcessingPreviewSourceFolPtr: proDetails.curProcessingPreviewSourceFolPtr,
+            curProcessingPreviewDestinationFolType: proDetails.curProcessingPreviewDestinationFolType,
+            curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
 
-    }
+        }
 
-    if(isPreview){
-        const project = await Project.findByIdAndUpdate(id,proArr , { new: true });
-    }else{
-        const jobArr = { jobId: response.job_id };
-        const mergedArr = Object.assign({}, proArr, jobArr);
-        await Project.findByIdAndUpdate(id,proArr , { new: true });
-        const project =  new JobProject(mergedArr);
-    }
-        
+        if (isPreview) {
+            const project = await Project.findByIdAndUpdate(id, proArr, { new: true });
+        } else {
+            const jobArr = { jobId: response.job_id, projectId: id };
+            const mergedArr = Object.assign({}, proArr, jobArr);
+            await Project.findByIdAndUpdate(id, proArr, { new: true });
+            const project = new JobProject(mergedArr);
+        }
+
         // }else{
         //     const project = await Project.findByIdAndUpdate(id, {
         //         'currentFrameId':frameName,
@@ -513,7 +513,7 @@ const proArr={
                 processed_image_count: response.processed_image_count,
                 status_message: response.status_message,
                 basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
-                request:request
+                request: request
             }
         }
 
