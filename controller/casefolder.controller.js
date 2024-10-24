@@ -1,67 +1,36 @@
-const Casefolder = require('../model/casefolder.model');
-const { where } = require('../model/user.model');
+const caseFolderService = require("../services/casefolder.service");
 
-exports.getFolderAll = async (req, res, next) => {
-    
+const getFolderAll = async (req, res, next) => {
     try {
-        const casefolder = await Casefolder.find({'userId':req.user.id}).select('folderName').sort({ createdAt: -1 });
-        if (!casefolder) {
-            return res.status(404).json({
-                statusCode: 404,
-                status: 'Failed',
-                message: 'Data not found'
-            });
-        }
-
-        res.status(201).json({
-            statusCode: 200,
-            status: 'Success',
-            message: 'Successfully authenticated.',
-            casefolder
-        })
+        const response = await caseFolderService.getFolder(req);
+        res.status(201).json(response);
     } catch (error) {
         next(error);
     }
-    
-}
+};
 
-exports.createCasefolder = async (req, res, next) => {
+const createCasefolder = async (req, res, next) => {
+    const { folderName } = req.body;
     try {
-        const {folderName} = req.body;
-        const max=5667722;
-        const slag = Math.floor(Math.random() * max);
-        const casefolder = new Casefolder({
-            folderName,
-            userId:req.user.id,
-            slag:slag
-        })
+        const response = await caseFolderService.createFolder(req, folderName);
+        res.status(201).json(response);
+    } catch (error) {
+        next(error);
+    }
+};
 
-        await casefolder.save();
-
-        res.status(201).json({
-            statusCode: 200,
-            status: 'Success',
-            message: 'Successfully created Folder.',
-            casefolder
-        })
+const updateCasefolder = async (req, res, next) => {
+    const { folderName, id } = req.body;
+    try {
+        const response = await caseFolderService.updateFolder(id, folderName);
+        res.status(201).json(response);
     } catch (error) {
         next(error);
     }
 }
 
-exports.updateCasefolder = async (req, res, next) => {
-    try {
-        const {folderName,id} = req.body;
-        const casefolder = await Casefolder.findByIdAndUpdate(id, {'folderName':folderName}, { new: true });
-        
-        res.status(201).json({
-            statusCode: 200,
-            status: 'Success',
-            message: 'Update Successfully.',
-            casefolder
-        })
-    } catch (error) {
-        next(error);
-    }
-    
+module.exports = {
+    getFolderAll,
+    createCasefolder,
+    updateCasefolder
 }
