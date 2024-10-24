@@ -77,6 +77,7 @@ const uploadFiles = async (req, res, next) => {
             userId: req.user.id,
         })
         await project.save();
+
         
         const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
         const rootPath = `${req.user.id}/${project.id}`;

@@ -44,10 +44,10 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                     console.log('Directory removed successfully.');
 
                     // Recreate the directory after removing it
-                    const dynamicFolderName = `public/${rootPath}/temp/1`; // Create a folder with the project limit
-                    fs.mkdir(dynamicFolderName, { recursive: true }, (err) => {
-                        console.log(`Folder  created successfully at ${dynamicFolderName}`);
-                    });
+                    // const dynamicFolderName = `public/${rootPath}/temp/1`; // Create a folder with the project limit
+                    // fs.mkdir(dynamicFolderName, { recursive: true }, (err) => {
+                    //     console.log(`Folder  created successfully at ${dynamicFolderName}`);
+                    // });
 
                 }
             });
@@ -373,12 +373,15 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
 
 
         const rootDir = path.resolve(__dirname, '..', '..');
-        let imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
-        let imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
+        let imgBasePathFrom =''
+        let imgBasePathTo =''
+         imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
+         imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
 
         if (isPreview) {
-            let imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
-            let imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
+            imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/video/1`);
+            // imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
+            imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
         }
 
         return ({ imgBasePathFrom, imgBasePathTo })
@@ -610,21 +613,27 @@ const cloneImage = async (id, isApplyToAll, frame, req, res) => {
     }
 };
 
-const checkFile = async (id, isApplyToAll, proDetails, req, res) => {
+const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
     try {
 
+        // let imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
+        // let imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
+
+
+        const srcType = (isPreview)?proDetails.curProcessingPreviewSourceFolType:proDetails.curProcessingSourceFolType
+        const srcPtr = (isPreview)?proDetails.curProcessingPreviewSourceFolPtr:proDetails.curProcessingSourceFolPtr
         const rootPath = `${req.user.id}/${id}`;
-        if (!fs.existsSync(`public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${proDetails.curFrameId}`)) {
+        if (!fs.existsSync(`public/${rootPath}/${srcType}/${srcPtr}/${proDetails.curFrameId}`)) {
 
-            const project = await Project.findByIdAndUpdate(id, {
-                'imageFolInPtr': (proDetails.curProcessingSourceFolType == 'image' && (proDetails.curProcessingSourceFolPtr > 1)) ? proDetails.curProcessingSourceFolPtr - 1 : proDetails.curProcessingSourceFolPtr,
-                'videoFolInPtr': (proDetails.curProcessingSourceFolType == 'video' && (proDetails.curProcessingSourceFolPtr > 1)) ? proDetails.curProcessingSourceFolPtr - 1 : proDetails.curProcessingSourceFolPtr,
+            // const project = await Project.findByIdAndUpdate(id, {
+            //     'imageFolInPtr': (proDetails.curProcessingSourceFolType == 'image' && (proDetails.curProcessingSourceFolPtr > 1)) ? proDetails.curProcessingSourceFolPtr - 1 : proDetails.curProcessingSourceFolPtr,
+            //     'videoFolInPtr': (proDetails.curProcessingSourceFolType == 'video' && (proDetails.curProcessingSourceFolPtr > 1)) ? proDetails.curProcessingSourceFolPtr - 1 : proDetails.curProcessingSourceFolPtr,
 
-            }, { new: true });
+            // }, { new: true });
 
             return {
                 errStatus: true,
-                message: `Image file not found: public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${proDetails.curFrameId}`
+                message: `Image file not found: public/${rootPath}/${srcType}/${srcPtr}/${proDetails.curFrameId}`
             };
 
         } else {

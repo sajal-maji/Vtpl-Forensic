@@ -91,7 +91,7 @@ const projectsSchema = new mongoose.Schema({
     },
     curProcessingSourceFolPtr: {
         type: Number,
-        default: 0,
+        default: 1,
     },
     curProcessingDestinationFolType: {
         type: String,
@@ -99,7 +99,7 @@ const projectsSchema = new mongoose.Schema({
     },
     curProcessingDestinationFolPtr: {
         type: Number,
-        default: 0,
+        default: 1,
     },
     curProcessingPreviewSourceFolType: {
         type: String,

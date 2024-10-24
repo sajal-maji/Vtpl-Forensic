@@ -4,17 +4,20 @@ const Project = require('../model/projects.model');
 
 const getStatus = async (job_id) => {
     const request = { job_id };
-    let data = channelServiceClient.GetJobStatus(request, async (error, response) => {
-        if (error) {
-            console.error("Error fetching job status:", error);
-            return { error: 'Error fetching job status', details: error };
-        }
-        if (response && response.completed) {
-            await updateJobDetails(response.job_id);
-        }
-        return response;
+    return new Promise((resolve, reject) => {
+        channelServiceClient.GetJobStatus(request, (error, response) => {
+            if (error) {
+                console.error("Error fetching job status:", error);
+                return reject({ error: 'Error fetching job status', details: error });
+            }
+
+            // If there is any condition to check, you can add it here
+            // if (response && response.completed) {
+            //     await updateJobDetails(response.job_id);
+            // }
+            resolve(response);
+        });
     });
-    return data;
 };
 
 async function updateJobDetails(jobId) {
