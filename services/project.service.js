@@ -155,7 +155,7 @@ const projectDetails = async (req, id) => {
         data: {
             'folderId': projectDetails.catId,
             'projectId': projectDetails.id,
-            'curFrameId': (projectDetails.curDisplayPreviewFolType == 'temp')?projectDetails.currentPreviewFrameId:projectDetails.currentFrameId,
+            'curFrameId': (projectDetails.curDisplayPreviewFolType == 'temp') ? projectDetails.currentPreviewFrameId : projectDetails.currentFrameId,
             'isUndoPossible': isUndoPossible,
             'isRedoPossible': isRedoPossible,
             'isRedoPossible': isRedoPossible,
@@ -212,8 +212,8 @@ const applyUndoAction = async (id) => {
     let refreshThumbnailFlag = project.refreshThumbnailFlag;
 
     if (project.imagePossibleUndoCount > 1) {
-        imagePossibleUndoCount = project.imagePossibleUndoCount-1;
-        imagePossibleRedoCount = project.imagePossibleRedoCount+1;
+        imagePossibleUndoCount = project.imagePossibleUndoCount - 1;
+        imagePossibleRedoCount = project.imagePossibleRedoCount + 1;
         imageFolInPtr = ((project.imageFolInPtr - 2 + project.totalImageFolderSet) % project.totalImageFolderSet) + 1
 
         curDisplayPreviewFolType = ImageFolderSet;
@@ -241,8 +241,8 @@ const applyUndoAction = async (id) => {
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
         } else {
-            imagePossibleUndoCount = project.imagePossibleUndoCount-1;
-            imagePossibleRedoCount = project.imagePossibleRedoCount+1;
+            imagePossibleUndoCount = project.imagePossibleUndoCount - 1;
+            imagePossibleRedoCount = project.imagePossibleRedoCount + 1;
             videoPossibleRedoCount = project.videoPossibleRedoCount
             imageFolInPtr = ((project.imageFolInPtr - 2 + project.totalImageFolderSet) % project.totalImageFolderSet) + 1;
 
@@ -257,8 +257,8 @@ const applyUndoAction = async (id) => {
         }
     } else {
         if ((project.handoverPossibleImageToVideoFlag) && (project.videoPossibleUndoCount > 0)) {
-            videoPossibleUndoCount = project.videoPossibleUndoCount-1;
-            videoPossibleRedoCount = project.videoPossibleRedoCount+1;
+            videoPossibleUndoCount = project.videoPossibleUndoCount - 1;
+            videoPossibleRedoCount = project.videoPossibleRedoCount + 1;
             videoFolInPtr = ((project.videoFolInPtr - 2 + project.totalVideoFolderSet) % project.totalVideoFolderSet) + 1;
 
             curDisplayThumbnailFolType = VideoFolderSet;
@@ -292,6 +292,7 @@ const applyUndoAction = async (id) => {
         curDisplayThumbnailFolPtr,
         refreshThumbnailFlag
     }, { new: true });
+    logger.changePointer(id, 'Undo', 'pointerDetails');
     return {
         statusCode: 200,
         status: 'Success',
@@ -323,13 +324,13 @@ const applyRedoAction = async (id) => {
     let curProcessingPreviewDestinationFolType = project.curProcessingPreviewDestinationFolType
     let curProcessingPreviewDestinationFolPtr = project.curProcessingPreviewDestinationFolPtr
     let refreshThumbnailFlag = project.refreshThumbnailFlag;
-    let videoFolInPtr=project.videoFolInPtr
+    let videoFolInPtr = project.videoFolInPtr
 
 
 
     if (project.imagePossibleRedoCount > 0) {
         if (project.handoverPossibleImageToVideoFlag && (project.imagePossibleUndoCount == 0)) {
-            imagePossibleRedoCount = project.imagePossibleRedoCount-1;
+            imagePossibleRedoCount = project.imagePossibleRedoCount - 1;
             curDisplayPreviewFolType = ImageFolderSet;
             curDisplayPreviewFolPtr = imageFolInPtr;
 
@@ -340,9 +341,9 @@ const applyRedoAction = async (id) => {
             curProcessingPreviewDestinationFolPtr = 1;
             refreshThumbnailFlag = false;
         } else {
-            imagePossibleRedoCount = project.imagePossibleRedoCount-1;
-            imagePossibleUndoCount = project.imagePossibleUndoCount+1;
-            imageFolInPtr = (imageFolInPtr % project.totalImageFolderSet ) + 1
+            imagePossibleRedoCount = project.imagePossibleRedoCount - 1;
+            imagePossibleUndoCount = project.imagePossibleUndoCount + 1;
+            imageFolInPtr = (imageFolInPtr % project.totalImageFolderSet) + 1
 
             curDisplayPreviewFolType = ImageFolderSet;
             curDisplayPreviewFolPtr = imageFolInPtr;
@@ -355,9 +356,9 @@ const applyRedoAction = async (id) => {
             refreshThumbnailFlag = false;
         }
     } else if (project.handoverPossibleImageToVideoFlag && (project.videoPossibleRedoCount > 0)) {
-        videoPossibleRedoCount = project.videoPossibleRedoCount-1;
-        videoPossibleUndoCount = project.videoPossibleUndoCount+1;
-        videoFolInPtr = (videoFolInPtr % project.totalVideoFolderSet ) + 1
+        videoPossibleRedoCount = project.videoPossibleRedoCount - 1;
+        videoPossibleUndoCount = project.videoPossibleUndoCount + 1;
+        videoFolInPtr = (videoFolInPtr % project.totalVideoFolderSet) + 1
 
         curDisplayThumbnailFolType = VideoFolderSet;
         curDisplayThumbnailFolPtr = videoFolInPtr;
@@ -373,7 +374,7 @@ const applyRedoAction = async (id) => {
 
         refreshThumbnailFlag = true;
     }
-    const projectDetails=await Project.findByIdAndUpdate(id, {
+    const projectDetails = await Project.findByIdAndUpdate(id, {
         imagePossibleUndoCount,
         imagePossibleRedoCount,
         videoPossibleUndoCount,
@@ -390,6 +391,7 @@ const applyRedoAction = async (id) => {
         curProcessingPreviewDestinationFolPtr,
         refreshThumbnailFlag
     }, { new: true });
+    logger.changePointer(id, 'Redo', 'pointerDetails');
     return {
         statusCode: 200,
         status: 'Success',
@@ -441,7 +443,7 @@ const selectThumbnailFrame = async (req, id, frameId) => {
         handoverPossibleImageToVideoFlag,
         refreshThumbnailFlag,
     }, { new: true });
-    logger.logCreate(`selectThumbnailFrame: Updated project details : ${projectUpdate}`, 'systemlog');   
+    logger.logCreate(`selectThumbnailFrame: Updated project details : ${projectUpdate}`, 'systemlog');
 
     return {
         statusCode: 200,
