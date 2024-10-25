@@ -15,6 +15,9 @@ const projectsSchema = new mongoose.Schema({
     currentFrameId: {
         type: String,
     },
+    currentPreviewFrameId: {
+        type: String,
+    },
     userId: {
         type: String,
         required: true,

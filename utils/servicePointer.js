@@ -178,6 +178,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             const newFileName = timestamp + 'new_frame_name.png'; // Replace this with the new file name
             const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
             frameName = newFileName
+            project = await Project.findByIdAndUpdate(id, {'currentPreviewFrameId':frameName}, { new: true });
             // Rename the file
             console.log("111111111111111111111111", oldFilePath);
             console.log("22222222222222222222222", newFilePath);
