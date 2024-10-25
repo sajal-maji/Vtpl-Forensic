@@ -26,6 +26,7 @@ async function updateJobDetails(jobId) {
     if (!jobProjectDetails) {
         return;
     }
+    let id = jobProjectDetails.projectId;
     const proArr = {
         currentFrameId: jobProjectDetails.currentFrameId,
         imageFolInPtr: jobProjectDetails.imageFolInPtr,
@@ -54,7 +55,7 @@ async function updateJobDetails(jobId) {
 
     }
 
-    await Project.findByIdAndUpdate(jobProjectDetails.projectId, proArr, { new: true });
+    await Project.findByIdAndUpdate(id, proArr, { new: true });
 };
 
 
@@ -63,7 +64,8 @@ async function updateProjectDetails(jobId) {
     if (!jobProjectDetails) {
         return;
     }
-    const projectDetails = await Project.findById(jobProjectDetails.projectId);
+    let id = jobProjectDetails.projectId;
+    const projectDetails = await Project.findById(id);
 
     if (!projectDetails) {
         return;
