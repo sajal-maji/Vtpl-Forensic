@@ -1,6 +1,7 @@
 const User = require('../model/user.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const logger = require("../helpers/logEvents");
 
 const jwtSecret = process.env.JWT_SECRET;
 const jwtExpiryMin = process.env.JWT_EXPIRY_MIN;
@@ -8,6 +9,7 @@ const fs = require('fs');
 
 const createUser = async (name, email, password, userName) => {
     if (!userName, !password) {
+        logger.logCreate(`createUser: Provided parameter values are invalid.`, 'systemlog');
         return {
             statusCode: 400,
             status: 'Bad Request',
@@ -16,6 +18,7 @@ const createUser = async (name, email, password, userName) => {
     }
     const existUser = await User.findOne({ userName });
     if (existUser) {
+        logger.logCreate(`createUser: User already exists with username - ${userName}.`, 'systemlog');
         return {
             statusCode: 400,
             status: 'Bad Request',
@@ -55,6 +58,7 @@ const createUser = async (name, email, password, userName) => {
             expiresIn: `${jwtExpiryMin} min`
         }
     );
+    logger.logCreate(`createUser: User created successfully.`, 'systemlog');
     return {
         statusCode: 201,
         status: 'Created',
