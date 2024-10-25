@@ -11,7 +11,7 @@ const logger = require("../helpers/logEvents");
 
 const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
     try {
-
+        logger.logCreate(`managePointer: with req ${req}`, 'systemlog');
         const project = await Project.findById(id);
         if (!project) {
             return ({
@@ -26,18 +26,18 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
         const defaultImg = (frame) ? frame[0] : project.currentFrameId;
 
         if (isPreview) {
-            const preViewData = await preview(project, id, req, defaultImg)
+            const preViewData = await preview(project, id, req, defaultImg);
+            logger.logCreate(`managePointer: with priview data ${preViewData}`, 'systemlog');
             return preViewData;
         }
 
         if (isApplyToAll) {
-
-            const applyToAllData = await applyToAll(project, defaultImg)
+            const applyToAllData = await applyToAll(project, defaultImg);
+            logger.logCreate(`managePointer: with apply to all data ${applyToAllData}`, 'systemlog');
             return applyToAllData
-
         } else {
-
-            const applyToFrameData = await applyToFrame(project, defaultImg)
+            const applyToFrameData = await applyToFrame(project, defaultImg);
+            logger.logCreate(`managePointer: with apply to frame data ${applyToFrameData}`, 'systemlog');
             return applyToFrameData
         }
     } catch (error) {
