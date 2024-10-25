@@ -146,6 +146,8 @@ const projectDetails = async (req, id) => {
     } else if (projectDetails.imagePossibleRedoCount > 0) {
         isRedoPossible = true;
     }
+    logger.logCreate(`project details: ${JSON.stringify(projectDetails)}`, 'systemlog');
+
     return {
         statusCode: 200,
         status: 'Success',
