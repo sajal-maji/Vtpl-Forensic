@@ -5,6 +5,7 @@ const Project = require('../model/projects.model');
 const path = require('path');
 const fsExtra = require('fs-extra');
 const fs = require('fs');
+const logger = require("../helpers/logEvents");
 
 const { managePointer, folderPath, savePointer, cloneImage, checkFile } = require('../utils/servicePointer');
 
@@ -174,11 +175,24 @@ const colorswitchConversion = async (req, res, next) => {
 
 const colorConversion = async (req, res, next) => {
     try {
-        console.log('call--1')
+        logger.logCreate(`colorConversion: ${req.body}`, 'systemlog');
         const { projectId: id, isApplyToAll, frame, isPreview, subProcessBlack, subProcessWhite, subProcessMid } = req.body;
 
-        const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
+        const project = await Project.findById(id);
+        if (!project) {
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Data not found'
+            };
+        }
+        if (project.currentFrameId != frame[0]) {
+            logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
+            const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
+        }
         const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
+
+        logger.logCreate(`managePointer: response ${proDetails}`, 'systemlog');
 
         if (proDetails.statusCode != 200) {
             return res.status(404).json({
@@ -188,14 +202,8 @@ const colorConversion = async (req, res, next) => {
             });
         }
 
-
-        console.log('call-0', proDetails)
-
-        
-
-        console.log('call-1', selectThumbnailFrame)
-
         const { errStatus, message } = await checkFile(id, isApplyToAll, isPreview, proDetails, req, res);
+        logger.logCreate(`checkFile: response status - ${errStatus} and response message - ${message}`, 'systemlog');
 
         if (errStatus) {
             return res.status(404).json({
@@ -205,16 +213,8 @@ const colorConversion = async (req, res, next) => {
             });
         }
 
-
         const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
-
-
-        // return res.status(404).json({
-        //     statusCode: 404,
-        //     status: 'Failed',
-        //     imgBasePathFrom,
-        //     imgBasePathTo
-        // });
+        logger.logCreate(`folderPath: imgBasePathFrom - ${imgBasePathFrom}, imgBasePathTo - ${imgBasePathTo}`, 'systemlog');
 
         const request = {
             in_img_path: imgBasePathFrom,  // Input image path
@@ -225,10 +225,9 @@ const colorConversion = async (req, res, next) => {
             sub_process_white: subProcessWhite,
             sub_process_mid: subProcessMid       // Output image path
         };
-
-        console.log('call-2', request)
-
         // Make the gRPC request to the grayscale method (modify according to your method name)
+        logger.logCreate(`grpc: request - ${request}`, 'systemlog');
+
         channelServiceClient.ColorConversionFilter(request, async (error, response) => {
             try {
                 if (error) {
@@ -240,7 +239,9 @@ const colorConversion = async (req, res, next) => {
                 }
 
                 const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
-                console.log('colData', colData)
+                logger.logCreate(`grpc: response - ${response}`, 'systemlog');
+                logger.logCreate(`savePointer: response - ${colData}`, 'systemlog');
+
                 return res.status(200).json({
                     message: 'Processing successfully Done',
                     data: colData,
@@ -320,7 +321,7 @@ const extractSingleChannel = async (req, res, next) => {
     }
 };
 
-module.exports ={
+module.exports = {
     grayscaleRoute,
     grayscaleConversion,
     colorswitchConversion,

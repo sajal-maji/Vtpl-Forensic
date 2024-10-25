@@ -9,6 +9,7 @@ const { errorLogger } = require("../config/log.config");
 const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
 const TempFolder = 'temp'
+const logger = require("../helpers/logEvents");
 
 const createProject = async (req, catId, projectName) => {
     let casefolder = await Casefolder.findById(catId);
@@ -396,7 +397,6 @@ const applyRedoAction = async (id) => {
 };
 
 const selectThumbnailFrame = async (req, id, frameId) => {
-   console.log('1111111111111111111111')
     const project = await Project.findById(id);
     const rootPath = `${req.user.id}/${id}`;
     if (!project) {
@@ -406,7 +406,6 @@ const selectThumbnailFrame = async (req, id, frameId) => {
             message: 'Data not found'
         };
     }
-    console.log('22222222222222')
     let currentFrameId = frameId;
     let imagePossibleUndoCount = 0;
     let videoPossibleRedoCount = 0;
@@ -440,8 +439,7 @@ const selectThumbnailFrame = async (req, id, frameId) => {
         handoverPossibleImageToVideoFlag,
         refreshThumbnailFlag,
     }, { new: true });
-
-    console.log('selectThumb',projectUpdate)
+    logger.logCreate(`selectThumbnailFrame: Updated project details : ${projectUpdate}`, 'systemlog');   
 
     return {
         statusCode: 200,
