@@ -152,7 +152,7 @@ const projectDetails = async (req, id) => {
         data: {
             'folderId': projectDetails.catId,
             'projectId': projectDetails.id,
-            'curFrameId': projectDetails.currentFrameId,
+            'curFrameId': (projectDetails.curDisplayPreviewFolType == 'temp')?projectDetails.currentPreviewFrameId:projectDetails.currentFrameId,
             'isUndoPossible': isUndoPossible,
             'isRedoPossible': isRedoPossible,
             'isRedoPossible': isRedoPossible,
