@@ -7,7 +7,7 @@ const getJobStatus = async (req, res, next) => {
             return res.status(400).json({ error: 'Job ID is required' });
         }
         const response = await jobService.getStatus(job_id);
-        console.log(response)
+        // console.log(response)
         res.status(201).json(response);
     } catch (error) {
         next(error);

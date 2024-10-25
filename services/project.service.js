@@ -208,6 +208,9 @@ const applyUndoAction = async (id) => {
     let curDisplayThumbnailFolPtr = project.curDisplayThumbnailFolPtr
     let refreshThumbnailFlag = project.refreshThumbnailFlag;
 
+    let curProcessingDestinationFolType = project.curProcessingDestinationFolType
+    let curProcessingDestinationFolPtr = project.curProcessingDestinationFolPtr;
+
     if (project.imagePossibleUndoCount > 1) {
         imagePossibleUndoCount = project.imagePossibleUndoCount-1;
         imagePossibleRedoCount = project.imagePossibleRedoCount+1;
@@ -218,6 +221,9 @@ const applyUndoAction = async (id) => {
 
         curProcessingPreviewSourceFolType = ImageFolderSet;
         curProcessingPreviewSourceFolPtr = imageFolInPtr;
+
+        curProcessingDestinationFolType = ImageFolderSet
+	    curProcessingDestinationFolPtr = imageFolInPtr
 
         curProcessingPreviewDestinationFolType = TempFolder;
         curProcessingPreviewDestinationFolPtr = 1;
@@ -232,6 +238,9 @@ const applyUndoAction = async (id) => {
             curDisplayPreviewFolType = VideoFolderSet;
             curDisplayPreviewFolPtr = videoFolInPtr;
 
+            curProcessingDestinationFolType = VideoFolderSet
+	        curProcessingDestinationFolPtr = videoFolInPtr
+
             curProcessingPreviewSourceFolType = VideoFolderSet;
             curProcessingPreviewSourceFolPtr = videoFolInPtr;
 
@@ -245,6 +254,9 @@ const applyUndoAction = async (id) => {
 
             curDisplayPreviewFolType = ImageFolderSet;
             curDisplayPreviewFolPtr = imageFolInPtr;
+
+            curProcessingDestinationFolType = ImageFolderSet
+	        curProcessingDestinationFolPtr = imageFolInPtr
 
             curProcessingPreviewSourceFolType = ImageFolderSet;
             curProcessingPreviewSourceFolPtr = imageFolInPtr;
@@ -263,6 +275,9 @@ const applyUndoAction = async (id) => {
 
             curDisplayPreviewFolType = VideoFolderSet;
             curDisplayPreviewFolPtr = videoFolInPtr;
+
+            curProcessingDestinationFolType = VideoFolderSet
+	        curProcessingDestinationFolPtr = videoFolInPtr
 
             curProcessingPreviewSourceFolType = VideoFolderSet;
             curProcessingPreviewSourceFolPtr = videoFolInPtr;
@@ -287,7 +302,9 @@ const applyUndoAction = async (id) => {
         curProcessingPreviewDestinationFolPtr,
         curDisplayThumbnailFolType,
         curDisplayThumbnailFolPtr,
-        refreshThumbnailFlag
+        refreshThumbnailFlag,
+        curProcessingDestinationFolType,
+        curProcessingDestinationFolPtr
     }, { new: true });
     return {
         statusCode: 200,
@@ -396,6 +413,7 @@ const applyRedoAction = async (id) => {
 };
 
 const selectThumbnailFrame = async (req, id, frameId) => {
+   
     const project = await Project.findById(id);
     const rootPath = `${req.user.id}/${id}`;
     if (!project) {
@@ -405,16 +423,17 @@ const selectThumbnailFrame = async (req, id, frameId) => {
             message: 'Data not found'
         };
     }
+    
     let currentFrameId = frameId;
     let imagePossibleUndoCount = 0;
     let videoPossibleRedoCount = 0;
     let imagePossibleRedoCount = 0;
     let curDisplayThumbnailFolType = VideoFolderSet;
-    let curDisplayThumbnailFolPtr = videoFolInPtr;
+    let curDisplayThumbnailFolPtr = project.videoFolInPtr;
     let curDisplayPreviewFolType = VideoFolderSet;
-    let curDisplayPreviewFolPtr = videoFolInPtr;
+    let curDisplayPreviewFolPtr = project.videoFolInPtr;
     let curProcessingPreviewSourceFolType = VideoFolderSet;
-    let curProcessingPreviewSourceFolPtr = videoFolInPtr;
+    let curProcessingPreviewSourceFolPtr = project.videoFolInPtr;
     let curProcessingPreviewDestinationFolType = TempFolder;
     let curProcessingPreviewDestinationFolPtr = 1;
     let operatePossibleOnVideoFlag = true;

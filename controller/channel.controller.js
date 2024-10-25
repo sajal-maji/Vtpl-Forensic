@@ -174,6 +174,7 @@ exports.colorswitchConversion = async (req, res, next) => {
 
 exports.colorConversion = async (req, res, next) => {
     try {
+        console.log('call--1')
         const { projectId: id, isApplyToAll,frame,isPreview,subProcessBlack,subProcessWhite,subProcessMid } = req.body;
         const {proDetails} = await managePointer(id,isApplyToAll,isPreview,frame,req,res);
        
@@ -185,7 +186,12 @@ exports.colorConversion = async (req, res, next) => {
                 });
             }
 
+            
+            console.log('call-0',proDetails)
+
             const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
+
+            console.log('call-1',selectThumbnailFrame)
 
             const {errStatus,message} = await checkFile(id,isApplyToAll,isPreview,proDetails,req,res);
        
@@ -199,6 +205,15 @@ exports.colorConversion = async (req, res, next) => {
         
 
         const {imgBasePathFrom,imgBasePathTo} = await folderPath(id,isApplyToAll,isPreview,proDetails,req,res);
+
+        
+        // return res.status(404).json({
+        //     statusCode: 404,
+        //     status: 'Failed',
+        //     imgBasePathFrom,
+        //     imgBasePathTo
+        // });
+
         const request = {
             in_img_path: imgBasePathFrom,  // Input image path
             process_all_flag: isApplyToAll,   // Process all flag
@@ -209,6 +224,7 @@ exports.colorConversion = async (req, res, next) => {
             sub_process_mid:subProcessMid       // Output image path
         };
         
+        console.log('call-2',request)
 
         // Make the gRPC request to the grayscale method (modify according to your method name)
         channelServiceClient.ColorConversionFilter(request, async (error, response) => {
@@ -222,6 +238,7 @@ exports.colorConversion = async (req, res, next) => {
                 }
 
                 const {colData} = await savePointer(id,isApplyToAll,isPreview,frame,req,res,proDetails,response);
+                console.log('colData',colData)
                     return res.status(200).json({
                         message: 'Processing successfully Done',
                         data: colData,
