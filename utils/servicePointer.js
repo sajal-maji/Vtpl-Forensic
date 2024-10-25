@@ -7,274 +7,8 @@ const fs = require('fs');
 const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
 const TempFolder = 'temp'
+const logger = require("../helpers/logEvents");
 
-const preview = async (project, id, req, defaultImg) => {
-    const rootPath = `${req.user.id}/${id}`;
-    const imagePath = `public/${rootPath}/temp/`;
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    const curDisplayPreviewFolType = TempFolder
-    let curDisplayPreviewFolPtr = 1;
-    if (project.processingGoingOnVideoOrFrameFlag == true)
-        curDisplayPreviewFolPtr = 2
-    else
-        curDisplayPreviewFolPtr = 1
-
-    return ({
-        'proDetails': {
-            'statusCode': 200,
-            'curFrameId': defaultImg,
-            operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
-            handoverPossibleImageToVideoFlag: project.handoverPossibleImageToVideoFlag,
-
-            curProcessingSourceFolType: project.curProcessingSourceFolType,
-            curProcessingSourceFolPtr: project.curProcessingSourceFolPtr,
-            curProcessingDestinationFolType: project.curProcessingDestinationFolType,
-            curProcessingDestinationFolPtr: project.curProcessingDestinationFolPtr,
-
-            imagePossibleUndoCount: project.imagePossibleUndoCount,
-            videoPossibleUndoCount: project.videoPossibleUndoCount,
-            videoPossibleRedoCount: project.videoPossibleRedoCount,
-            imagePossibleRedoCount: project.imagePossibleRedoCount,
-
-            videoToFrameWarningPopUp: project.videoToFrameWarningPopUp,
-            processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
-            processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
-
-            imageFolInPtr: project.imageFolInPtr,
-            videoFolInPtr: project.videoFolInPtr,
-
-
-            curDisplayPreviewFolType,
-            curDisplayPreviewFolPtr,
-
-            curProcessingPreviewSourceFolType: project.curProcessingPreviewSourceFolType,
-            curProcessingPreviewSourceFolPtr: project.curProcessingPreviewSourceFolPtr,
-            curProcessingPreviewDestinationFolType: project.curProcessingPreviewDestinationFolType,
-            curProcessingPreviewDestinationFolPtr: project.curProcessingPreviewDestinationFolPtr,
-
-        }
-    }
-    )
-}
-const applyToAll = async (project, defaultImg) => {
-    if (project.operatePossibleOnVideoFlag) {
-
-        const srcVideoFolInPtr = project.videoFolInPtr
-        videoFolInPtr = (project.videoFolInPtr % project.totalVideoFolderSet) + 1
-        imageFolInPtr = 1
-
-        videoPossibleUndoCount = Math.min((project.videoPossibleUndoCount + 1), project.undoVideoLimit)
-        imagePossibleUndoCount = 0
-        videoPossibleRedoCount = 0
-        imagePossibleRedoCount = 0
-
-        handoverPossibleImageToVideoFlag = true
-        operatePossibleOnVideoFlag = project.operatePossibleOnVideoFlag
-
-        curProcessingSourceFolType = VideoFolderSet
-        curProcessingSourceFolPtr = srcVideoFolInPtr
-        curProcessingDestinationFolType = VideoFolderSet
-        curProcessingDestinationFolPtr = videoFolInPtr
-
-        processingGoingOnVideoOrFrameFlag = true
-        processingGoingOnVideoNotFrame = true
-        videoToFrameWarningPopUp = false
-
-        curDisplayPreviewFolType = TempFolder
-        curDisplayPreviewFolPtr = 1
-
-        curProcessingPreviewSourceFolType = TempFolder
-        curProcessingPreviewSourceFolPtr = 1
-        curProcessingPreviewDestinationFolType = TempFolder
-        curProcessingPreviewDestinationFolPtr = 2
-
-
-
-        return ({
-            'proDetails': {
-                'statusCode': 200,
-                'curFrameId': defaultImg,
-
-                imageFolInPtr,
-                videoFolInPtr,
-
-                imagePossibleUndoCount,
-                imagePossibleRedoCount,
-                videoPossibleUndoCount,
-                videoPossibleRedoCount,
-
-                operatePossibleOnVideoFlag,
-                handoverPossibleImageToVideoFlag,
-
-                curProcessingSourceFolType,
-                curProcessingSourceFolPtr,
-                curProcessingDestinationFolType,
-                curProcessingDestinationFolPtr,
-
-
-                videoToFrameWarningPopUp,
-                processingGoingOnVideoOrFrameFlag,
-                processingGoingOnVideoNotFrame,
-
-                curDisplayPreviewFolType,
-                curDisplayPreviewFolPtr,
-
-                curProcessingPreviewSourceFolType,
-                curProcessingPreviewSourceFolPtr,
-                curProcessingPreviewDestinationFolType,
-                curProcessingPreviewDestinationFolPtr,
-            }
-        }
-        )
-
-    } else {
-        return ({
-            'proDetails': {
-                statusCode: 400,
-                status: 'Failed',
-                message: "Sorry You can't use apply toall.",
-            }
-        })
-    }
-}
-
-const applyToFrame = async (project, defaultImg) => {
-    videoPossibleRedoCount = 0
-    imagePossibleRedoCount = 0
-
-    processingGoingOnVideoOrFrameFlag = true
-    processingGoingOnVideoNotFrame = false
-    refreshThumbnailFlag = false
-
-    curDisplayPreviewFolType = TempFolder
-    curDisplayPreviewFolPtr = 1
-
-    curProcessingPreviewSourceFolType = TempFolder
-    curProcessingPreviewSourceFolPtr = 1
-    curProcessingPreviewDestinationFolType = TempFolder
-    curProcessingPreviewDestinationFolPtr = 2
-
-
-
-
-    if (project.operatePossibleOnVideoFlag) {
-        imageFolInPtr = 1
-        imagePossibleUndoCount = 1
-        operatePossibleOnVideoFlag = false
-
-        curProcessingSourceFolType = VideoFolderSet
-        curProcessingSourceFolPtr = project.videoFolInPtr
-        curProcessingDestinationFolType = ImageFolderSet
-        curProcessingDestinationFolPtr = imageFolInPtr
-
-        videoToFrameWarningPopUp = true
-
-        handoverPossibleImageToVideoFlag = project.handoverPossibleImageToVideoFlag
-        videoPossibleUndoCount = project.videoPossibleUndoCount
-
-        console.log('call-if')
-
-
-        return ({
-            'proDetails': {
-                'statusCode': 200,
-                'curFrameId': defaultImg,
-
-                operatePossibleOnVideoFlag,
-                handoverPossibleImageToVideoFlag,
-
-                curProcessingSourceFolType,
-                curProcessingSourceFolPtr,
-                curProcessingDestinationFolType,
-                curProcessingDestinationFolPtr,
-
-                videoPossibleUndoCount,
-                videoPossibleRedoCount,
-                imagePossibleUndoCount,
-                imagePossibleRedoCount,
-
-                videoToFrameWarningPopUp,
-
-                processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
-                processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
-
-                imageFolInPtr,
-                videoFolInPtr: project.videoFolInPtr,
-
-                curDisplayPreviewFolType,
-                curDisplayPreviewFolPtr,
-
-                curProcessingPreviewSourceFolType,
-                curProcessingPreviewSourceFolPtr,
-                curProcessingPreviewDestinationFolType,
-                curProcessingPreviewDestinationFolPtr,
-
-            }
-        }
-        )
-    } else {
-
-        console.log('cal-elae')
-
-        const srcImageFolInPtr = project.imageFolInPtr
-        imageFolInPtr = (project.imageFolInPtr % project.totalImageFolderSet) + 1
-        imagePossibleUndoCount = Math.min((project.imagePossibleUndoCount + 1), project.undoImageLimit)
-        if (imagePossibleUndoCount == project.undoImageLimit)
-            handoverPossibleImageToVideoFlag = false
-
-        curProcessingSourceFolType = ImageFolderSet
-        curProcessingSourceFolPtr = srcImageFolInPtr
-        curProcessingDestinationFolType = ImageFolderSet
-        curProcessingDestinationFolPtr = imageFolInPtr
-
-        videoToFrameWarningPopUp = false
-
-        videoPossibleUndoCount = project.videoPossibleUndoCount
-
-
-
-        return ({
-            'proDetails': {
-                'statusCode': 200,
-                'curFrameId': defaultImg,
-
-                handoverPossibleImageToVideoFlag,
-                operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
-
-                curProcessingSourceFolType,
-                curProcessingSourceFolPtr,
-                curProcessingDestinationFolType,
-                curProcessingDestinationFolPtr,
-
-                videoPossibleUndoCount,
-                videoPossibleRedoCount,
-                imagePossibleUndoCount,
-                imagePossibleRedoCount,
-
-                videoToFrameWarningPopUp,
-                processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
-                processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
-
-                imageFolInPtr,
-                videoFolInPtr: project.videoFolInPtr,
-
-
-
-                curDisplayPreviewFolType,
-                curDisplayPreviewFolPtr,
-
-                curProcessingPreviewSourceFolType: project.curProcessingPreviewSourceFolType,
-                curProcessingPreviewSourceFolPtr: project.curProcessingPreviewSourceFolPtr,
-                curProcessingPreviewDestinationFolType: project.curProcessingPreviewDestinationFolType,
-                curProcessingPreviewDestinationFolPtr: project.curProcessingPreviewDestinationFolPtr,
-
-
-            }
-        }
-        )
-
-    }
-}
 const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
     try {
 
@@ -394,6 +128,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
 
         }
+        logger.logCreate(`savePointer: product array - ${proArr}`, 'systemlog');
 
         let project = ''
         if (isPreview) {
@@ -621,6 +356,255 @@ const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
 
     } catch (error) {
         return error.message;
+    }
+};
+
+const preview = async (project, id, req, defaultImg) => {
+    const rootPath = `${req.user.id}/${id}`;
+    const imagePath = `public/${rootPath}/temp/`;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const curDisplayPreviewFolType = TempFolder
+    let curDisplayPreviewFolPtr = 1;
+    if (project.processingGoingOnVideoOrFrameFlag == true) {
+        curDisplayPreviewFolPtr = 2
+    } else {
+        curDisplayPreviewFolPtr = 1
+    }
+
+    return ({
+        'proDetails': {
+            'statusCode': 200,
+            'curFrameId': defaultImg,
+            operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
+            handoverPossibleImageToVideoFlag: project.handoverPossibleImageToVideoFlag,
+
+            curProcessingSourceFolType: project.curProcessingSourceFolType,
+            curProcessingSourceFolPtr: project.curProcessingSourceFolPtr,
+            curProcessingDestinationFolType: project.curProcessingDestinationFolType,
+            curProcessingDestinationFolPtr: project.curProcessingDestinationFolPtr,
+
+            imagePossibleUndoCount: project.imagePossibleUndoCount,
+            videoPossibleUndoCount: project.videoPossibleUndoCount,
+            videoPossibleRedoCount: project.videoPossibleRedoCount,
+            imagePossibleRedoCount: project.imagePossibleRedoCount,
+
+            videoToFrameWarningPopUp: project.videoToFrameWarningPopUp,
+            processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
+            processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
+
+            imageFolInPtr: project.imageFolInPtr,
+            videoFolInPtr: project.videoFolInPtr,
+
+
+            curDisplayPreviewFolType,
+            curDisplayPreviewFolPtr,
+
+            curProcessingPreviewSourceFolType: project.curProcessingPreviewSourceFolType,
+            curProcessingPreviewSourceFolPtr: project.curProcessingPreviewSourceFolPtr,
+            curProcessingPreviewDestinationFolType: project.curProcessingPreviewDestinationFolType,
+            curProcessingPreviewDestinationFolPtr: project.curProcessingPreviewDestinationFolPtr,
+        }
+    });
+};
+
+const applyToAll = async (project, defaultImg) => {
+    if (project.operatePossibleOnVideoFlag) {
+
+        const srcVideoFolInPtr = project.videoFolInPtr
+        videoFolInPtr = (project.videoFolInPtr % project.totalVideoFolderSet) + 1
+        imageFolInPtr = 1
+
+        videoPossibleUndoCount = Math.min((project.videoPossibleUndoCount + 1), project.undoVideoLimit)
+        imagePossibleUndoCount = 0
+        videoPossibleRedoCount = 0
+        imagePossibleRedoCount = 0
+
+        handoverPossibleImageToVideoFlag = true
+        operatePossibleOnVideoFlag = project.operatePossibleOnVideoFlag
+
+        curProcessingSourceFolType = VideoFolderSet
+        curProcessingSourceFolPtr = srcVideoFolInPtr
+        curProcessingDestinationFolType = VideoFolderSet
+        curProcessingDestinationFolPtr = videoFolInPtr
+
+        processingGoingOnVideoOrFrameFlag = true
+        processingGoingOnVideoNotFrame = true
+        videoToFrameWarningPopUp = false
+
+        curDisplayPreviewFolType = TempFolder
+        curDisplayPreviewFolPtr = 1
+
+        curProcessingPreviewSourceFolType = TempFolder
+        curProcessingPreviewSourceFolPtr = 1
+        curProcessingPreviewDestinationFolType = TempFolder
+        curProcessingPreviewDestinationFolPtr = 2
+
+
+
+        return ({
+            'proDetails': {
+                'statusCode': 200,
+                'curFrameId': defaultImg,
+
+                imageFolInPtr,
+                videoFolInPtr,
+
+                imagePossibleUndoCount,
+                imagePossibleRedoCount,
+                videoPossibleUndoCount,
+                videoPossibleRedoCount,
+
+                operatePossibleOnVideoFlag,
+                handoverPossibleImageToVideoFlag,
+
+                curProcessingSourceFolType,
+                curProcessingSourceFolPtr,
+                curProcessingDestinationFolType,
+                curProcessingDestinationFolPtr,
+
+
+                videoToFrameWarningPopUp,
+                processingGoingOnVideoOrFrameFlag,
+                processingGoingOnVideoNotFrame,
+
+                curDisplayPreviewFolType,
+                curDisplayPreviewFolPtr,
+
+                curProcessingPreviewSourceFolType,
+                curProcessingPreviewSourceFolPtr,
+                curProcessingPreviewDestinationFolType,
+                curProcessingPreviewDestinationFolPtr,
+            }
+        });
+    } else {
+        return ({
+            'proDetails': {
+                statusCode: 400,
+                status: 'Failed',
+                message: "Sorry You can't use apply toall.",
+            }
+        });
+    }
+};
+
+const applyToFrame = async (project, defaultImg) => {
+    videoPossibleRedoCount = 0
+    imagePossibleRedoCount = 0
+
+    processingGoingOnVideoOrFrameFlag = true
+    processingGoingOnVideoNotFrame = false
+    refreshThumbnailFlag = false
+
+    curDisplayPreviewFolType = TempFolder
+    curDisplayPreviewFolPtr = 1
+
+    curProcessingPreviewSourceFolType = TempFolder
+    curProcessingPreviewSourceFolPtr = 1
+    curProcessingPreviewDestinationFolType = TempFolder
+    curProcessingPreviewDestinationFolPtr = 2
+
+    if (project.operatePossibleOnVideoFlag) {
+        imageFolInPtr = 1
+        imagePossibleUndoCount = 1
+        operatePossibleOnVideoFlag = false
+
+        curProcessingSourceFolType = VideoFolderSet
+        curProcessingSourceFolPtr = project.videoFolInPtr
+        curProcessingDestinationFolType = ImageFolderSet
+        curProcessingDestinationFolPtr = imageFolInPtr
+
+        videoToFrameWarningPopUp = true
+
+        handoverPossibleImageToVideoFlag = project.handoverPossibleImageToVideoFlag
+        videoPossibleUndoCount = project.videoPossibleUndoCount
+        return ({
+            'proDetails': {
+                'statusCode': 200,
+                'curFrameId': defaultImg,
+
+                operatePossibleOnVideoFlag,
+                handoverPossibleImageToVideoFlag,
+
+                curProcessingSourceFolType,
+                curProcessingSourceFolPtr,
+                curProcessingDestinationFolType,
+                curProcessingDestinationFolPtr,
+
+                videoPossibleUndoCount,
+                videoPossibleRedoCount,
+                imagePossibleUndoCount,
+                imagePossibleRedoCount,
+
+                videoToFrameWarningPopUp,
+
+                processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
+                processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
+
+                imageFolInPtr,
+                videoFolInPtr: project.videoFolInPtr,
+
+                curDisplayPreviewFolType,
+                curDisplayPreviewFolPtr,
+
+                curProcessingPreviewSourceFolType,
+                curProcessingPreviewSourceFolPtr,
+                curProcessingPreviewDestinationFolType,
+                curProcessingPreviewDestinationFolPtr,
+
+            }
+        })
+    } else {
+        const srcImageFolInPtr = project.imageFolInPtr
+        imageFolInPtr = (project.imageFolInPtr % project.totalImageFolderSet) + 1
+        imagePossibleUndoCount = Math.min((project.imagePossibleUndoCount + 1), project.undoImageLimit)
+        if (imagePossibleUndoCount == project.undoImageLimit)
+            handoverPossibleImageToVideoFlag = false
+
+        curProcessingSourceFolType = ImageFolderSet
+        curProcessingSourceFolPtr = srcImageFolInPtr
+        curProcessingDestinationFolType = ImageFolderSet
+        curProcessingDestinationFolPtr = imageFolInPtr
+
+        videoToFrameWarningPopUp = false
+        videoPossibleUndoCount = project.videoPossibleUndoCount
+
+        return ({
+            'proDetails': {
+                'statusCode': 200,
+                'curFrameId': defaultImg,
+
+                handoverPossibleImageToVideoFlag,
+                operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
+
+                curProcessingSourceFolType,
+                curProcessingSourceFolPtr,
+                curProcessingDestinationFolType,
+                curProcessingDestinationFolPtr,
+
+                videoPossibleUndoCount,
+                videoPossibleRedoCount,
+                imagePossibleUndoCount,
+                imagePossibleRedoCount,
+
+                videoToFrameWarningPopUp,
+                processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
+                processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
+
+                imageFolInPtr,
+                videoFolInPtr: project.videoFolInPtr,
+
+
+
+                curDisplayPreviewFolType,
+                curDisplayPreviewFolPtr,
+
+                curProcessingPreviewSourceFolType: project.curProcessingPreviewSourceFolType,
+                curProcessingPreviewSourceFolPtr: project.curProcessingPreviewSourceFolPtr,
+                curProcessingPreviewDestinationFolType: project.curProcessingPreviewDestinationFolType,
+                curProcessingPreviewDestinationFolPtr: project.curProcessingPreviewDestinationFolPtr,
+            }
+        })
+
     }
 };
 
