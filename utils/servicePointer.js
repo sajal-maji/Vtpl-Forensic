@@ -80,8 +80,8 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
         imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
 
         if (isPreview) {
-            imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/video/1`);
-            // imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
+            // imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/video/1`);
+            imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
             imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
         }
 
@@ -176,14 +176,12 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             const timestamp = Date.now();
             const oldFilePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`;
             const newFileName = timestamp + 'new_frame_name.png'; // Replace this with the new file name
+            // const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
             const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
             frameName = newFileName
             project = await Project.findByIdAndUpdate(id, {'currentPreviewFrameId':frameName}, { new: true });
             // Rename the file
-            console.log("111111111111111111111111", oldFilePath);
-            console.log("22222222222222222222222", newFilePath);
-
-
+            
             fs.rename(oldFilePath, newFilePath, (err) => {
                 if (err) {
                     console.log(`Error renaming file from ${oldFilePath} to ${newFilePath}:`, err);
