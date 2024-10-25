@@ -1,8 +1,10 @@
 const { channelServiceClient } = require('../grpcClient');
 const JobProject = require('../model/jobprojects.model');
 const Project = require('../model/projects.model');
+const path = require('path');
+const fs = require('fs');
 
-const getStatus = async (job_id) => {
+const getStatus = async (job_id, userId) => {
     const request = { job_id };
     return new Promise((resolve, reject) => {
         channelServiceClient.GetJobStatus(request, async (error, response) => {
@@ -10,11 +12,9 @@ const getStatus = async (job_id) => {
                 console.error("Error fetching job status:", error);
                 return reject({ error: 'Error fetching job status', details: error });
             }
-
-            // If there is any condition to check, you can add it here
             if (response && response.completed) {
                 await updateJobDetails(response.job_id);
-                await updateProjectDetails(response.job_id);
+                await updateProjectDetails(response.job_id, userId);
             }
             resolve(response);
         });
@@ -59,7 +59,7 @@ async function updateJobDetails(jobId) {
 };
 
 
-async function updateProjectDetails(jobId) {
+async function updateProjectDetails(jobId, userId) {
     const jobProjectDetails = await JobProject.findById(jobId);
     if (!jobProjectDetails) {
         return;
@@ -81,13 +81,13 @@ async function updateProjectDetails(jobId) {
     }
 
     if (projectDetails.curDisplayPreviewFolPtr === 2) {
-        // copyImage(projectDetails.currentFrameId, {
-        //     folderType: 'TempFolder',
-        //     folderPtr: 2
-        // }, {
-        //     folderType: 'TempFolder',
-        //     folderPtr: 1
-        // });
+        copyImage(projectDetails.currentFrameId, id, userId, {
+            folderType: 'TempFolder',
+            folderPtr: 2
+        }, {
+            folderType: 'TempFolder',
+            folderPtr: 1
+        });
 
         curDisplayPreviewFolType = 'TempFolder';
         curDisplayPreviewFolPtr = 1;
@@ -120,8 +120,19 @@ async function updateProjectDetails(jobId) {
     }, { new: true });
 };
 
-function copyImage(currentFrameId, source, destination) {
-    console.log(`Copying image ${currentFrameId} from ${source.folderType} (${source.folderPtr}) to ${destination.folderType} (${destination.folderPtr})`);
+function copyImage(currentFrameId, id, userId, source, destination) {
+    const rootPath = `${userId}/${id}`;
+    const sourcePath = `public/${rootPath}/${source.folderType}/${source.folderPtr}/${currentFrameId}`;
+    const destinationPath = `public/${rootPath}/${destination.folderType}/${destination.folderPtr}/${currentFrameId}`;
+
+    // Use fs.copyFile to copy the file
+    fs.copyFile(sourcePath, destinationPath, (err) => {
+        if (err) {
+            console.error(`Error copying image: ${err.message}`);
+        } else {
+            console.log(`Copied image ${currentFrameId} from ${source.folderType} (${source.folderPtr}) to ${destination.folderType} (${destination.folderPtr})`);
+        }
+    });
 }
 
 module.exports = {
