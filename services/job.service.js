@@ -22,7 +22,7 @@ const getStatus = async (job_id, userId) => {
 };
 
 async function updateJobDetails(jobId) {
-    const jobProjectDetails = await JobProject.findById(jobId);
+    const jobProjectDetails = await JobProject.findOne({jobId:jobId});
     if (!jobProjectDetails) {
         return;
     }
@@ -60,7 +60,7 @@ async function updateJobDetails(jobId) {
 
 
 async function updateProjectDetails(jobId, userId) {
-    const jobProjectDetails = await JobProject.findById(jobId);
+    const jobProjectDetails = await JobProject.findOne({jobId:jobId});
     if (!jobProjectDetails) {
         return;
     }

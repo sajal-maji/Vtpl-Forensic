@@ -176,6 +176,8 @@ const colorConversion = async (req, res, next) => {
     try {
         console.log('call--1')
         const { projectId: id, isApplyToAll, frame, isPreview, subProcessBlack, subProcessWhite, subProcessMid } = req.body;
+
+        const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
         const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
 
         if (proDetails.statusCode != 200) {
@@ -189,7 +191,7 @@ const colorConversion = async (req, res, next) => {
 
         console.log('call-0', proDetails)
 
-        const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
+        
 
         console.log('call-1', selectThumbnailFrame)
 
