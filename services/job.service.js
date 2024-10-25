@@ -13,8 +13,10 @@ const getStatus = async (job_id, userId) => {
                 return reject({ error: 'Error fetching job status', details: error });
             }
             if (response && response.completed) {
+                console.log('-------------Step------------1', response.job_id)
                 await updateJobDetails(response.job_id);
                 await updateProjectDetails(response.job_id, userId);
+                console.log('-------------Step End------------')
             }
             resolve(response);
         });
@@ -22,7 +24,7 @@ const getStatus = async (job_id, userId) => {
 };
 
 async function updateJobDetails(jobId) {
-    const jobProjectDetails = await JobProject.findOne({jobId:jobId});
+    const jobProjectDetails = await JobProject.findOne({ jobId: jobId.toString() });
     if (!jobProjectDetails) {
         return;
     }
@@ -60,16 +62,22 @@ async function updateJobDetails(jobId) {
 
 
 async function updateProjectDetails(jobId, userId) {
-    const jobProjectDetails = await JobProject.findOne({jobId:jobId});
+    console.log("1111111111111111111111111" +jobId);
+
+    const jobProjectDetails = await JobProject.findOne({ jobId: jobId });
+    console.log("222222222222222222222222222222"+jobProjectDetails);
+
     if (!jobProjectDetails) {
         return;
     }
+    console.log('-------------Step------------1.1')
     let id = jobProjectDetails.projectId;
     const projectDetails = await Project.findById(id);
 
     if (!projectDetails) {
         return;
     }
+    console.log('-------------Step------------1.2')
     let processingGoingOnVideoOrFrameFlag = false;
 
     let curDisplayThumbnailFolType = projectDetails.VideoFolderSet;
@@ -78,34 +86,38 @@ async function updateProjectDetails(jobId, userId) {
 
     if (projectDetails.processingGoingOnVideoNotFrame) {
         refreshThumbnailFlag = true;
+        console.log('-------------Step------------1.2.1')
     }
 
     if (projectDetails.curDisplayPreviewFolPtr === 2) {
         copyImage(projectDetails.currentFrameId, id, userId, {
-            folderType: 'TempFolder',
+            folderType: 'temp',
             folderPtr: 2
         }, {
-            folderType: 'TempFolder',
+            folderType: 'temp',
             folderPtr: 1
         });
-
-        curDisplayPreviewFolType = 'TempFolder';
+        console.log('-------------Step------------1.3')
+        curDisplayPreviewFolType = 'temp';
         curDisplayPreviewFolPtr = 1;
     } else {
+        console.log('-------------Step------------1.4')
         if (projectDetails.processingGoingOnVideoNotFrame === true) {
             curDisplayPreviewFolType = projectDetails.VideoFolderSet;
             curDisplayPreviewFolPtr = projectDetails.videoFolInPtr;
+            console.log('-------------Step------------1.4.1')
         } else {
             curDisplayPreviewFolType = projectDetails.ImageFolderSet;
             curDisplayPreviewFolPtr = projectDetails.imageFolInPtr;
+            console.log('-------------Step------------1.4.2')
         }
     }
 
     curProcessingPreviewSourceFolType = projectDetails.curProcessingDestinationFolType;
     curProcessingPreviewSourceFolPtr = projectDetails.curProcessingDestinationFolPtr;
-    curProcessingPreviewDestinationFolType = 'TempFolder';
+    curProcessingPreviewDestinationFolType = 'temp';
     curProcessingPreviewDestinationFolPtr = 1;
-
+    console.log('-------------Step------------1.7')
     const projectUpdate = await Project.findByIdAndUpdate(id, {
         processingGoingOnVideoOrFrameFlag,
         curDisplayThumbnailFolType,

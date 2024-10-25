@@ -44,6 +44,20 @@ const grayscaleConversion = async (req, res, next) => {
     try {
 
         const { projectId: id, isApplyToAll, frame, isPreview } = req.body;
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Data not found'
+            };
+        }
+        if (project.currentFrameId != frame[0]) {
+            logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
+            const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
+        }
+        
         const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
 
 
@@ -113,6 +127,20 @@ const grayscaleConversion = async (req, res, next) => {
 const colorswitchConversion = async (req, res, next) => {
     try {
         const { projectId: id, isApplyToAll, frame, isPreview, subProcessNum } = req.body;
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Data not found'
+            };
+        }
+        if (project.currentFrameId != frame[0]) {
+            logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
+            const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
+        }
+
         const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
 
         if (proDetails.statusCode != 200) {

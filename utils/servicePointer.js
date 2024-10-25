@@ -132,15 +132,19 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
 
         let project = ''
         if (isPreview) {
+
             project = await Project.findByIdAndUpdate(id, proArr, { new: true });
             console.log('prev', project)
         } else {
+            
             const jobArr = { jobId: response.job_id, projectId: id };
             const mergedArr = Object.assign({}, proArr, jobArr);
             await Project.findByIdAndUpdate(id, proArr, { new: true });
             project = new JobProject(mergedArr);
-            console.log('notpre', project)
+            await project.save();
+
         }
+
 
 
 
@@ -494,7 +498,7 @@ const applyToFrame = async (project, defaultImg) => {
     processingGoingOnVideoNotFrame = false
     refreshThumbnailFlag = false
 
-    curDisplayPreviewFolType = TempFolder
+    curDisplayPreviewFolType = ImageFolderSet
     curDisplayPreviewFolPtr = 1
 
     curProcessingPreviewSourceFolType = TempFolder
