@@ -11,7 +11,7 @@ const logger = require("../helpers/logEvents");
 
 const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
     try {
-        logger.logCreate(`managePointer: with req ${req}`, 'systemlog');
+        logger.logCreate(`managePointer: with req ${JSON.stringify(req.body)}`, 'systemlog');
         const project = await Project.findById(id);
         if (!project) {
             return ({
@@ -27,17 +27,17 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
 
         if (isPreview) {
             const preViewData = await preview(project, id, req, defaultImg);
-            logger.logCreate(`managePointer: with priview data ${preViewData}`, 'systemlog');
+            logger.logCreate(`managePointer: with priview data ${JSON.stringify(preViewData)}`, 'systemlog');
             return preViewData;
         }
 
         if (isApplyToAll) {
             const applyToAllData = await applyToAll(project, defaultImg);
-            logger.logCreate(`managePointer: with apply to all data ${applyToAllData}`, 'systemlog');
+            logger.logCreate(`managePointer: with apply to all data ${JSON.stringify(applyToAllData)}`, 'systemlog');
             return applyToAllData
         } else {
             const applyToFrameData = await applyToFrame(project, defaultImg);
-            logger.logCreate(`managePointer: with apply to frame data ${applyToFrameData}`, 'systemlog');
+            logger.logCreate(`managePointer: with apply to frame data ${JSON.stringify(applyToFrameData)}`, 'systemlog');
             return applyToFrameData
         }
     } catch (error) {
@@ -128,7 +128,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
 
         }
-        logger.logCreate(`savePointer: product array - ${proArr}`, 'systemlog');
+        logger.logCreate(`savePointer: product array - ${JSON.stringify(proArr)}`, 'systemlog');
 
         let project = ''
         if (isPreview) {

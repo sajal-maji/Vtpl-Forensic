@@ -175,7 +175,7 @@ const colorswitchConversion = async (req, res, next) => {
 
 const colorConversion = async (req, res, next) => {
     try {
-        logger.logCreate(`colorConversion: ${req.body}`, 'systemlog');
+        logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
         const { projectId: id, isApplyToAll, frame, isPreview, subProcessBlack, subProcessWhite, subProcessMid } = req.body;
 
         const project = await Project.findById(id);
@@ -192,7 +192,7 @@ const colorConversion = async (req, res, next) => {
         }
         const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
 
-        logger.logCreate(`managePointer: response ${proDetails}`, 'systemlog');
+        logger.logCreate(`managePointer: response ${JSON.stringify(proDetails)}`, 'systemlog');
 
         if (proDetails.statusCode != 200) {
             return res.status(404).json({
@@ -226,7 +226,7 @@ const colorConversion = async (req, res, next) => {
             sub_process_mid: subProcessMid       // Output image path
         };
         // Make the gRPC request to the grayscale method (modify according to your method name)
-        logger.logCreate(`grpc: request - ${request}`, 'systemlog');
+        logger.logCreate(`grpc: request - ${JSON.stringify(request)}`, 'systemlog');
 
         channelServiceClient.ColorConversionFilter(request, async (error, response) => {
             try {
@@ -239,8 +239,8 @@ const colorConversion = async (req, res, next) => {
                 }
 
                 const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
-                logger.logCreate(`grpc: response - ${response}`, 'systemlog');
-                logger.logCreate(`savePointer: response - ${colData}`, 'systemlog');
+                logger.logCreate(`grpc: response - ${JSON.stringify(response)}`, 'systemlog');
+                logger.logCreate(`savePointer: response - ${JSON.stringify(colData)}`, 'systemlog');
 
                 return res.status(200).json({
                     message: 'Processing successfully Done',
