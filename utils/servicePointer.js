@@ -135,14 +135,18 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
 
             project = await Project.findByIdAndUpdate(id, proArr, { new: true });
             console.log('prev', project)
+            logger.changePointer(id, 'Preview', 'pointerDetails');
         } else {
-            
             const jobArr = { jobId: response.job_id, projectId: id };
             const mergedArr = Object.assign({}, proArr, jobArr);
             await Project.findByIdAndUpdate(id, proArr, { new: true });
             project = new JobProject(mergedArr);
             await project.save();
-
+            if (isApplyToAll) {
+                logger.changePointer(id, 'Apply to all', 'pointerDetails');
+            } else {
+                logger.changePointer(id, 'Apply to frame', 'pointerDetails');
+            }
         }
 
 
@@ -183,9 +187,9 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             // const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
             const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
             frameName = newFileName
-            project = await Project.findByIdAndUpdate(id, {'currentPreviewFrameId':frameName}, { new: true });
+            project = await Project.findByIdAndUpdate(id, { 'currentPreviewFrameId': frameName }, { new: true });
             // Rename the file
-            
+
             fs.rename(oldFilePath, newFilePath, (err) => {
                 if (err) {
                     console.log(`Error renaming file from ${oldFilePath} to ${newFilePath}:`, err);
