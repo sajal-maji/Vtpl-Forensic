@@ -21,7 +21,7 @@ const logCreate = async function (msg, logfile = 'systemlog.text') {
     });
 };
 
-const changePointer = async function (id, msg, logfile = 'systemlog.text') {
+const changePointer = async function (userId, id, msg, logfile = 'systemlog.text') {
     const projectDetails = await Project.findById(id);
     if (!projectDetails) {
         return {
@@ -55,7 +55,7 @@ const changePointer = async function (id, msg, logfile = 'systemlog.text') {
     const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based
     const day = String(currentDate.getDate()).padStart(2, '0');
 
-    const logFileName = `${logfile}_${year}-${month}-${day}.txt`;
+    const logFileName = `${logfile}_${userId}_${year}-${month}-${day}.txt`;
 
 
     let ccavnueResponceStream = fs.createWriteStream("public/logs/" + logFileName, { flags: "a" });
