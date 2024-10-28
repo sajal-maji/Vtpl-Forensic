@@ -47,7 +47,7 @@ const colorswitchConversion = async (req, res, next) => {
         const requestObj = {
             sub_process_num: subProcessNum     
         };
-        const response = await filterOperation(req,res,next, requestObj,'ColorSwitchFilter');
+        const response = await filterOperation(req,res,next, requestObj,channelServiceClient,'ColorSwitchFilter');
         res.status(201).json(response);
 
     } catch (error) {
@@ -59,7 +59,7 @@ const grayscaleConversion = async (req, res, next) => {
     try {
         const requestObj = {
         };
-        const response = await filterOperation(req,res,next, requestObj,'GrayscaleFilter');
+        const response = await filterOperation(req,res,next, requestObj,channelServiceClient,'GrayscaleFilter');
         res.status(201).json(response);
 
     } catch (error) {
@@ -75,7 +75,7 @@ const colorConversion = async (req, res, next) => {
             sub_process_white: subProcessWhite,
             sub_process_mid: subProcessMid       
         };
-        const response = await filterOperation(req,res,next, requestObj,'ColorConversionFilter');
+        const response = await filterOperation(req,res,next, requestObj,channelServiceClient,'ColorConversionFilter');
         res.status(201).json(response);
 
     } catch (error) {
@@ -175,7 +175,7 @@ const extractSingleChannel = async (req, res, next) => {
         const requestObj = {
             sub_process_num: subProcessNum     
         };
-        const response = await filterOperation(req,res,next, requestObj,'ExtractSingleChannelFilter');
+        const response = await filterOperation(req,res,next, requestObj,channelServiceClient,'ExtractSingleChannelFilter');
         res.status(201).json(response);
 
     } catch (error) {
@@ -189,7 +189,7 @@ const displaySelectedChannels = async (req, res, next) => {
          const requestObj = {
              sub_process_num: subProcessNum     
          };
-         const response = await filterOperation(req,res,next, requestObj,'DisplaySelectedChannelFilter');
+         const response = await filterOperation(req,res,next, requestObj,channelServiceClient,'DisplaySelectedChannelFilter');
          res.status(201).json(response);
  
      } catch (error) {
