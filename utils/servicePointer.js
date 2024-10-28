@@ -100,6 +100,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         // if(!isPreview){
 
         // if(isApplyToAll){
+        console.log("sssssssssssssssso"+proDetails.operatePossibleOnVideoFlag)
         const proArr = {
             'currentFrameId': frameName,
             imageFolInPtr: proDetails.imageFolInPtr,
@@ -127,6 +128,8 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
 
         }
+        logger.logCreate(`savepointer: response ${JSON.stringify(proArr)}`, 'systemlog');
+
         logger.changePointer(req.user.id, id, 'Before save pointer', 'pointerDetails');
 
         let project = ''
@@ -504,7 +507,9 @@ const applyToFrame = async (project, defaultImg) => {
     curProcessingPreviewDestinationFolType = TempFolder
     curProcessingPreviewDestinationFolPtr = 2
 
+    console.log('kkkkkkkkkkkkkkkkkkkkkkkkkkk'+project.operatePossibleOnVideoFlag)
     if (project.operatePossibleOnVideoFlag) {
+        console.log("-----------------1--------------------------------")
         imageFolInPtr = 1
         imagePossibleUndoCount = 1
         operatePossibleOnVideoFlag = false
@@ -555,11 +560,13 @@ const applyToFrame = async (project, defaultImg) => {
             }
         })
     } else {
+        console.log("-----------------2--------------------------------")
         const srcImageFolInPtr = project.imageFolInPtr
         imageFolInPtr = (project.imageFolInPtr % project.totalImageFolderSet) + 1
         imagePossibleUndoCount = Math.min((project.imagePossibleUndoCount + 1), project.undoImageLimit)
         if (imagePossibleUndoCount == project.undoImageLimit)
             handoverPossibleImageToVideoFlag = false
+        
 
         curProcessingSourceFolType = ImageFolderSet
         curProcessingSourceFolPtr = srcImageFolInPtr

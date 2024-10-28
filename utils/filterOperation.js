@@ -18,10 +18,10 @@ const filterOperation = async (req, res, next,requestObj,processName) => {
             message: 'Data not found'
         };
     }
-    // if (project.currentFrameId != frame[0]) {
+    if (project.currentFrameId != frame[0]) {
         logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
         const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
-    // }
+    }
     const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
 
     logger.logCreate(`managePointer: response ${JSON.stringify(proDetails)}`, 'systemlog');

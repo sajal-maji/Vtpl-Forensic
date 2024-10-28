@@ -58,7 +58,7 @@ const resetPointer = async (id, updateData) => {
             message: 'Data not found'
         };
     }
-    const project = await Project.findByIdAndUpdate(id,updateData, { new: true });
+    const project = await Project.findByIdAndUpdate(id, updateData, { new: true });
 
     return {
         statusCode: 200,
@@ -242,10 +242,14 @@ const applyUndoAction = async (id, userId) => {
 
         curProcessingPreviewDestinationFolType = TempFolder;
         curProcessingPreviewDestinationFolPtr = 1;
+
+        refreshThumbnailFlag = false;
+
     } else if (project.imagePossibleUndoCount == 1) {
         if (project.handoverPossibleImageToVideoFlag) {
+            imagePossibleUndoCount = 0
             videoFolInPtr = ((project.videoFolInPtr - 2 + project.totalVideoFolderSet) % project.totalVideoFolderSet) + 1;
-            imagePossibleRedoCount = project.imagePossibleRedoCount++;
+            imagePossibleRedoCount = project.imagePossibleRedoCount + 1;
 
             curDisplayThumbnailFolType = VideoFolderSet;
             curDisplayThumbnailFolPtr = videoFolInPtr;
@@ -258,6 +262,8 @@ const applyUndoAction = async (id, userId) => {
 
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
+
+            refreshThumbnailFlag = false
         } else {
             imagePossibleUndoCount = project.imagePossibleUndoCount - 1;
             imagePossibleRedoCount = project.imagePossibleRedoCount + 1;
@@ -272,6 +278,7 @@ const applyUndoAction = async (id, userId) => {
 
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
+            refreshThumbnailFlag = false
         }
     } else {
         if ((project.handoverPossibleImageToVideoFlag) && (project.videoPossibleUndoCount > 0)) {
@@ -290,6 +297,8 @@ const applyUndoAction = async (id, userId) => {
 
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
+
+            refreshThumbnailFlag = true
         }
     }
 
@@ -346,51 +355,53 @@ const applyRedoAction = async (id, userId) => {
 
 
 
-    if (project.imagePossibleRedoCount > 0) {
-        if (project.handoverPossibleImageToVideoFlag && (project.imagePossibleUndoCount == 0)) {
-            imagePossibleRedoCount = project.imagePossibleRedoCount - 1;
-            curDisplayPreviewFolType = ImageFolderSet;
-            curDisplayPreviewFolPtr = imageFolInPtr;
+    if (project.videoPossibleRedoCount > 0) {
+        videoPossibleRedoCount = project.videoPossibleRedoCount - 1
+        videoPossibleUndoCount = project.videoPossibleUndoCount + 1
+        videoFolInPtr = (project.videoFolInPtr % project.totalVideoFolderSet) + 1
 
-            curProcessingPreviewSourceFolType = ImageFolderSet;
-            curProcessingPreviewSourceFolPtr = imageFolInPtr;
+        curDisplayThumbnailFolType = VideoFolderSet
+        curDisplayThumbnailFolPtr = videoFolInPtr
+        curDisplayPreviewFolType = VideoFolderSet
+        curDisplayPreviewFolPtr = videoFolInPtr
 
-            curProcessingPreviewDestinationFolType = TempFolder;
-            curProcessingPreviewDestinationFolPtr = 1;
-            refreshThumbnailFlag = false;
-        } else {
-            imagePossibleRedoCount = project.imagePossibleRedoCount - 1;
-            imagePossibleUndoCount = project.imagePossibleUndoCount + 1;
-            imageFolInPtr = (imageFolInPtr % project.totalImageFolderSet) + 1
-
-            curDisplayPreviewFolType = ImageFolderSet;
-            curDisplayPreviewFolPtr = imageFolInPtr;
-
-            curProcessingPreviewSourceFolType = ImageFolderSet;
-            curProcessingPreviewSourceFolPtr = imageFolInPtr;
-
-            curProcessingPreviewDestinationFolType = TempFolder;
-            curProcessingPreviewDestinationFolPtr = 1;
-            refreshThumbnailFlag = false;
-        }
-    } else if (project.handoverPossibleImageToVideoFlag && (project.videoPossibleRedoCount > 0)) {
-        videoPossibleRedoCount = project.videoPossibleRedoCount - 1;
-        videoPossibleUndoCount = project.videoPossibleUndoCount + 1;
-        videoFolInPtr = (videoFolInPtr % project.totalVideoFolderSet) + 1
-
-        curDisplayThumbnailFolType = VideoFolderSet;
-        curDisplayThumbnailFolPtr = videoFolInPtr;
-
-        curDisplayPreviewFolType = VideoFolderSet;
-        curDisplayPreviewFolPtr = videoFolInPtr;
-
-        curProcessingPreviewSourceFolType = VideoFolderSet;
-        curProcessingPreviewSourceFolPtr = videoFolInPtr;
-
-        curProcessingPreviewDestinationFolType = TempFolder;
-        curProcessingPreviewDestinationFolPtr = 1;
+        curProcessingPreviewSourceFolType = VideoFolderSet
+        curProcessingPreviewSourceFolPtr = videoFolInPtr
+        curProcessingPreviewDestinationFolType = TempFolder
+        curProcessingPreviewDestinationFolPtr = 1
 
         refreshThumbnailFlag = true;
+    } else if (project.imagePossibleRedoCount > 0) {
+        if (project.handoverPossibleImageToVideoFlag && (project.imagePossibleUndoCount == 0)) {
+            imageFolInPtr = 1
+            imagePossibleUndoCount = 1
+            imagePossibleRedoCount = project.imagePossibleRedoCount - 1
+            videoPossibleRedoCount = 0
+
+            curDisplayPreviewFolType = ImageFolderSet
+            curDisplayPreviewFolPtr = imageFolInPtr
+
+            curProcessingPreviewSourceFolType = ImageFolderSet
+            curProcessingPreviewSourceFolPtr = imageFolInPtr
+            curProcessingPreviewDestinationFolType = TempFolder
+            curProcessingPreviewDestinationFolPtr = 1
+
+            refreshThumbnailFlag = false;
+        } else {
+            imagePossibleRedoCount = project.imagePossibleRedoCount - 1
+            imagePossibleUndoCount = project.imagePossibleUndoCount + 1
+            imageFolInPtr = (project.imageFolInPtr % project.totalImageFolderSet) + 1
+
+            curDisplayPreviewFolType = ImageFolderSet
+            curDisplayPreviewFolPtr = imageFolInPtr
+
+            curProcessingPreviewSourceFolType = ImageFolderSet
+            curProcessingPreviewSourceFolPtr = imageFolInPtr
+            curProcessingPreviewDestinationFolType = TempFolder
+            curProcessingPreviewDestinationFolPtr = 1
+
+            refreshThumbnailFlag = false;
+        }
     }
     const projectDetails = await Project.findByIdAndUpdate(id, {
         imagePossibleUndoCount,
