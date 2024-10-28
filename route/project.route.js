@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { createCasefolder, getFolderAll, updateCasefolder } = require('../controller/casefolder.controller');
-const { createProject, updateProject, deleteProject, uploadFiles, getProjectByCat, getProjectDetails, getAction, selectFream, discardFream, saveSnapImage } = require('../controller/project.controller');
+const { createProject, updateProject, deleteProject, uploadFiles, getProjectByCat, getProjectDetails, getAction, selectFream, discardFream, saveSnapImage,resetPointer } = require('../controller/project.controller');
 
 router.post('/create-folder', createCasefolder);
 router.put('/update-folder', updateCasefolder);
@@ -16,6 +16,7 @@ router.put('/undo-redo-action', getAction);
 router.put('/select-image', selectFream);
 router.put('/discard-image', discardFream);
 router.put('/save-image', saveSnapImage);
+router.put('/reset-pointer', resetPointer);
 
 
 module.exports = router;

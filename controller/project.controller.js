@@ -313,6 +313,16 @@ const saveSnapImage = async (req, res, next) => {
     }
 };
 
+const resetPointer = async (req, res, next) => {
+    const { projectId: id,updateData } = req.body;
+    try {
+        const updatePointer = await projectService.resetPointer(id,updateData);
+        res.status(201).json(updatePointer)
+    } catch (error) {
+        next(error);
+    }
+};
+
 function createFolder(folderPath) {
     fs.mkdir(folderPath, { recursive: true }, (err) => {
         if (err) {
@@ -406,5 +416,6 @@ module.exports = {
     getAction,
     selectFream,
     discardFream,
-    saveSnapImage
+    saveSnapImage,
+    resetPointer
 };

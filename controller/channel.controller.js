@@ -8,6 +8,7 @@ const fs = require('fs');
 const logger = require("../helpers/logEvents");
 
 const { managePointer, folderPath, savePointer, cloneImage, checkFile } = require('../utils/servicePointer');
+const {filterOperation } = require('../utils/filterOperation');
 
 const grayscaleRoute = (req, res, next) => {
     try {
@@ -40,168 +41,49 @@ const grayscaleRoute = (req, res, next) => {
     }
 };
 
-const grayscaleConversion = async (req, res, next) => {
+const colorswitchConversion = async (req, res, next) => {
     try {
-
-        const { projectId: id, isApplyToAll, frame, isPreview } = req.body;
-
-        const project = await Project.findById(id);
-        if (!project) {
-            return {
-                statusCode: 404,
-                status: 'Failed',
-                message: 'Data not found'
-            };
-        }
-        if (project.currentFrameId != frame[0]) {
-            logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
-            const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
-        }
-        
-        const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
-
-
-
-        if (proDetails.statusCode != 200) {
-            return res.status(404).json({
-                statusCode: 404,
-                status: 'Failed',
-                message: proDetails.message
-            });
-        }
-
-        const { errStatus, message } = await checkFile(id, isApplyToAll, proDetails, req, res);
-
-        if (errStatus) {
-            return res.status(404).json({
-                statusCode: 404,
-                status: 'Failed',
-                message
-            });
-        }
-
-
-
-
-        const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
-        const request = {
-            in_img_path: imgBasePathFrom,  // Input image path
-            process_all_flag: isApplyToAll,   // Process all flag
-            in_img_list: frame,                // Input image list
-            out_img_path: imgBasePathTo         // Output image path
+        const {subProcessNum } = req.body;
+        const requestObj = {
+            sub_process_num: subProcessNum     
         };
-
-        // Make the gRPC request to the grayscale method (modify according to your method name)
-        channelServiceClient.GrayscaleFilter(request, async (error, response) => {
-            try {
-                if (error) {
-                    return res.status(404).json({
-                        statusCode: 404,
-                        status: 'Failed',
-                        message: error
-                    });
-                }
-
-                const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
-
-                return res.status(200).json({
-                    message: 'Processing successfully Done',
-                    data: colData,
-                    response
-                });
-
-
-            } catch (saveError) {
-                // Handle any errors that occurred during the saving process
-                return res.status(500).json({ error: 'Failed to save image filter', details: saveError });
-            }
-        });
+        const response = await filterOperation(req,res,next, requestObj,'ColorSwitchFilter');
+        res.status(201).json(response);
 
     } catch (error) {
-        // console.error("Unexpected error:", error);
         return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
-
-const colorswitchConversion = async (req, res, next) => {
+const grayscaleConversion = async (req, res, next) => {
     try {
-        const { projectId: id, isApplyToAll, frame, isPreview, subProcessNum } = req.body;
-
-        const project = await Project.findById(id);
-        if (!project) {
-            return {
-                statusCode: 404,
-                status: 'Failed',
-                message: 'Data not found'
-            };
-        }
-        if (project.currentFrameId != frame[0]) {
-            logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
-            const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
-        }
-
-        const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
-
-        if (proDetails.statusCode != 200) {
-            return res.status(404).json({
-                statusCode: 404,
-                status: 'Failed',
-                message: proDetails.message
-            });
-        }
-
-
-
-        const { errStatus, message } = await checkFile(id, isApplyToAll, proDetails, req, res);
-
-        if (errStatus) {
-            return res.status(404).json({
-                statusCode: 404,
-                status: 'Failed',
-                message
-            });
-        }
-
-        const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
-        const request = {
-            in_img_path: imgBasePathFrom,  // Input image path
-            process_all_flag: isApplyToAll,   // Process all flag
-            in_img_list: frame,                // Input image list
-            out_img_path: imgBasePathTo,
-            sub_process_num: subProcessNum         // Output image path
+        const requestObj = {
         };
-
-        // Make the gRPC request to the grayscale method (modify according to your method name)
-        channelServiceClient.ColorSwitchFilter(request, async (error, response) => {
-            try {
-                if (error) {
-                    return res.status(404).json({
-                        statusCode: 404,
-                        status: 'Failed',
-                        message: error
-                    });
-                }
-
-                const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
-                return res.status(200).json({
-                    message: 'Processing successfully Done',
-                    data: colData,
-                    response
-                });
-            } catch (saveError) {
-                // Handle any errors that occurred during the saving process
-                return res.status(500).json({ error: 'Failed to save image filter', details: saveError });
-            }
-        });
+        const response = await filterOperation(req,res,next, requestObj,'GrayscaleFilter');
+        res.status(201).json(response);
 
     } catch (error) {
-        // console.error("Unexpected error:", error);
         return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
 const colorConversion = async (req, res, next) => {
+    try {
+        const {subProcessBlack, subProcessWhite, subProcessMid } = req.body;
+        const requestObj = {
+            sub_process_black: subProcessBlack,
+            sub_process_white: subProcessWhite,
+            sub_process_mid: subProcessMid       
+        };
+        const response = await filterOperation(req,res,next, requestObj,'ColorConversionFilter');
+        res.status(201).json(response);
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+
+const colorConversionOld = async (req, res, next) => {
     try {
         logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
         const { projectId: id, isApplyToAll, frame, isPreview, subProcessBlack, subProcessWhite, subProcessMid } = req.body;
@@ -214,10 +96,10 @@ const colorConversion = async (req, res, next) => {
                 message: 'Data not found'
             };
         }
-        if (project.currentFrameId != frame[0]) {
+        // if (project.currentFrameId != frame[0]) {
             logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
             const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
-        }
+        // }
         const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
 
         logger.logCreate(`managePointer: response ${JSON.stringify(proDetails)}`, 'systemlog');
@@ -288,72 +170,39 @@ const colorConversion = async (req, res, next) => {
 };
 
 const extractSingleChannel = async (req, res, next) => {
-    try {
-        const { projectId: id, isApplyToAll, frame, isPreview, subProcessNum } = req.body;
-        const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
-
-        if (proDetails.statusCode != 200) {
-            return res.status(404).json({
-                statusCode: 404,
-                status: 'Failed',
-                message: proDetails.message
-            });
-        }
-
-        const { errStatus, message } = await checkFile(id, isApplyToAll, proDetails, req, res);
-
-        if (errStatus) {
-            return res.status(404).json({
-                statusCode: 404,
-                status: 'Failed',
-                message
-            });
-        }
-
-
-        const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
-        const request = {
-            in_img_path: imgBasePathFrom,  // Input image path
-            process_all_flag: isApplyToAll,   // Process all flag
-            in_img_list: frame,                // Input image list
-            out_img_path: imgBasePathTo,
-            sub_process_num: subProcessNum         // Output image path
+   try {
+        const {subProcessNum } = req.body;
+        const requestObj = {
+            sub_process_num: subProcessNum     
         };
-
-        // Make the gRPC request to the grayscale method (modify according to your method name)
-        channelServiceClient.ExtractSingleChannelFilter(request, async (error, response) => {
-            try {
-                if (error) {
-                    return res.status(404).json({
-                        statusCode: 404,
-                        status: 'Failed',
-                        message: error
-                    });
-                }
-
-                const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
-                return res.status(200).json({
-                    message: 'Processing successfully Done',
-                    data: colData,
-                    response
-                });
-            } catch (saveError) {
-                // Handle any errors that occurred during the saving process
-                return res.status(500).json({ error: 'Failed to save image filter', details: saveError });
-            }
-        });
+        const response = await filterOperation(req,res,next, requestObj,'ExtractSingleChannelFilter');
+        res.status(201).json(response);
 
     } catch (error) {
-        // console.error("Unexpected error:", error);
         return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
+
+const displaySelectedChannels = async (req, res, next) => {
+    try {
+         const {subProcessNum } = req.body;
+         const requestObj = {
+             sub_process_num: subProcessNum     
+         };
+         const response = await filterOperation(req,res,next, requestObj,'DisplaySlectedChannelRequest');
+         res.status(201).json(response);
+ 
+     } catch (error) {
+         return res.status(500).json({ error: 'Internal server error', details: error });
+     }
+ };
 
 module.exports = {
     grayscaleRoute,
     grayscaleConversion,
     colorswitchConversion,
     colorConversion,
-    extractSingleChannel
+    extractSingleChannel,
+    displaySelectedChannels
 }
 

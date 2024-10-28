@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const imageoperationSchema = new mongoose.Schema({
     processIndex: {
-        type: Number, default: 0 
+        type: Number, default: 1 
     },
     processType: {
         type: String,
@@ -19,5 +19,5 @@ const imageoperationSchema = new mongoose.Schema({
     }
 }, { timestamps: true })
 
-const Imageoperation = mongoose.model('Imageoperation', imageoperationSchema);
+const Imageoperation = mongoose.model('imageoperation', imageoperationSchema);
 module.exports = Imageoperation;

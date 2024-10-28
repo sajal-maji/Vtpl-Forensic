@@ -94,7 +94,6 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
 };
 
 const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response) => {
-    try {
         const rootPath = `${req.user.id}/${id}`;
         let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_1.png';
         // Determine the filter type based on the `isApplyToAll` flag
@@ -135,18 +134,18 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
 
             project = await Project.findByIdAndUpdate(id, proArr, { new: true });
             console.log('prev', project)
-            logger.changePointer(id, 'Preview', 'pointerDetails');
+            // logger.changePointer(id, 'Preview', 'pointerDetails');
         } else {
             const jobArr = { jobId: response.job_id, projectId: id };
             const mergedArr = Object.assign({}, proArr, jobArr);
             await Project.findByIdAndUpdate(id, proArr, { new: true });
             project = new JobProject(mergedArr);
             await project.save();
-            if (isApplyToAll) {
-                logger.changePointer(id, 'Apply to all', 'pointerDetails');
-            } else {
-                logger.changePointer(id, 'Apply to frame', 'pointerDetails');
-            }
+            // if (isApplyToAll) {
+            //     logger.changePointer(id, 'Apply to all', 'pointerDetails');
+            // } else {
+            //     logger.changePointer(id, 'Apply to frame', 'pointerDetails');
+            // }
         }
 
 
@@ -237,11 +236,6 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
                 basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
             }
         }
-
-
-    } catch (error) {
-        return error.message;
-    }
 };
 
 const cloneImage = async (id, isApplyToAll, frame, req, res) => {
@@ -614,6 +608,8 @@ const applyToFrame = async (project, defaultImg) => {
 
     }
 };
+
+
 
 module.exports = {
     managePointer,

@@ -11,7 +11,7 @@ const projectsSchema = new mongoose.Schema({
         type: String,
     },
     videoFolInPtr: {
-        type: String,
+        type: Number,
         default: 1,
     },
     imageFolInPtr: {
@@ -95,7 +95,8 @@ const projectsSchema = new mongoose.Schema({
         default: false,
     },
     processingGoingOnVideoNotFrame: {
-        type: String,
+        type: Boolean,
+        default: true
     },
     refreshThumbnailFlag: {
         type: Boolean,
