@@ -49,6 +49,24 @@ const createProject = async (req, catId, projectName) => {
     }
 };
 
+const resetPointer = async (id, updateData) => {
+    const projectDetails = await Project.findById(id);
+    if (!projectDetails) {
+        return {
+            statusCode: 404,
+            status: 'Failed',
+            message: 'Data not found'
+        };
+    }
+    const project = await Project.findByIdAndUpdate(id,updateData, { new: true });
+
+    return {
+        statusCode: 200,
+        status: 'Success',
+        message: 'Update Successfully.'
+    };
+};
+
 const updateProject = async (id, projectName) => {
     const projectDetails = await Project.findById(id);
     if (!projectDetails) {
@@ -147,7 +165,7 @@ const projectDetails = async (req, id) => {
         isRedoPossible = true;
     }
     logger.logCreate(`project details: ${JSON.stringify(projectDetails)}`, 'systemlog');
-
+    logger.changePointer(id, 'ProjectDetails', 'pointerDetails');
     return {
         statusCode: 200,
         status: 'Success',
@@ -583,6 +601,8 @@ function createFolder(folderPath) {
     });
 };
 
+
+
 module.exports = {
     createProject,
     updateProject,
@@ -593,5 +613,6 @@ module.exports = {
     applyUndoAction,
     applyRedoAction,
     discardImage,
-    saveImage
+    saveImage,
+    resetPointer
 };

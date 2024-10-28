@@ -3,6 +3,9 @@ const JobProject = require('../model/jobprojects.model');
 const Project = require('../model/projects.model');
 const path = require('path');
 const fs = require('fs');
+const VideoFolderSet = 'video'
+const ImageFolderSet = 'image'
+const TempFolder = 'temp'
 
 const getStatus = async (job_id, userId) => {
     const request = { job_id };
@@ -18,7 +21,8 @@ const getStatus = async (job_id, userId) => {
                 await updateProjectDetails(response.job_id, userId);
                 console.log('-------------Step End------------')
             }
-            resolve(response);
+            const jobProjectDetails = await JobProject.findOne({ jobId: response.job_id });
+            resolve({response,'jobDetails':jobProjectDetails});
         });
     });
 };
@@ -91,23 +95,23 @@ async function updateProjectDetails(jobId, userId) {
 
     if (projectDetails.curDisplayPreviewFolPtr === 2) {
         copyImage(projectDetails.currentFrameId, id, userId, {
-            folderType: 'temp',
+            folderType: TempFolder,
             folderPtr: 2
         }, {
-            folderType: 'temp',
+            folderType: TempFolder,
             folderPtr: 1
         });
         console.log('-------------Step------------1.3')
-        curDisplayPreviewFolType = 'temp';
+        curDisplayPreviewFolType = TempFolder;
         curDisplayPreviewFolPtr = 1;
     } else {
         console.log('-------------Step------------1.4')
         if (projectDetails.processingGoingOnVideoNotFrame === true) {
-            curDisplayPreviewFolType = projectDetails.VideoFolderSet;
+            curDisplayPreviewFolType = VideoFolderSet;
             curDisplayPreviewFolPtr = projectDetails.videoFolInPtr;
             console.log('-------------Step------------1.4.1')
         } else {
-            curDisplayPreviewFolType = projectDetails.ImageFolderSet;
+            curDisplayPreviewFolType = ImageFolderSet;
             curDisplayPreviewFolPtr = projectDetails.imageFolInPtr;
             console.log('-------------Step------------1.4.2')
         }
