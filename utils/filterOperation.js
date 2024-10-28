@@ -1,4 +1,4 @@
-const { channelServiceClient } = require('../grpcClient');
+const { channelServiceClient,adjustServiceClient } = require('../grpcClient');
 const Project = require('../model/projects.model');
 const logger = require("../helpers/logEvents");
 const projectService = require("../services/project.service");
@@ -6,7 +6,7 @@ const Imageoperation = require('../services/imageoperation.service');
 
 const { managePointer, folderPath, savePointer, cloneImage, checkFile } = require('../utils/servicePointer');
 
-const filterOperation = async (req, res, next,requestObj,processName) => {
+const filterOperation = async (req, res, next,requestObj,grpcServiceName,processName) => {
     logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
     const { projectId: id, isApplyToAll, frame, isPreview} = req.body;
 
@@ -70,27 +70,70 @@ const filterOperation = async (req, res, next,requestObj,processName) => {
    
     // Make the gRPC request to the grayscale method (modify according to your method name)
     logger.logCreate(`grpc: request - ${JSON.stringify(request)}`, 'systemlog');
-    return new Promise(async (resolve, reject) => {
-        channelServiceClient[processName](request, async (error, response) => {
+
+    const responseData = await callGrpcService(grpcServiceName, processName, request,req,res,proDetails);
+        return responseData
+
+    // return new Promise(async (resolve, reject) => {
+    //     channelServiceClient[processName](request, async (error, response) => {
+    //         try {
+    //             if (error) {
+    //                 return resolve({
+    //                     statusCode: 404,
+    //                     status: 'Failed',
+    //                     // message: error.message || error
+    //                     message: error
+    //                 });
+    //             }
+              
+
+    //             const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
+
+    //             logger.logCreate(`grpc: response - ${JSON.stringify(response)}`, 'systemlog');
+    //             logger.logCreate(`savePointer: response - ${JSON.stringify(colData)}`, 'systemlog');
+
+                
+    //             resolve({
+    //                 message: 'Processing successfully Done',
+    //                 data: colData,
+    //                 response
+    //             });
+    //         } catch (saveError) {
+    //             reject({
+    //                 error: 'Failed to save image filter',
+    //                 details: saveError.message
+    //             });
+    //         }
+    //     });
+    // });
+
+};
+
+async function callGrpcService(grpcServiceName, processName, request,req,res,proDetails) {
+    return new Promise((resolve, reject) => {
+        if (typeof grpcServiceName[processName] !== 'function') {
+            return reject(new Error(`Method ${processName} is not available on the provided gRPC service.`));
+        }
+
+        // Call the method dynamically if it exists
+        grpcServiceName[processName](request, async (error, response) => {
             try {
+                const { projectId: id, isApplyToAll, frame, isPreview} = req.body;
                 if (error) {
                     return resolve({
                         statusCode: 404,
                         status: 'Failed',
-                        // message: error.message || error
-                        message: error
+                        message: error.message || error
                     });
                 }
-              
 
                 const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
 
-                logger.logCreate(`grpc: response - ${JSON.stringify(response)}`, 'systemlog');
-                logger.logCreate(`savePointer: response - ${JSON.stringify(colData)}`, 'systemlog');
+                logger.logCreate(`gRPC response: ${JSON.stringify(response)}`, 'systemlog');
+                logger.logCreate(`savePointer response: ${JSON.stringify(colData)}`, 'systemlog');
 
-                
                 resolve({
-                    message: 'Processing successfully Done',
+                    message: 'Processing successfully done',
                     data: colData,
                     response
                 });
@@ -102,10 +145,7 @@ const filterOperation = async (req, res, next,requestObj,processName) => {
             }
         });
     });
-
-};
-
-
+}
 
 
 module.exports = {

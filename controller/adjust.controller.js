@@ -1,4 +1,5 @@
 const {filterOperation } = require('../utils/filterOperation');
+const { adjustServiceClient } = require('../grpcClient'); 
 
 const levelControl = async (req, res, next) => {
     try {
@@ -10,7 +11,7 @@ const levelControl = async (req, res, next) => {
             out_level_st: outLevelSt,
             out_level_en: outLevelEn,   
         };
-        const response = await filterOperation(req,res,next, requestObj,'LevelControlFilter');
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'LevelControlFilter');
         res.status(201).json(response);
 
     } catch (error) {
@@ -25,7 +26,7 @@ const brightnessContrast = async (req, res, next) => {
            brightness_amount_change: brightnessAmountChange,
            contrast_change_factor: contrastChangeFactor,
         };
-        const response = await filterOperation(req,res,next, requestObj,'BrightnessContrastChangeFilter');
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'BrightnessContrastChangeFilter');
         res.status(201).json(response);
 
     } catch (error) {
@@ -39,7 +40,7 @@ const contrastStretch = async (req, res, next) => {
         const requestObj = {
             in_con_stretch_amt : inConStretchAmt,
         };
-        const response = await filterOperation(req,res,next, requestObj,'ContrastStretchFilter');
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'ContrastStretchFilter');
         res.status(201).json(response);
 
     } catch (error) {
@@ -69,7 +70,7 @@ const intensityChange = async (req, res, next) => {
         const requestObj = {
           intensity_value_amount_change : intensityValueAmountChange,
         };
-        const response = await filterOperation(req,res,next, requestObj,'IntensityChangeFilter');
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'IntensityChangeFilter');
         res.status(201).json(response);
 
     } catch (error) {
