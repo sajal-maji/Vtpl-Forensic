@@ -189,7 +189,7 @@ const displaySelectedChannels = async (req, res, next) => {
          const requestObj = {
              sub_process_num: subProcessNum     
          };
-         const response = await filterOperation(req,res,next, requestObj,'DisplaySlectedChannelRequest');
+         const response = await filterOperation(req,res,next, requestObj,'DisplaySelectedChannelFilter');
          res.status(201).json(response);
  
      } catch (error) {
