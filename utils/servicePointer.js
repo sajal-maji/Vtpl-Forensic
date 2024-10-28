@@ -127,7 +127,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
 
         }
-        logger.logCreate(`savePointer: product array - ${JSON.stringify(proArr)}`, 'systemlog');
+        logger.changePointer(req.user.id, id, 'Before save pointer', 'pointerDetails');
 
         let project = ''
         if (isPreview) {
