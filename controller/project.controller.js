@@ -273,9 +273,9 @@ const getAction = async (req, res, next) => {
     try {
         let applyChanges = '';
         if (actionType === 'undo') {
-            applyChanges = await projectService.applyUndoAction(id, actionType);
+            applyChanges = await projectService.applyUndoAction(id, req.user.id);
         } else if (actionType === 'redo') {
-            applyChanges = await projectService.applyRedoAction(id, actionType);
+            applyChanges = await projectService.applyRedoAction(id, req.user.id);
         }
         res.status(201).json(applyChanges)
     } catch (error) {

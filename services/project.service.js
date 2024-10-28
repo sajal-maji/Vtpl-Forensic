@@ -165,7 +165,7 @@ const projectDetails = async (req, id) => {
         isRedoPossible = true;
     }
     logger.logCreate(`project details: ${JSON.stringify(projectDetails)}`, 'systemlog');
-    logger.changePointer(id, 'ProjectDetails', 'pointerDetails');
+    logger.changePointer(req.user.id, id, 'ProjectDetails', 'pointerDetails');
     return {
         statusCode: 200,
         status: 'Success',
@@ -204,7 +204,7 @@ const projectDetails = async (req, id) => {
     };
 };
 
-const applyUndoAction = async (id) => {
+const applyUndoAction = async (id, userId) => {
     const project = await Project.findById(id);
     if (!project) {
         return ({
@@ -310,7 +310,7 @@ const applyUndoAction = async (id) => {
         curDisplayThumbnailFolPtr,
         refreshThumbnailFlag
     }, { new: true });
-    logger.changePointer(id, 'Undo', 'pointerDetails');
+    logger.changePointer(userId, id, 'Undo', 'pointerDetails');
     return {
         statusCode: 200,
         status: 'Success',
@@ -319,7 +319,7 @@ const applyUndoAction = async (id) => {
     };
 };
 
-const applyRedoAction = async (id) => {
+const applyRedoAction = async (id, userId) => {
     const project = await Project.findById(id);
     if (!project) {
         return {
@@ -409,7 +409,7 @@ const applyRedoAction = async (id) => {
         curProcessingPreviewDestinationFolPtr,
         refreshThumbnailFlag
     }, { new: true });
-    logger.changePointer(id, 'Redo', 'pointerDetails');
+    logger.changePointer(userId, id, 'Redo', 'pointerDetails');
     return {
         statusCode: 200,
         status: 'Success',
