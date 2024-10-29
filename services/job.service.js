@@ -16,10 +16,8 @@ const getStatus = async (job_id, userId) => {
                 return reject({ error: 'Error fetching job status', details: error });
             }
             if (response && response.completed) {
-                console.log('-------------Step------------1', response.job_id)
-                await updateJobDetails(response.job_id);
+                // await updateJobDetails(response.job_id);
                 await updateProjectDetails(response.job_id, userId);
-                console.log('-------------Step End------------')
             }
             const jobProjectDetails = await JobProject.findOne({ jobId: response.job_id });
             resolve({response,'jobDetails':jobProjectDetails});
@@ -66,22 +64,17 @@ async function updateJobDetails(jobId) {
 
 
 async function updateProjectDetails(jobId, userId) {
-    console.log("1111111111111111111111111" +jobId);
-
     const jobProjectDetails = await JobProject.findOne({ jobId: jobId });
-    console.log("222222222222222222222222222222"+jobProjectDetails);
 
     if (!jobProjectDetails) {
         return;
     }
-    console.log('-------------Step------------1.1')
     let id = jobProjectDetails.projectId;
     const projectDetails = await Project.findById(id);
 
     if (!projectDetails) {
         return;
     }
-    console.log('-------------Step------------1.2')
     let processingGoingOnVideoOrFrameFlag = false;
 
     let curDisplayThumbnailFolType = projectDetails.VideoFolderSet;
@@ -90,7 +83,6 @@ async function updateProjectDetails(jobId, userId) {
 
     if (projectDetails.processingGoingOnVideoNotFrame) {
         refreshThumbnailFlag = true;
-        console.log('-------------Step------------1.2.1')
     }
 
     if (projectDetails.curDisplayPreviewFolPtr === 2) {
@@ -101,19 +93,15 @@ async function updateProjectDetails(jobId, userId) {
             folderType: TempFolder,
             folderPtr: 1
         });
-        console.log('-------------Step------------1.3')
         curDisplayPreviewFolType = TempFolder;
         curDisplayPreviewFolPtr = 1;
     } else {
-        console.log('-------------Step------------1.4')
         if (projectDetails.processingGoingOnVideoNotFrame === true) {
             curDisplayPreviewFolType = VideoFolderSet;
             curDisplayPreviewFolPtr = projectDetails.videoFolInPtr;
-            console.log('-------------Step------------1.4.1')
         } else {
             curDisplayPreviewFolType = ImageFolderSet;
             curDisplayPreviewFolPtr = projectDetails.imageFolInPtr;
-            console.log('-------------Step------------1.4.2')
         }
     }
 
@@ -121,7 +109,6 @@ async function updateProjectDetails(jobId, userId) {
     curProcessingPreviewSourceFolPtr = projectDetails.curProcessingDestinationFolPtr;
     curProcessingPreviewDestinationFolType = 'temp';
     curProcessingPreviewDestinationFolPtr = 1;
-    console.log('-------------Step------------1.7')
     const projectUpdate = await Project.findByIdAndUpdate(id, {
         processingGoingOnVideoOrFrameFlag,
         curDisplayThumbnailFolType,
