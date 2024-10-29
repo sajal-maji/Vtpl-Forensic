@@ -130,18 +130,18 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         }
         logger.logCreate(`savepointer: response ${JSON.stringify(proArr)}`, 'systemlog');
 
-        logger.changePointer(req.user.id, id, 'Before save pointer', 'pointerDetails');
 
         let project = ''
         if (isPreview) {
-
             project = await Project.findByIdAndUpdate(id, proArr, { new: true });
-            console.log('prev', project)
+            logger.changePointer(req.user.id, id, 'preview', 'pointerDetails');
             // logger.changePointer(id, 'Preview', 'pointerDetails');
         } else {
             const jobArr = { jobId: response.job_id, projectId: id };
             const mergedArr = Object.assign({}, proArr, jobArr);
             await Project.findByIdAndUpdate(id, proArr, { new: true });
+            logger.changePointer(req.user.id, id, 'Before job complete', 'pointerDetails');
+
             project = new JobProject(mergedArr);
             await project.save();
             // if (isApplyToAll) {
@@ -499,7 +499,7 @@ const applyToFrame = async (project, defaultImg) => {
     processingGoingOnVideoNotFrame = false
     refreshThumbnailFlag = false
 
-    curDisplayPreviewFolType = ImageFolderSet
+    curDisplayPreviewFolType = TempFolder
     curDisplayPreviewFolPtr = 1
 
     curProcessingPreviewSourceFolType = TempFolder
