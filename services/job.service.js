@@ -16,7 +16,7 @@ const getStatus = async (job_id, userId) => {
                 return reject({ error: 'Error fetching job status', details: error });
             }
             if (response && response.completed) {
-                // await updateJobDetails(response.job_id);
+                await updateJobDetails(response.job_id);
                 await updateProjectDetails(response.job_id, userId);
             }
             const jobProjectDetails = await JobProject.findOne({ jobId: response.job_id });
