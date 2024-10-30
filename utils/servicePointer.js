@@ -93,7 +93,7 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
 
 };
 
- const copyFolderExcluding = async(sourceDir, destDir, exclude = []) =>{
+const copyFolderExcluding = async (sourceDir, destDir, exclude = []) => {
     try {
         const items = await fs.promises.readdir(sourceDir);
 
@@ -112,11 +112,11 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
                 } else {
                     console.log(`File not found: ${srcPath}`);
                 }
-                
+
             })
-            
+
         );
-        
+
     } catch (error) {
         console.log('Error copying folder:', error);
     }
@@ -124,151 +124,151 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
 
 
 const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response) => {
+    const rootPath = `${req.user.id}/${id}`;
+    let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_1.png';
+    // Determine the filter type based on the `isApplyToAll` flag
+    // if(!isPreview){
+
+    // if(isApplyToAll){
+    console.log("sssssssssssssssso" + proDetails.operatePossibleOnVideoFlag)
+    const proArr = {
+        'currentFrameId': frameName,
+        imageFolInPtr: proDetails.imageFolInPtr,
+        videoFolInPtr: proDetails.videoFolInPtr,
+        imagePossibleUndoCount: proDetails.imagePossibleUndoCount,
+        imagePossibleRedoCount: proDetails.imagePossibleRedoCount,
+        operatePossibleOnVideoFlag: proDetails.operatePossibleOnVideoFlag,
+        handoverPossibleImageToVideoFlag: proDetails.handoverPossibleImageToVideoFlag,
+        curProcessingSourceFolType: proDetails.curProcessingSourceFolType,
+        curProcessingSourceFolPtr: proDetails.curProcessingSourceFolPtr,
+        curProcessingDestinationFolType: proDetails.curProcessingDestinationFolType,
+        curProcessingDestinationFolPtr: proDetails.curProcessingDestinationFolPtr,
+        videoPossibleUndoCount: proDetails.videoPossibleUndoCount,
+
+        videoToFrameWarningPopUp: proDetails.videoToFrameWarningPopUp,
+        processingGoingOnVideoOrFrameFlag: proDetails.processingGoingOnVideoOrFrameFlag,
+        processingGoingOnVideoNotFrame: proDetails.processingGoingOnVideoNotFrame,
+
+        curDisplayPreviewFolType: proDetails.curDisplayPreviewFolType,
+        curDisplayPreviewFolPtr: proDetails.curDisplayPreviewFolPtr,
+
+        curProcessingPreviewSourceFolType: proDetails.curProcessingPreviewSourceFolType,
+        curProcessingPreviewSourceFolPtr: proDetails.curProcessingPreviewSourceFolPtr,
+        curProcessingPreviewDestinationFolType: proDetails.curProcessingPreviewDestinationFolType,
+        curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
+
+    }
+    logger.logCreate(`savepointer: response ${JSON.stringify(proArr)}`, 'systemlog');
+
+
+    let project = ''
+    if (isPreview) {
+        project = await Project.findByIdAndUpdate(id, proArr, { new: true });
+        logger.changePointer(req.user.id, id, 'preview', 'pointerDetails');
+        // logger.changePointer(id, 'Preview', 'pointerDetails');
+    } else {
+        const jobArr = { jobId: response.job_id, projectId: id };
+        const mergedArr = Object.assign({}, proArr, jobArr);
+        await Project.findByIdAndUpdate(id, proArr, { new: true });
+        logger.changePointer(req.user.id, id, 'Before job complete', 'pointerDetails');
+
+        project = new JobProject(mergedArr);
+        await project.save();
+        // if (isApplyToAll) {
+        //     logger.changePointer(id, 'Apply to all', 'pointerDetails');
+        // } else {
+        //     logger.changePointer(id, 'Apply to frame', 'pointerDetails');
+        // }
+    }
+
+
+
+
+    // }else{
+    //     const project = await Project.findByIdAndUpdate(id, {
+    //         'currentFrameId':frameName,
+    //         'imageFolInPtr':proDetails.dstFolPtr,
+    //         'videoToFrameWarmPopUp':proDetails.videoToFrameWarmPopUp,
+    //         'handoverPossibleImageToVideoFlag':proDetails.handoverPossibleImageToVideoFlag,
+    //         'operatePossibleOnVideoFlag':proDetails.operatePossibleOnVideoFlag,
+    //         'videoPossibleUndoCount':proDetails.videoPossibleUndoCount,
+    //         'imagePossibleUndoCount':proDetails.imagePossibleUndoCount,
+    //         'videoPossibleRedoCount':proDetails.videoPossibleRedoCount,
+    //         'imagePossibleRedoCount':proDetails.imagePossibleRedoCount,
+    //         'srcFolType':proDetails.srcFolType,
+    //         'srcFolPtr':proDetails.srcFolPtr,
+    //         'dstFolType':proDetails.dstFolType,
+    //         'dstFolPtr':proDetails.dstFolPtr,
+    //         'updateThumbnail' : proDetails.updateThumbnail,
+    //         'curThumbFolPtr':proDetails.curThumbFolPtr,
+    //         'curThumbFolType':proDetails.curThumbFolType,
+    //         'curFrameFolPtr':proDetails.curFrameFolPtr,
+    //         'curFrameFolType':proDetails.curFrameFolType
+
+    //     }, { new: true });
+    // }
+
+    // }else{
+
+    if (isPreview) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
         const rootPath = `${req.user.id}/${id}`;
-        let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_1.png';
-        // Determine the filter type based on the `isApplyToAll` flag
-        // if(!isPreview){
+        const timestamp = Date.now();
+        const oldFilePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`;
+        const newFileName = timestamp + 'new_frame_name.png'; // Replace this with the new file name
+        // const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
+        const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
+        frameName = newFileName
+        project = await Project.findByIdAndUpdate(id, { 'currentPreviewFrameId': frameName }, { new: true });
+        // Rename the file
 
-        // if(isApplyToAll){
-        console.log("sssssssssssssssso"+proDetails.operatePossibleOnVideoFlag)
-        const proArr = {
-            'currentFrameId': frameName,
-            imageFolInPtr: proDetails.imageFolInPtr,
-            videoFolInPtr: proDetails.videoFolInPtr,
-            imagePossibleUndoCount: proDetails.imagePossibleUndoCount,
-            imagePossibleRedoCount: proDetails.imagePossibleRedoCount,
-            operatePossibleOnVideoFlag: proDetails.operatePossibleOnVideoFlag,
-            handoverPossibleImageToVideoFlag: proDetails.handoverPossibleImageToVideoFlag,
-            curProcessingSourceFolType: proDetails.curProcessingSourceFolType,
-            curProcessingSourceFolPtr: proDetails.curProcessingSourceFolPtr,
-            curProcessingDestinationFolType: proDetails.curProcessingDestinationFolType,
-            curProcessingDestinationFolPtr: proDetails.curProcessingDestinationFolPtr,
-            videoPossibleUndoCount: proDetails.videoPossibleUndoCount,
-
-            videoToFrameWarningPopUp: proDetails.videoToFrameWarningPopUp,
-            processingGoingOnVideoOrFrameFlag: proDetails.processingGoingOnVideoOrFrameFlag,
-            processingGoingOnVideoNotFrame: proDetails.processingGoingOnVideoNotFrame,
-
-            curDisplayPreviewFolType: proDetails.curDisplayPreviewFolType,
-            curDisplayPreviewFolPtr: proDetails.curDisplayPreviewFolPtr,
-
-            curProcessingPreviewSourceFolType: proDetails.curProcessingPreviewSourceFolType,
-            curProcessingPreviewSourceFolPtr: proDetails.curProcessingPreviewSourceFolPtr,
-            curProcessingPreviewDestinationFolType: proDetails.curProcessingPreviewDestinationFolType,
-            curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
-
-        }
-        logger.logCreate(`savepointer: response ${JSON.stringify(proArr)}`, 'systemlog');
-
-
-        let project = ''
-        if (isPreview) {
-            project = await Project.findByIdAndUpdate(id, proArr, { new: true });
-            logger.changePointer(req.user.id, id, 'preview', 'pointerDetails');
-            // logger.changePointer(id, 'Preview', 'pointerDetails');
-        } else {
-            const jobArr = { jobId: response.job_id, projectId: id };
-            const mergedArr = Object.assign({}, proArr, jobArr);
-            await Project.findByIdAndUpdate(id, proArr, { new: true });
-            logger.changePointer(req.user.id, id, 'Before job complete', 'pointerDetails');
-
-            project = new JobProject(mergedArr);
-            await project.save();
-            // if (isApplyToAll) {
-            //     logger.changePointer(id, 'Apply to all', 'pointerDetails');
-            // } else {
-            //     logger.changePointer(id, 'Apply to frame', 'pointerDetails');
-            // }
-        }
-
-
-
-
-        // }else{
-        //     const project = await Project.findByIdAndUpdate(id, {
-        //         'currentFrameId':frameName,
-        //         'imageFolInPtr':proDetails.dstFolPtr,
-        //         'videoToFrameWarmPopUp':proDetails.videoToFrameWarmPopUp,
-        //         'handoverPossibleImageToVideoFlag':proDetails.handoverPossibleImageToVideoFlag,
-        //         'operatePossibleOnVideoFlag':proDetails.operatePossibleOnVideoFlag,
-        //         'videoPossibleUndoCount':proDetails.videoPossibleUndoCount,
-        //         'imagePossibleUndoCount':proDetails.imagePossibleUndoCount,
-        //         'videoPossibleRedoCount':proDetails.videoPossibleRedoCount,
-        //         'imagePossibleRedoCount':proDetails.imagePossibleRedoCount,
-        //         'srcFolType':proDetails.srcFolType,
-        //         'srcFolPtr':proDetails.srcFolPtr,
-        //         'dstFolType':proDetails.dstFolType,
-        //         'dstFolPtr':proDetails.dstFolPtr,
-        //         'updateThumbnail' : proDetails.updateThumbnail,
-        //         'curThumbFolPtr':proDetails.curThumbFolPtr,
-        //         'curThumbFolType':proDetails.curThumbFolType,
-        //         'curFrameFolPtr':proDetails.curFrameFolPtr,
-        //         'curFrameFolType':proDetails.curFrameFolType
-
-        //     }, { new: true });
-        // }
-
-        // }else{
-
-        if (isPreview) {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            const rootPath = `${req.user.id}/${id}`;
-            const timestamp = Date.now();
-            const oldFilePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`;
-            const newFileName = timestamp + 'new_frame_name.png'; // Replace this with the new file name
-            // const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
-            const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
-            frameName = newFileName
-            project = await Project.findByIdAndUpdate(id, { 'currentPreviewFrameId': frameName }, { new: true });
-            // Rename the file
-
-            fs.rename(oldFilePath, newFilePath, (err) => {
-                if (err) {
-                    console.log(`Error renaming file from ${oldFilePath} to ${newFilePath}:`, err);
-                } else {
-                    console.log(`File renamed successfully from ${frameName} to ${newFileName}`);
-                }
-            });
-        }
-
-
-
-
-        // for (var i = 1; i <= project.totalImageFolderSet; i++) {
-        //     const sourcePath = `public/${rootPath}/${proDetails.srcFolType}/${i}/${frame[0]}`;
-        //     const destPath = `public/${rootPath}/${proDetails.dstFolType}/${i}/${frame[0]}`;
-
-        //     // Check if the source file exists before attempting to copy
-        //     if (fs.existsSync(sourcePath)) {
-        //         fsExtra.copy(sourcePath, destPath, (err) => {
-        //             if (err) {
-        //                 console.error('Error copying the file:', err);
-        //             } else {
-        //                 console.log('File copied successfully.');
-        //             }
-        //         });
-        //     } else {
-        //         console.log(`File not found: ${sourcePath}`);
-        //     }
-        // }
-        // console.log('File copied successfully.'+project.totalImageFolderSet);
-
-        // Proceed with logic to manage pointer if the filter exists
-        // Your pointer management logic goes here...
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        console.log('step3', response)
-        return {
-            'colData': {
-                job_id: response.job_id,
-                percentage: response.percentage,
-                'curFrameId': (proDetails.currentFrameId) ? proDetails.currentFrameId : '',
-                total_input_images: response.total_input_images,
-                processed_image_count: response.processed_image_count,
-                status_message: response.status_message,
-                basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
+        fs.rename(oldFilePath, newFilePath, (err) => {
+            if (err) {
+                console.log(`Error renaming file from ${oldFilePath} to ${newFilePath}:`, err);
+            } else {
+                console.log(`File renamed successfully from ${frameName} to ${newFileName}`);
             }
+        });
+    }
+
+
+
+
+    // for (var i = 1; i <= project.totalImageFolderSet; i++) {
+    //     const sourcePath = `public/${rootPath}/${proDetails.srcFolType}/${i}/${frame[0]}`;
+    //     const destPath = `public/${rootPath}/${proDetails.dstFolType}/${i}/${frame[0]}`;
+
+    //     // Check if the source file exists before attempting to copy
+    //     if (fs.existsSync(sourcePath)) {
+    //         fsExtra.copy(sourcePath, destPath, (err) => {
+    //             if (err) {
+    //                 console.error('Error copying the file:', err);
+    //             } else {
+    //                 console.log('File copied successfully.');
+    //             }
+    //         });
+    //     } else {
+    //         console.log(`File not found: ${sourcePath}`);
+    //     }
+    // }
+    // console.log('File copied successfully.'+project.totalImageFolderSet);
+
+    // Proceed with logic to manage pointer if the filter exists
+    // Your pointer management logic goes here...
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    console.log('step3', response)
+    return {
+        'colData': {
+            job_id: response.job_id,
+            percentage: response.percentage,
+            'curFrameId': (proDetails.currentFrameId) ? proDetails.currentFrameId : '',
+            total_input_images: response.total_input_images,
+            processed_image_count: response.processed_image_count,
+            status_message: response.status_message,
+            basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
         }
+    }
 };
 
 const cloneImage = async (id, isApplyToAll, frame, req, res) => {
@@ -537,7 +537,7 @@ const applyToFrame = async (project, defaultImg) => {
     curProcessingPreviewDestinationFolType = TempFolder
     curProcessingPreviewDestinationFolPtr = 2
 
-    console.log('kkkkkkkkkkkkkkkkkkkkkkkkkkk'+project.operatePossibleOnVideoFlag)
+    console.log('kkkkkkkkkkkkkkkkkkkkkkkkkkk' + project.operatePossibleOnVideoFlag)
     if (project.operatePossibleOnVideoFlag) {
         console.log("-----------------1--------------------------------")
         imageFolInPtr = 1
@@ -573,8 +573,8 @@ const applyToFrame = async (project, defaultImg) => {
 
                 videoToFrameWarningPopUp,
 
-                processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
-                processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
+                processingGoingOnVideoOrFrameFlag,
+                processingGoingOnVideoNotFrame,
 
                 imageFolInPtr,
                 videoFolInPtr: project.videoFolInPtr,
@@ -593,10 +593,11 @@ const applyToFrame = async (project, defaultImg) => {
         console.log("-----------------2--------------------------------")
         const srcImageFolInPtr = project.imageFolInPtr
         imageFolInPtr = (project.imageFolInPtr % project.totalImageFolderSet) + 1
-        imagePossibleUndoCount = Math.min((project.imagePossibleUndoCount + 1), project.undoImageLimit)
-        if (imagePossibleUndoCount == project.undoImageLimit)
+        tempImagePossibleUndoCount = project.imagePossibleUndoCount + 1
+        if (tempImagePossibleUndoCount > project.undoImageLimit) {
             handoverPossibleImageToVideoFlag = false
-        
+        }
+        imagePossibleUndoCount = Math.min(tempImagePossibleUndoCount, project.undoImageLimit)
 
         curProcessingSourceFolType = ImageFolderSet
         curProcessingSourceFolPtr = srcImageFolInPtr
@@ -625,8 +626,8 @@ const applyToFrame = async (project, defaultImg) => {
                 imagePossibleRedoCount,
 
                 videoToFrameWarningPopUp,
-                processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
-                processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
+                processingGoingOnVideoOrFrameFlag,
+                processingGoingOnVideoNotFrame,
 
                 imageFolInPtr,
                 videoFolInPtr: project.videoFolInPtr,
@@ -636,10 +637,10 @@ const applyToFrame = async (project, defaultImg) => {
                 curDisplayPreviewFolType,
                 curDisplayPreviewFolPtr,
 
-                curProcessingPreviewSourceFolType: project.curProcessingPreviewSourceFolType,
-                curProcessingPreviewSourceFolPtr: project.curProcessingPreviewSourceFolPtr,
-                curProcessingPreviewDestinationFolType: project.curProcessingPreviewDestinationFolType,
-                curProcessingPreviewDestinationFolPtr: project.curProcessingPreviewDestinationFolPtr,
+                curProcessingPreviewSourceFolType,
+                curProcessingPreviewSourceFolPtr,
+                curProcessingPreviewDestinationFolType,
+                curProcessingPreviewDestinationFolPtr,
             }
         })
 
