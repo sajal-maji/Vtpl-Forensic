@@ -232,7 +232,7 @@ const applyUndoAction = async (id, userId) => {
     if (project.imagePossibleUndoCount > 1) {
         imagePossibleUndoCount = project.imagePossibleUndoCount - 1;
         imagePossibleRedoCount = project.imagePossibleRedoCount + 1;
-        imageFolInPtr = ((project.imageFolInPtr - 2 + project.totalImageFolderSet) % project.totalImageFolderSet) + 1
+        imageFolInPtr = (((project.imageFolInPtr - 2) + project.totalImageFolderSet) % project.totalImageFolderSet) + 1
 
         curDisplayPreviewFolType = ImageFolderSet;
         curDisplayPreviewFolPtr = imageFolInPtr;
@@ -248,17 +248,16 @@ const applyUndoAction = async (id, userId) => {
     } else if (project.imagePossibleUndoCount == 1) {
         if (project.handoverPossibleImageToVideoFlag) {
             imagePossibleUndoCount = 0
-            videoFolInPtr = ((project.videoFolInPtr - 2 + project.totalVideoFolderSet) % project.totalVideoFolderSet) + 1;
             imagePossibleRedoCount = project.imagePossibleRedoCount + 1;
 
             curDisplayThumbnailFolType = VideoFolderSet;
-            curDisplayThumbnailFolPtr = videoFolInPtr;
+            curDisplayThumbnailFolPtr = project.videoFolInPtr;
 
             curDisplayPreviewFolType = VideoFolderSet;
-            curDisplayPreviewFolPtr = videoFolInPtr;
+            curDisplayPreviewFolPtr = project.videoFolInPtr;
 
             curProcessingPreviewSourceFolType = VideoFolderSet;
-            curProcessingPreviewSourceFolPtr = videoFolInPtr;
+            curProcessingPreviewSourceFolPtr = project.videoFolInPtr;
 
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
@@ -268,7 +267,7 @@ const applyUndoAction = async (id, userId) => {
             imagePossibleUndoCount = project.imagePossibleUndoCount - 1;
             imagePossibleRedoCount = project.imagePossibleRedoCount + 1;
             videoPossibleRedoCount = project.videoPossibleRedoCount
-            imageFolInPtr = ((project.imageFolInPtr - 2 + project.totalImageFolderSet) % project.totalImageFolderSet) + 1;
+            imageFolInPtr = (((project.imageFolInPtr - 2) + project.totalImageFolderSet) % project.totalImageFolderSet) + 1;
 
             curDisplayPreviewFolType = ImageFolderSet;
             curDisplayPreviewFolPtr = imageFolInPtr;
@@ -284,7 +283,7 @@ const applyUndoAction = async (id, userId) => {
         if ((project.handoverPossibleImageToVideoFlag) && (project.videoPossibleUndoCount > 0)) {
             videoPossibleUndoCount = project.videoPossibleUndoCount - 1;
             videoPossibleRedoCount = project.videoPossibleRedoCount + 1;
-            videoFolInPtr = ((project.videoFolInPtr - 2 + project.totalVideoFolderSet) % project.totalVideoFolderSet) + 1;
+            videoFolInPtr = (((project.videoFolInPtr - 2) + project.totalVideoFolderSet) % project.totalVideoFolderSet) + 1;
 
             curDisplayThumbnailFolType = VideoFolderSet;
             curDisplayThumbnailFolPtr = videoFolInPtr;
