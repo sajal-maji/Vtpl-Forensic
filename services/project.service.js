@@ -540,7 +540,7 @@ const discardImage = async (id) => {
         return {
             statusCode: 404,
             status: 'Failed',
-            message: 'Image undo not possible'
+            message: 'Image discard not possible as undo count disable'
         };
     }
 };

@@ -93,6 +93,36 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
 
 };
 
+ const copyFolderExcluding = async(sourceDir, destDir, exclude = []) =>{
+    try {
+        const items = await fs.promises.readdir(sourceDir);
+
+        await Promise.all(
+            items.map(async (item) => {
+                const srcPath = path.join(sourceDir, item);
+                const destPath = path.join(destDir, item);
+                if (fs.existsSync(srcPath) && !exclude.includes(item)) {
+                    fsExtra.copy(srcPath, destPath, (err) => {
+                        if (err) {
+                            console.log('Error copying the file:', err);
+                        } else {
+                            console.log('File copied successfully.');
+                        }
+                    });
+                } else {
+                    console.log(`File not found: ${srcPath}`);
+                }
+                
+            })
+            
+        );
+        
+    } catch (error) {
+        console.log('Error copying folder:', error);
+    }
+}
+
+
 const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response) => {
         const rootPath = `${req.user.id}/${id}`;
         let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_1.png';
@@ -623,5 +653,6 @@ module.exports = {
     folderPath,
     savePointer,
     cloneImage,
-    checkFile
+    checkFile,
+    copyFolderExcluding
 }

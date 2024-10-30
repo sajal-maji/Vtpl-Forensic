@@ -4,7 +4,7 @@ const logger = require("../helpers/logEvents");
 const projectService = require("../services/project.service");
 const Imageoperation = require('../services/imageoperation.service');
 
-const { managePointer, folderPath, savePointer, cloneImage, checkFile } = require('../utils/servicePointer');
+const { managePointer, folderPath, savePointer, cloneImage, checkFile,copyFolderExcluding } = require('../utils/servicePointer');
 
 const filterOperation = async (req, res, next,requestObj,grpcServiceName,processName) => {
     logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
@@ -59,14 +59,19 @@ const filterOperation = async (req, res, next,requestObj,grpcServiceName,process
     logger.logCreate(`folderPath: imgBasePathFrom - ${imgBasePathFrom}, imgBasePathTo - ${imgBasePathTo}`, 'systemlog');
 
     const jobObj = { 
-            process_all_flag: isApplyToAll,   // Process all flag
+            process_all_flag: false,   // Process all flag
             in_img_list: frame,                // Input image list
             in_img_path: imgBasePathFrom,
             out_img_path: imgBasePathTo 
         };
     const request = Object.assign({}, requestObj, jobObj);
-    
-    
+
+    if(isApplyToAll){
+        const rootPath = `${req.user.id}/${id}`;
+        const sourceFolder = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
+        const destinationFolder = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`;
+        await copyFolderExcluding(sourceFolder, destinationFolder, frame);
+    }
    
     // Make the gRPC request to the grayscale method (modify according to your method name)
     logger.logCreate(`grpc: request - ${JSON.stringify(request)}`, 'systemlog');
