@@ -13,14 +13,18 @@ router.put('/display-selected-channels', displaySelectedChannels);
 
 
 
-const { levelControl,brightnessContrast,contrastStretch,clahe,intensityChange} = require('../controller/adjust.controller');
+const { levelControl,brightnessContrast,contrastStretch,clahe,intensityChange,hueSatValChange,saturationChange,hueChange,exposureControl,curve,histogramEqualization} = require('../controller/adjust.controller');
 router.put('/level-control', levelControl);
 router.put('/brightness-contrast', brightnessContrast);
 router.put('/contrast-stretch', contrastStretch);
 router.put('/clahe', clahe);
 router.put('/intensity-change', intensityChange);
-// router.put('/brightness-contrast', contrastStretch);
-// router.put('/brightness-contrast', contrastStretch);
+router.put('/hue-sat-val-change', hueSatValChange);
+router.put('/saturation-change', saturationChange);
+router.put('/hue-change', hueChange);
+router.put('/exposure-control', exposureControl);
+router.put('/curve', curve);
+router.put('/histogram-equalization', histogramEqualization);
 
  
 module.exports = router;

@@ -56,7 +56,7 @@ const clahe = async (req, res, next) => {
             grid_row : gridRow,
             grid_col : gridCol,
         };
-        const response = await filterOperation(req,res,next, requestObj,'ClaheFilter');
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'ClaheFilter');
         res.status(201).json(response);
 
     } catch (error) {
@@ -78,12 +78,103 @@ const intensityChange = async (req, res, next) => {
     }
 };
 
+const hueSatValChange = async (req, res, next) => {
+    try {
+        const {hueDegreeChange,saturationTimesChange,intensityValueAmountChange} = req.body;
+        const requestObj = {
+            hue_degree_change : hueDegreeChange,
+            saturation_times_change : saturationTimesChange,
+            intensity_value_amount_change : intensityValueAmountChange,
+        };
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'HueSatValChangeFilter');
+        res.status(201).json(response);
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+const saturationChange = async (req, res, next) => {
+    try {
+        const {saturationTimesChange} = req.body;
+        const requestObj = {
+          saturation_times_change : saturationTimesChange,
+        };
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'SaturationChangeFilter');
+        res.status(201).json(response);
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+const hueChange = async (req, res, next) => {
+    try {
+        const {hueDegreeChange} = req.body;
+        const requestObj = {
+          hue_degree_change : hueDegreeChange,
+        };
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'HueChangeFilter');
+        res.status(201).json(response);
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+const exposureControl = async (req, res, next) => {
+    try {
+        const requestObj = {};
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'ExposureControlFilter');
+        res.status(201).json(response);
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+const curve = async (req, res, next) => {
+    try {
+        const {curveXList,curveYList,curveColorChRed,curveColorChGreen,curveColorChBlue} = req.body;
+        const requestObj = {
+            curve_x_list :curveXList,
+            curve_y_list : curveYList,
+            curve_color_ch_red : curveColorChRed,
+            curve_color_ch_green : curveColorChGreen,
+            curve_color_ch_blue : curveColorChBlue
+        };
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'CurveFilter');
+        res.status(201).json(response);
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+const histogramEqualization = async (req, res, next) => {
+    try {
+        const {histogramCalcOnFullImgFlag,inStRow,inEnRow,inStCol,inEnCol} = req.body;
+        const requestObj = {
+                histogram_calc_on_full_img_flag : histogramCalcOnFullImgFlag,
+                in_st_row : inStRow,
+                in_en_row : inEnRow,
+                in_st_col : inStCol,
+                in_en_col : inEnCol,
+        };
+        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'HistogramEqualizationFilter');
+        res.status(201).json(response);
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
 
 module.exports = {
     levelControl,
     brightnessContrast,
     contrastStretch,
     clahe,
-    intensityChange
+    intensityChange,
+    hueSatValChange,
+    saturationChange,
+    hueChange,
+    exposureControl,
+    curve,
+    histogramEqualization
 }
 
