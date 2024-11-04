@@ -156,6 +156,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         curProcessingPreviewSourceFolPtr: proDetails.curProcessingPreviewSourceFolPtr,
         curProcessingPreviewDestinationFolType: proDetails.curProcessingPreviewDestinationFolType,
         curProcessingPreviewDestinationFolPtr: proDetails.curProcessingPreviewDestinationFolPtr,
+        refreshThumbnailFlag:proDetails.refreshThumbnailFlag,
 
     }
     logger.logCreate(`savepointer: response ${JSON.stringify(proArr)}`, 'systemlog');
@@ -224,7 +225,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         const newFileName = timestamp + 'new_frame_name.png'; // Replace this with the new file name
         // const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
         const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
-        // frameName = newFileName
+        frameName = newFileName
         project = await Project.findByIdAndUpdate(id, { 'currentPreviewFrameId': frameName }, { new: true });
         // Rename the file
 
@@ -235,6 +236,14 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         //         console.log(`File renamed successfully from ${frameName} to ${newFileName}`);
         //     }
         // });
+
+        fsExtra.copy(oldFilePath, newFilePath, (err) => {
+                        if (err) {
+                            console.error('Error copying the file:', err);
+                        } else {
+                            console.log('File copied successfully.');
+                        }
+                    });
     }
 
 

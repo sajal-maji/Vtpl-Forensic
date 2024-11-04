@@ -553,15 +553,15 @@ const saveImage = async (req, id) => {
             message: 'Data not found'
         };
     }
-    const imagePossibleUndoCount = 0
-    const videoPossibleRedoCount = 0
-    const imagePossibleRedoCount = 0
-    const operatePossibleOnVideoFlag = true
-    const handoverPossibleImageToVideoFlag = true
+    // const imagePossibleUndoCount = 0
+    // const videoPossibleRedoCount = 0
+    // const imagePossibleRedoCount = 0
+    // const operatePossibleOnVideoFlag = true
+    // const handoverPossibleImageToVideoFlag = true
 
     const rootPath = `${req.user.id}/${id}`;
 
-    fsExtra.copy(`public/${rootPath}/${ImageFolderSet}/${project.imageFolInPtr}/${project.currentFrameId}.png`, `public/${rootPath}/snap/${project.currentFrameId}.png`, (err) => {
+    fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${project.currentFrameId}`, `public/${rootPath}/snap/${project.currentFrameId}`, (err) => {
         if (err) {
             console.log('Error copying the file:', err);
         } else {
@@ -569,32 +569,32 @@ const saveImage = async (req, id) => {
         }
     });
 
-    for (var i = 1; i <= project.totalImageFolderSet; i++) {
-        const sourcePath = `public/${rootPath}/${VideoFolderSet}/${i}/${project.currentFrameId}.png`;
-        const destPath = `public/${rootPath}/${ImageFolderSet}/${i}/${project.currentFrameId}.png`;
-        if (fs.existsSync(sourcePath)) {
-            fsExtra.copy(sourcePath, destPath, (err) => {
-                if (err) {
-                    console.error('Error copying the file:', err);
-                } else {
-                    console.log(sourcePath);
-                }
-            });
-        } else {
-            console.log(`File not found: ${sourcePath}`);
-        }
-    }
+    // for (var i = 1; i <= project.totalImageFolderSet; i++) {
+    //     const sourcePath = `public/${rootPath}/${VideoFolderSet}/${i}/${project.currentFrameId}.png`;
+    //     const destPath = `public/${rootPath}/${ImageFolderSet}/${i}/${project.currentFrameId}.png`;
+    //     if (fs.existsSync(sourcePath)) {
+    //         fsExtra.copy(sourcePath, destPath, (err) => {
+    //             if (err) {
+    //                 console.error('Error copying the file:', err);
+    //             } else {
+    //                 console.log(sourcePath);
+    //             }
+    //         });
+    //     } else {
+    //         console.log(`File not found: ${sourcePath}`);
+    //     }
+    // }
 
-    const projectUpdate = await Project.findByIdAndUpdate(id, {
-        imagePossibleUndoCount,
-        videoPossibleRedoCount,
-        imagePossibleRedoCount,
-        operatePossibleOnVideoFlag,
-        handoverPossibleImageToVideoFlag,
-        'srcFolType': VideoFolderSet,
-        'srcFolPtr': projectUpdate.videoFolInPtr,
-        'refreshThumbnail': false,
-    }, { new: true });
+    // const projectUpdate = await Project.findByIdAndUpdate(id, {
+    //     imagePossibleUndoCount,
+    //     videoPossibleRedoCount,
+    //     imagePossibleRedoCount,
+    //     operatePossibleOnVideoFlag,
+    //     handoverPossibleImageToVideoFlag,
+    //     'srcFolType': VideoFolderSet,
+    //     'srcFolPtr': projectUpdate.videoFolInPtr,
+    //     'refreshThumbnail': false,
+    // }, { new: true });
 
     return {
         statusCode: 200,
