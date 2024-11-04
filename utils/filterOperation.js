@@ -1,14 +1,14 @@
-const { channelServiceClient,adjustServiceClient } = require('../grpcClient');
+const { channelServiceClient, adjustServiceClient } = require('../grpcClient');
 const Project = require('../model/projects.model');
 const logger = require("../helpers/logEvents");
 const projectService = require("../services/project.service");
 const Imageoperation = require('../services/imageoperation.service');
 
-const { managePointer, folderPath, savePointer, cloneImage, checkFile,copyFolderExcluding } = require('../utils/servicePointer');
+const { managePointer, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
 
-const filterOperation = async (req, res, next,requestObj,grpcServiceName,processName) => {
+const filterOperation = async (req, res, next, requestObj, grpcServiceName, processName) => {
     logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
-    const { projectId: id, isApplyToAll, frame, isPreview} = req.body;
+    const { projectId: id, isApplyToAll, frame, isPreview } = req.body;
 
     const project = await Project.findById(id);
     if (!project) {
@@ -22,7 +22,9 @@ const filterOperation = async (req, res, next,requestObj,grpcServiceName,process
         logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
         const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
     }
+    console.log('11111111111111111111111111',frame)
     const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
+    console.log('2222222222222222222222222',frame)
 
     logger.logCreate(`managePointer: response ${JSON.stringify(proDetails)}`, 'systemlog');
     if (proDetails.statusCode != 200) {
@@ -34,13 +36,13 @@ const filterOperation = async (req, res, next,requestObj,grpcServiceName,process
     }
 
     const oppData = {
-        processType:(isPreview)?'preview':(isApplyToAll)?'apply_to_all':'apply_to_frame',
+        processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
         processName,
-        exeDetailsAvailFlag:(requestObj)?true:false,
-        exeDetails:JSON.stringify(requestObj)
+        exeDetailsAvailFlag: (requestObj) ? true : false,
+        exeDetails: JSON.stringify(requestObj)
     }
-    await Imageoperation.createOperation(req,oppData)
-   
+    await Imageoperation.createOperation(req, oppData)
+
     const { errStatus, message } = await checkFile(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`checkFile: response status - ${errStatus} and response message - ${message}`, 'systemlog');
 
@@ -52,32 +54,43 @@ const filterOperation = async (req, res, next,requestObj,grpcServiceName,process
         };
     }
 
-    
-   
+
 
     const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`folderPath: imgBasePathFrom - ${imgBasePathFrom}, imgBasePathTo - ${imgBasePathTo}`, 'systemlog');
+    const srcTypeLoc = (isPreview) ? proDetails.curProcessingPreviewSourceFolType : proDetails.curProcessingSourceFolType
+    console.log('33333333333333333333333333333',frame)
 
-    const jobObj = { 
-            process_all_flag: false,   // Process all flag
-            in_img_list: frame,                // Input image list
-            in_img_path: imgBasePathFrom,
-            out_img_path: imgBasePathTo 
-        };
+    let frameLoc = [];
+    console.log('4444444444444444444444444444',frameLoc)
+
+    if (isPreview && srcTypeLoc == 'temp') {
+        frameLoc[0] = proDetails.currentPreviewFrameId;
+    }
+
+    
+
+    const jobObj = {
+        process_all_flag: false,   // Process all flag
+        in_img_list: isPreview && srcTypeLoc == 'temp' ? frameLoc : frame,                // Input image list
+        in_img_path: imgBasePathFrom,
+        out_img_path: imgBasePathTo
+    };
+    
     const request = Object.assign({}, requestObj, jobObj);
 
-    if(isApplyToAll){
+    if (isApplyToAll) {
         const rootPath = `${req.user.id}/${id}`;
         const sourceFolder = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
         const destinationFolder = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`;
         await copyFolderExcluding(sourceFolder, destinationFolder, frame);
     }
-   
+
     // Make the gRPC request to the grayscale method (modify according to your method name)
     logger.logCreate(`grpc: request - ${JSON.stringify(request)}`, 'systemlog');
 
-    const responseData = await callGrpcService(grpcServiceName, processName, request,req,res,proDetails);
-        return responseData
+    const responseData = await callGrpcService(grpcServiceName, processName, request, req, res, proDetails);
+    return responseData
 
     // return new Promise(async (resolve, reject) => {
     //     channelServiceClient[processName](request, async (error, response) => {
@@ -90,14 +103,14 @@ const filterOperation = async (req, res, next,requestObj,grpcServiceName,process
     //                     message: error
     //                 });
     //             }
-              
+
 
     //             const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
 
     //             logger.logCreate(`grpc: response - ${JSON.stringify(response)}`, 'systemlog');
     //             logger.logCreate(`savePointer: response - ${JSON.stringify(colData)}`, 'systemlog');
 
-                
+
     //             resolve({
     //                 message: 'Processing successfully Done',
     //                 data: colData,
@@ -114,7 +127,7 @@ const filterOperation = async (req, res, next,requestObj,grpcServiceName,process
 
 };
 
-async function callGrpcService(grpcServiceName, processName, request,req,res,proDetails) {
+async function callGrpcService(grpcServiceName, processName, request, req, res, proDetails) {
     return new Promise((resolve, reject) => {
         if (typeof grpcServiceName[processName] !== 'function') {
             return reject(new Error(`Method ${processName} is not available on the provided gRPC service.`));
@@ -123,7 +136,7 @@ async function callGrpcService(grpcServiceName, processName, request,req,res,pro
         // Call the method dynamically if it exists
         grpcServiceName[processName](request, async (error, response) => {
             try {
-                const { projectId: id, isApplyToAll, frame, isPreview} = req.body;
+                const { projectId: id, isApplyToAll, frame, isPreview } = req.body;
                 if (error) {
                     return resolve({
                         statusCode: 404,

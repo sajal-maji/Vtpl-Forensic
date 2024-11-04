@@ -16,7 +16,6 @@ const getStatus = async (job_id, userId) => {
                 return reject({ error: 'Error fetching job status', details: error });
             }
             if (response && response.completed) {
-                await updateJobDetails(response.job_id);
                 await updateProjectDetails(response.job_id, userId);
             }
             const jobProjectDetails = await JobProject.findOne({ jobId: response.job_id });
@@ -66,15 +65,22 @@ async function updateJobDetails(jobId) {
 async function updateProjectDetails(jobId, userId) {
     const jobProjectDetails = await JobProject.findOne({ jobId: jobId });
 
+    console.log('---------------1---------------------');
+    
     if (!jobProjectDetails) {
         return;
     }
+    console.log('---------------2--------------------');
+
     let id = jobProjectDetails.projectId;
     const projectDetails = await Project.findById(id);
+    console.log('---------------3--------------------');
 
     if (!projectDetails) {
         return;
     }
+    console.log('---------------4-------------------');
+
     let processingGoingOnVideoOrFrameFlag = false;
 
     let curDisplayThumbnailFolType = projectDetails.VideoFolderSet;
@@ -84,8 +90,12 @@ async function updateProjectDetails(jobId, userId) {
     if (projectDetails.processingGoingOnVideoNotFrame) {
         refreshThumbnailFlag = true;
     }
+    console.log('---------------5--------------------',projectDetails.curDisplayPreviewFolPtr);
 
-    if (projectDetails.curDisplayPreviewFolPtr === 2) {
+
+    if (projectDetails.curDisplayPreviewFolPtr == 2) {
+    console.log('---------------6--------------------');
+
         copyImage(projectDetails.currentFrameId, id, userId, {
             folderType: TempFolder,
             folderPtr: 2
@@ -96,7 +106,7 @@ async function updateProjectDetails(jobId, userId) {
         curDisplayPreviewFolType = TempFolder;
         curDisplayPreviewFolPtr = 1;
     } else {
-        if (projectDetails.processingGoingOnVideoNotFrame === true) {
+        if (projectDetails.processingGoingOnVideoNotFrame == true) {
             curDisplayPreviewFolType = VideoFolderSet;
             curDisplayPreviewFolPtr = projectDetails.videoFolInPtr;
         } else {
