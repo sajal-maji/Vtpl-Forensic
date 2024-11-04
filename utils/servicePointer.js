@@ -24,7 +24,7 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
         }
 
         const defaultImg = (frame) ? frame[0] : project.currentFrameId;
-
+        console.log("111111111111110000000000000"+defaultImg)
         if (isPreview) {
             const preViewData = await preview(project, id, req, defaultImg);
             logger.logCreate(`managePointer: with priview data ${JSON.stringify(preViewData)}`, 'systemlog');
@@ -164,14 +164,17 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
     let project = ''
     if (isPreview) {
         project = await Project.findByIdAndUpdate(id, proArr, { new: true });
-        logger.changePointer(req.user.id, id, 'preview', 'pointerDetails');
+        logger.changePointer(req.user.id, id, 'PW', 'pointerDetails');
         // logger.changePointer(id, 'Preview', 'pointerDetails');
     } else {
         const jobArr = { jobId: response.job_id, projectId: id };
         const mergedArr = Object.assign({}, proArr, jobArr);
         await Project.findByIdAndUpdate(id, proArr, { new: true });
-        logger.changePointer(req.user.id, id, 'Before job complete', 'pointerDetails');
-
+        if (isApplyToAll) {
+            logger.changePointer(req.user.id, id, 'AA', 'pointerDetails');
+        } else {
+            logger.changePointer(req.user.id, id, 'AF', 'pointerDetails');
+        }
         project = new JobProject(mergedArr);
         await project.save();
         // if (isApplyToAll) {
@@ -214,21 +217,24 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         await new Promise((resolve) => setTimeout(resolve, 500));
         const rootPath = `${req.user.id}/${id}`;
         const timestamp = Date.now();
+        // if (proDetails.curProcessingPreviewSourceFolType == 'temp') {
+        //     frameName = proDetails.currentPreviewFrameId;
+        // }
         const oldFilePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`;
         const newFileName = timestamp + 'new_frame_name.png'; // Replace this with the new file name
         // const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
         const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
-        frameName = newFileName
+        // frameName = newFileName
         project = await Project.findByIdAndUpdate(id, { 'currentPreviewFrameId': frameName }, { new: true });
         // Rename the file
 
-        fs.rename(oldFilePath, newFilePath, (err) => {
-            if (err) {
-                console.log(`Error renaming file from ${oldFilePath} to ${newFilePath}:`, err);
-            } else {
-                console.log(`File renamed successfully from ${frameName} to ${newFileName}`);
-            }
-        });
+        // fs.rename(oldFilePath, newFilePath, (err) => {
+        //     if (err) {
+        //         console.log(`Error renaming file from ${oldFilePath} to ${newFilePath}:`, err);
+        //     } else {
+        //         console.log(`File renamed successfully from ${frameName} to ${newFileName}`);
+        //     }
+        // });
     }
 
 
@@ -364,11 +370,11 @@ const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
         // let imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
         // let imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
 
-
         const srcType = (isPreview) ? proDetails.curProcessingPreviewSourceFolType : proDetails.curProcessingSourceFolType
         const srcPtr = (isPreview) ? proDetails.curProcessingPreviewSourceFolPtr : proDetails.curProcessingSourceFolPtr
         const rootPath = `${req.user.id}/${id}`;
-        if (!fs.existsSync(`public/${rootPath}/${srcType}/${srcPtr}/${proDetails.curFrameId}`)) {
+        const frameId = (isPreview && srcType == 'temp') ? proDetails.currentPreviewFrameId : proDetails.curFrameId
+        if (!fs.existsSync(`public/${rootPath}/${srcType}/${srcPtr}/${frameId}`)) {
 
             // const project = await Project.findByIdAndUpdate(id, {
             //     'imageFolInPtr': (proDetails.curProcessingSourceFolType == 'image' && (proDetails.curProcessingSourceFolPtr > 1)) ? proDetails.curProcessingSourceFolPtr - 1 : proDetails.curProcessingSourceFolPtr,
@@ -378,13 +384,13 @@ const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
 
             return {
                 errStatus: true,
-                message: `Image file not found: public/${rootPath}/${srcType}/${srcPtr}/${proDetails.curFrameId}`
+                message: `Image file not found: public/${rootPath}/${srcType}/${srcPtr}/${frameId}`
             };
 
         } else {
             return {
                 status: false,
-                message: `Image file not found: public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${proDetails.curFrameId}`
+                message: `Image file not found: public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${frameId}`
             };
         }
 
@@ -437,6 +443,10 @@ const preview = async (project, id, req, defaultImg) => {
             curProcessingPreviewSourceFolPtr: project.curProcessingPreviewSourceFolPtr,
             curProcessingPreviewDestinationFolType: project.curProcessingPreviewDestinationFolType,
             curProcessingPreviewDestinationFolPtr: project.curProcessingPreviewDestinationFolPtr,
+
+            currentPreviewFrameId : project.currentPreviewFrameId,
+            
+            refreshThumbnailFlag : false
         }
     });
 };
@@ -474,7 +484,6 @@ const applyToAll = async (project, defaultImg) => {
         curProcessingPreviewDestinationFolPtr = 2
 
 
-
         return ({
             'proDetails': {
                 'statusCode': 200,
@@ -508,6 +517,7 @@ const applyToAll = async (project, defaultImg) => {
                 curProcessingPreviewSourceFolPtr,
                 curProcessingPreviewDestinationFolType,
                 curProcessingPreviewDestinationFolPtr,
+                currentPreviewFrameId : project.currentPreviewFrameId
             }
         });
     } else {
@@ -587,6 +597,8 @@ const applyToFrame = async (project, defaultImg) => {
                 curProcessingPreviewDestinationFolType,
                 curProcessingPreviewDestinationFolPtr,
 
+                currentPreviewFrameId : project.currentPreviewFrameId
+
             }
         })
     } else {
@@ -641,6 +653,8 @@ const applyToFrame = async (project, defaultImg) => {
                 curProcessingPreviewSourceFolPtr,
                 curProcessingPreviewDestinationFolType,
                 curProcessingPreviewDestinationFolPtr,
+
+                currentPreviewFrameId : project.currentPreviewFrameId
             }
         })
 

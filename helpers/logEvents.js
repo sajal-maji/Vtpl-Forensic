@@ -31,7 +31,19 @@ const changePointer = async function (userId, id, msg, logfile = 'systemlog.text
         };
     }
     let jsonData = {
+        'call_number': 1,
+        'process_no': 1,
+        'process_name': msg,
+        'Response' : 'Possible',
         'currentFrameId': projectDetails.currentFrameId,
+        'undoVideoLimit' : projectDetails.undoVideoLimit,
+        'undoImageLimit' : projectDetails.undoImageLimit,
+        'videoFolInPtr' : projectDetails.videoFolInPtr,
+        'imageFolInPtr' : projectDetails.imageFolInPtr,
+        'videoPossibleUndoCount': projectDetails.videoPossibleUndoCount,
+        'imagePossibleUndoCount': projectDetails.imagePossibleUndoCount,
+        'videoPossibleRedoCount': projectDetails.videoPossibleRedoCount,
+        'imagePossibleRedoCount': projectDetails.imagePossibleRedoCount,
         'curDisplayThumbnailFolType': projectDetails.curDisplayThumbnailFolType,
         'curDisplayThumbnailFolPtr': projectDetails.curDisplayThumbnailFolPtr,
         'curDisplayPreviewFolType': projectDetails.curDisplayPreviewFolType,
@@ -44,10 +56,13 @@ const changePointer = async function (userId, id, msg, logfile = 'systemlog.text
         'curProcessingPreviewSourceFolPtr': projectDetails.curProcessingPreviewSourceFolPtr,
         'curProcessingPreviewDestinationFolType': projectDetails.curProcessingPreviewDestinationFolType,
         'curProcessingPreviewDestinationFolPtr': projectDetails.curProcessingPreviewDestinationFolPtr,
-        'videoPossibleUndoCount': projectDetails.videoPossibleUndoCount,
-        'videoPossibleRedoCount': projectDetails.videoPossibleRedoCount,
-        'imagePossibleUndoCount': projectDetails.imagePossibleUndoCount,
-        'imagePossibleRedoCount': projectDetails.imagePossibleRedoCount,
+        'operatePossibleOnVideoFlag': projectDetails.operatePossibleOnVideoFlag,
+        'handoverPossibleImageToVideoFlag': projectDetails.handoverPossibleImageToVideoFlag,
+        'processingGoingOnVideoOrFrameFlag': projectDetails.processingGoingOnVideoOrFrameFlag,
+        'processingGoingOnVideoNotFrame': projectDetails.processingGoingOnVideoNotFrame,
+        'refreshThumbnailFlag': projectDetails.refreshThumbnailFlag,
+        'videoToFrameWarningPopUp': projectDetails.videoToFrameWarningPopUp,
+
     }
     let msgWithData = `${msg} - ${JSON.stringify(jsonData)}`;
     const currentDate = new Date();
