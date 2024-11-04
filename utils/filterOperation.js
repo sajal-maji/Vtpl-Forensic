@@ -72,7 +72,8 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
 
     const jobObj = {
         process_all_flag: false,   // Process all flag
-        in_img_list: isPreview && srcTypeLoc == 'temp' ? frameLoc : frame,                // Input image list
+        // in_img_list: isPreview && srcTypeLoc == 'temp' ? frameLoc : frame,  
+        in_img_list: frame,                 // Input image list
         in_img_path: imgBasePathFrom,
         out_img_path: imgBasePathTo
     };

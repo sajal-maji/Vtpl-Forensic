@@ -142,7 +142,7 @@ const projectsSchema = new mongoose.Schema({
     },
     videoToFrameWarningPopUp: {
         type: Boolean,
-        default: true
+        default: false
     },
     isDeleted: {
         type: String
