@@ -26,5 +26,9 @@ router.put('/exposure-control', exposureControl);
 router.put('/curve', curve);
 router.put('/histogram-equalization', histogramEqualization);
 
+const { negativeFilter, thresholdFilter} = require('../controller/extract.controller');
+router.put('/negative-filter', negativeFilter);
+router.put('/threshold-filter', thresholdFilter);
+
  
 module.exports = router;
