@@ -30,8 +30,15 @@ const adjustServiceClient = new grpcPackage.AdjustService(
     grpc.credentials.createInsecure() // Use insecure credentials for local testing
 );
 
+// Create the gRPC client for ExtractService
+const ExtractServiceClient = new grpcPackage.ExtractService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
 // Export the clients
 module.exports = {
     channelServiceClient,
-    adjustServiceClient
+    adjustServiceClient,
+    ExtractServiceClient
 };

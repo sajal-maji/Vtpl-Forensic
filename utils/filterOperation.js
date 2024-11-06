@@ -41,7 +41,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         exeDetailsAvailFlag: (requestObj) ? true : false,
         exeDetails: JSON.stringify(requestObj)
     }
-    await Imageoperation.createOperation(req, oppData)
+    
 
     const { errStatus, message } = await checkFile(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`checkFile: response status - ${errStatus} and response message - ${message}`, 'systemlog');
@@ -54,7 +54,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         };
     }
 
-
+    await Imageoperation.createOperation(req, oppData)
 
     const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`folderPath: imgBasePathFrom - ${imgBasePathFrom}, imgBasePathTo - ${imgBasePathTo}`, 'systemlog');
@@ -72,6 +72,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
 
     const jobObj = {
         process_all_flag: false,   // Process all flag
+        is_preview_flag: isPreview,
         // in_img_list: isPreview && srcTypeLoc == 'temp' ? frameLoc : frame,  
         in_img_list: frame,                 // Input image list
         in_img_path: imgBasePathFrom,
