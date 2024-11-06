@@ -237,7 +237,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         //     }
         // });
 
-        fsExtra.copy(oldFilePath, newFilePath, (err) => {
+        fsExtra.copy(oldFilePath, newFileName, (err) => {
                         if (err) {
                             console.error('Error copying the file:', err);
                         } else {

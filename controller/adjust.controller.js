@@ -121,7 +121,10 @@ const hueChange = async (req, res, next) => {
 };
 const exposureControl = async (req, res, next) => {
     try {
-        const requestObj = {};
+        const {exposureTimes} = req.body;
+        const requestObj = {
+            exposure_times:exposureTimes
+        };
         const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'ExposureControlFilter');
         res.status(201).json(response);
 
