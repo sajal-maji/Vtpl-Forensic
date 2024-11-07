@@ -316,7 +316,7 @@ const saveSnapImage = async (req, res, next) => {
 const resetPointer = async (req, res, next) => {
     const { projectId: id,updateData } = req.body;
     try {
-        const updatePointer = await projectService.resetPointer(id,updateData);
+        const updatePointer = await projectService.resetPointer(req.user.id,id,updateData);
         res.status(201).json(updatePointer)
     } catch (error) {
         next(error);
