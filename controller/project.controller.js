@@ -15,9 +15,9 @@ const createProject = async (req, res, next) => {
     const { projectName, catId } = req.body;
     try {
         const response = await projectService.createProject(req, catId, projectName);
-        res.status(201).json(response);
+        res.status(200).json(response);
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
@@ -25,9 +25,9 @@ const updateProject = async (req, res, next) => {
     const { id, projectName } = req.body;
     try {
         const response = await projectService.updateProject(id, projectName);
-        res.status(201).json(response);
+        res.status(200).json(response);
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
@@ -35,9 +35,9 @@ const deleteProject = async (req, res, next) => {
     const { projectId: id } = req.body;
     try {
         const response = await projectService.deleteProject(id);
-        res.status(201).json(response);
+        res.status(200).json(response);
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
@@ -78,7 +78,7 @@ const uploadFiles = async (req, res, next) => {
         })
         await project.save();
 
-        
+
         const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
         const rootPath = `${req.user.id}/${project.id}`;
         const baseUrl = `${process.env.BASE_URL}:${process.env.PORT}/`;
@@ -87,7 +87,7 @@ const uploadFiles = async (req, res, next) => {
         createFolder(`${basePath}/snap`);
         createFolder(`${basePath}/temp/1`);
         createFolder(`${basePath}/temp/2`);
-        
+
 
         for (let i = 1; i <= project.totalVideoFolderSet; i++) {
             const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
@@ -220,7 +220,7 @@ const uploadFiles = async (req, res, next) => {
                         'projectDetails': JSON.stringify(projectDetails)
                     }, { new: true });
 
-                res.status(201).json({
+                res.status(200).json({
                     statusCode: 200,
                     status: 'Success',
                     message: 'Video uploaded and processed successfully.',
@@ -252,9 +252,9 @@ const getProjectByCat = async (req, res, next) => {
     const { catId } = req.query;
     try {
         const projectList = await projectService.projectList(req, catId);
-        res.status(201).json(projectList)
+        res.status(200).json(projectList)
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
@@ -262,9 +262,9 @@ const getProjectDetails = async (req, res, next) => {
     const { projectId: id } = req.query;
     try {
         const projectDetails = await projectService.projectDetails(req, id);
-        res.status(201).json(projectDetails)
+        res.status(200).json(projectDetails)
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
@@ -277,9 +277,9 @@ const getAction = async (req, res, next) => {
         } else if (actionType === 'redo') {
             applyChanges = await projectService.applyRedoAction(id, req.user.id);
         }
-        res.status(201).json(applyChanges)
+        res.status(200).json(applyChanges)
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
@@ -287,9 +287,9 @@ const selectFream = async (req, res, next) => {
     const { projectId: id, frameId } = req.body;
     try {
         const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frameId);
-        res.status(201).json(selectThumbnailFrame)
+        res.status(200).json(selectThumbnailFrame)
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
@@ -297,9 +297,9 @@ const discardFream = async (req, res, next) => {
     const { projectId: id } = req.body;
     try {
         const discardImage = await projectService.discardImage(id);
-        res.status(201).json(discardImage)
+        res.status(200).json(discardImage)
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
@@ -307,19 +307,19 @@ const saveSnapImage = async (req, res, next) => {
     const { projectId: id } = req.body;
     try {
         const saveImage = await projectService.saveImage(req, id);
-        res.status(201).json(saveImage)
+        res.status(200).json(saveImage)
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
 const resetPointer = async (req, res, next) => {
-    const { projectId: id,updateData } = req.body;
+    const { projectId: id, updateData } = req.body;
     try {
-        const updatePointer = await projectService.resetPointer(req.user.id,id,updateData);
-        res.status(201).json(updatePointer)
+        const updatePointer = await projectService.resetPointer(req.user.id, id, updateData);
+        res.status(200).json(updatePointer)
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 

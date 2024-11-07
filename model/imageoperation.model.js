@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
 const imageoperationSchema = new mongoose.Schema({
+    projectId: {
+        type: String
+    },
     processIndex: {
         type: Number, default: 1 
     },

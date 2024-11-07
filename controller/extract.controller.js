@@ -5,13 +5,12 @@ const negativeFilter = async (req, res, next) => {
     try {
         const requestObj = {};
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'NegativeFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
-
 
 const thresholdFilter = async (req, res, next) => {
     try {
@@ -21,14 +20,12 @@ const thresholdFilter = async (req, res, next) => {
             threshold_level: thresholdLevel      
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ThresholdFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
-
-
 
 const adaptiveThreshold = async (req, res, next) => {
     try {
@@ -39,7 +36,7 @@ const adaptiveThreshold = async (req, res, next) => {
             adaptive_threshold_option: adaptiveThresholdOption      
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'AdaptiveThresholdFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -53,7 +50,7 @@ const laplace = async (req, res, next) => {
             in_kernal_size: inKernalSize,
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'LaplaceFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -65,7 +62,7 @@ const prewitt = async (req, res, next) => {
         const requestObj = {
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'PrewittFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -79,7 +76,7 @@ const sobel = async (req, res, next) => {
             in_kernal_size: inKernalSize,    
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'SobelFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -91,7 +88,7 @@ const scharr = async (req, res, next) => {
         const requestObj = {
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ScharrFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -106,7 +103,7 @@ const canny = async (req, res, next) => {
             in_rejection_upper_level: inRejectionUpperLevel      
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'CannyFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -123,7 +120,7 @@ const linearFilter = async (req, res, next) => {
             kernal_request_format:kernalRequestFormat   
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'LinearFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -138,13 +135,12 @@ const biLinear = async (req, res, next) => {
             in_kernal_2: inKernalTwo,
         }
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'BiLinearFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
-
 
 const channelSelector = async (req, res, next) => {
     try {
@@ -156,7 +152,7 @@ const channelSelector = async (req, res, next) => {
             in_spread_color: inSpreadColor
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ChannelSelectorFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -173,7 +169,7 @@ const channelDemux = async (req, res, next) => {
             in_filter_power:inFilterPower      
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ChannelDemuxFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -188,7 +184,7 @@ const fourier = async (req, res, next) => {
             in_clarity_strength : inClarityStrength
         };
         const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'FourierFilter');
-        res.status(201).json(response);
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });

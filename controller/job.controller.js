@@ -7,9 +7,9 @@ const getJobStatus = async (req, res, next) => {
             return res.status(400).json({ error: 'Job ID is required' });
         }
         const response = await jobService.getStatus(job_id, req.user.id);
-        res.status(201).json(response);
+        res.status(200).json(response);
     } catch (error) {
-        next(error);
+        return res.status(500).json({ error: 'Internal server error', details: error });
     }
 };
 
