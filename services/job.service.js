@@ -61,25 +61,17 @@ async function updateJobDetails(jobId) {
     await Project.findByIdAndUpdate(id, proArr, { new: true });
 };
 
-
 async function updateProjectDetails(jobId, userId) {
     const jobProjectDetails = await JobProject.findOne({ jobId: jobId });
-
-    console.log('---------------1---------------------');
-    
     if (!jobProjectDetails) {
         return;
     }
-    console.log('---------------2--------------------');
 
     let id = jobProjectDetails.projectId;
     const projectDetails = await Project.findById(id);
-    console.log('---------------3--------------------');
-
     if (!projectDetails) {
         return;
     }
-    console.log('---------------4-------------------');
 
     let processingGoingOnVideoOrFrameFlag = false;
 
@@ -90,12 +82,8 @@ async function updateProjectDetails(jobId, userId) {
     if (projectDetails.processingGoingOnVideoNotFrame) {
         refreshThumbnailFlag = true;
     }
-    console.log('---------------5--------------------',projectDetails.curDisplayPreviewFolPtr);
-
 
     if (projectDetails.curDisplayPreviewFolPtr == 2) {
-    console.log('---------------6--------------------');
-
         copyImage(projectDetails.currentFrameId, id, userId, {
             folderType: TempFolder,
             folderPtr: 2

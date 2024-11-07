@@ -24,7 +24,6 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
         }
 
         const defaultImg = (frame) ? frame[0] : project.currentFrameId;
-        console.log("111111111111110000000000000"+defaultImg)
         if (isPreview) {
             const preViewData = await preview(project, id, req, defaultImg);
             logger.logCreate(`managePointer: with priview data ${JSON.stringify(preViewData)}`, 'systemlog');
@@ -130,7 +129,6 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
     // if(!isPreview){
 
     // if(isApplyToAll){
-    console.log("sssssssssssssssso" + proDetails.operatePossibleOnVideoFlag)
     const proArr = {
         'currentFrameId': frameName,
         imageFolInPtr: proDetails.imageFolInPtr,
@@ -166,7 +164,6 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
     if (isPreview) {
         project = await Project.findByIdAndUpdate(id, proArr, { new: true });
         logger.changePointer(req.user.id, id, 'PW', 'pointerDetails');
-        // logger.changePointer(id, 'Preview', 'pointerDetails');
     } else {
         const jobArr = { jobId: response.job_id, projectId: id };
         const mergedArr = Object.assign({}, proArr, jobArr);
@@ -178,11 +175,6 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         }
         project = new JobProject(mergedArr);
         await project.save();
-        // if (isApplyToAll) {
-        //     logger.changePointer(id, 'Apply to all', 'pointerDetails');
-        // } else {
-        //     logger.changePointer(id, 'Apply to frame', 'pointerDetails');
-        // }
     }
 
 
@@ -215,7 +207,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
     // }else{
 
     if (isPreview) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 800));
         const rootPath = `${req.user.id}/${id}`;
         const timestamp = Date.now();
         // if (proDetails.curProcessingPreviewSourceFolType == 'temp') {
@@ -237,13 +229,15 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         //     }
         // });
 
-        fsExtra.copy(oldFilePath, newFileName, (err) => {
-                        if (err) {
-                            console.error('Error copying the file:', err);
-                        } else {
-                            console.log('File copied successfully.');
-                        }
-                    });
+        fsExtra.copy(oldFilePath, newFilePath, (err) => {
+            if (err) {
+                logger.logCreate(`copyimage: response ${err}`, 'systemlog');
+                console.error('Error copying the file:', err);
+            } else {
+                logger.logCreate(`copyimage: response success`, 'systemlog');
+                console.log('File copied successfully.');
+            }
+        });
     }
 
 
@@ -270,9 +264,6 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
 
     // Proceed with logic to manage pointer if the filter exists
     // Your pointer management logic goes here...
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    console.log('step3', response)
     return {
         'colData': {
             job_id: response.job_id,
@@ -453,9 +444,7 @@ const preview = async (project, id, req, defaultImg) => {
             curProcessingPreviewDestinationFolType: project.curProcessingPreviewDestinationFolType,
             curProcessingPreviewDestinationFolPtr: project.curProcessingPreviewDestinationFolPtr,
 
-            currentPreviewFrameId : project.currentPreviewFrameId,
-            
-            refreshThumbnailFlag : false
+            currentPreviewFrameId : project.currentPreviewFrameId
         }
     });
 };
@@ -556,9 +545,7 @@ const applyToFrame = async (project, defaultImg) => {
     curProcessingPreviewDestinationFolType = TempFolder
     curProcessingPreviewDestinationFolPtr = 2
 
-    console.log('kkkkkkkkkkkkkkkkkkkkkkkkkkk' + project.operatePossibleOnVideoFlag)
     if (project.operatePossibleOnVideoFlag) {
-        console.log("-----------------1--------------------------------")
         imageFolInPtr = 1
         imagePossibleUndoCount = 1
         operatePossibleOnVideoFlag = false
@@ -612,7 +599,6 @@ const applyToFrame = async (project, defaultImg) => {
             }
         })
     } else {
-        console.log("-----------------2--------------------------------")
         const srcImageFolInPtr = project.imageFolInPtr
         imageFolInPtr = (project.imageFolInPtr % project.totalImageFolderSet) + 1
         tempImagePossibleUndoCount = project.imagePossibleUndoCount + 1

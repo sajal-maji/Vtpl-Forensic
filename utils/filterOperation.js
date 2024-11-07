@@ -22,9 +22,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
         const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
     }
-    console.log('11111111111111111111111111',frame)
     const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
-    console.log('2222222222222222222222222',frame)
 
     logger.logCreate(`managePointer: response ${JSON.stringify(proDetails)}`, 'systemlog');
     if (proDetails.statusCode != 200) {
@@ -36,6 +34,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     }
 
     const oppData = {
+        projectId: id,
         processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
         processName,
         exeDetailsAvailFlag: (requestObj) ? true : false,
@@ -59,10 +58,8 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`folderPath: imgBasePathFrom - ${imgBasePathFrom}, imgBasePathTo - ${imgBasePathTo}`, 'systemlog');
     const srcTypeLoc = (isPreview) ? proDetails.curProcessingPreviewSourceFolType : proDetails.curProcessingSourceFolType
-    console.log('33333333333333333333333333333',frame)
 
     let frameLoc = [];
-    console.log('4444444444444444444444444444',frameLoc)
 
     if (isPreview && srcTypeLoc == 'temp') {
         frameLoc[0] = proDetails.currentPreviewFrameId;
@@ -93,40 +90,6 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
 
     const responseData = await callGrpcService(grpcServiceName, processName, request, req, res, proDetails);
     return responseData
-
-    // return new Promise(async (resolve, reject) => {
-    //     channelServiceClient[processName](request, async (error, response) => {
-    //         try {
-    //             if (error) {
-    //                 return resolve({
-    //                     statusCode: 404,
-    //                     status: 'Failed',
-    //                     // message: error.message || error
-    //                     message: error
-    //                 });
-    //             }
-
-
-    //             const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
-
-    //             logger.logCreate(`grpc: response - ${JSON.stringify(response)}`, 'systemlog');
-    //             logger.logCreate(`savePointer: response - ${JSON.stringify(colData)}`, 'systemlog');
-
-
-    //             resolve({
-    //                 message: 'Processing successfully Done',
-    //                 data: colData,
-    //                 response
-    //             });
-    //         } catch (saveError) {
-    //             reject({
-    //                 error: 'Failed to save image filter',
-    //                 details: saveError.message
-    //             });
-    //         }
-    //     });
-    // });
-
 };
 
 async function callGrpcService(grpcServiceName, processName, request, req, res, proDetails) {

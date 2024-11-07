@@ -1,18 +1,18 @@
-const {filterOperation } = require('../utils/filterOperation');
-const { adjustServiceClient } = require('../grpcClient'); 
+const { filterOperation } = require('../utils/filterOperation');
+const { adjustServiceClient } = require('../grpcClient');
 
 const levelControl = async (req, res, next) => {
     try {
-        const {inLevelSt,inLevelMid,inLevelEn,outLevelSt,outLevelEn } = req.body;
+        const { inLevelSt, inLevelMid, inLevelEn, outLevelSt, outLevelEn } = req.body;
         const requestObj = {
             in_level_st: inLevelSt,
             in_level_mid: inLevelMid,
             in_level_en: inLevelEn,
             out_level_st: outLevelSt,
-            out_level_en: outLevelEn,   
+            out_level_en: outLevelEn,
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'LevelControlFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'LevelControlFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -21,13 +21,13 @@ const levelControl = async (req, res, next) => {
 
 const brightnessContrast = async (req, res, next) => {
     try {
-        const {brightnessAmountChange,contrastChangeFactor } = req.body;
+        const { brightnessAmountChange, contrastChangeFactor } = req.body;
         const requestObj = {
-           brightness_amount_change: brightnessAmountChange,
-           contrast_change_factor: contrastChangeFactor,
+            brightness_amount_change: brightnessAmountChange,
+            contrast_change_factor: contrastChangeFactor,
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'BrightnessContrastChangeFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'BrightnessContrastChangeFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -36,12 +36,12 @@ const brightnessContrast = async (req, res, next) => {
 
 const contrastStretch = async (req, res, next) => {
     try {
-        const {inConStretchAmt } = req.body;
+        const { inConStretchAmt } = req.body;
         const requestObj = {
-            in_con_stretch_amt : inConStretchAmt,
+            in_con_stretch_amt: inConStretchAmt,
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'ContrastStretchFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'ContrastStretchFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -50,14 +50,14 @@ const contrastStretch = async (req, res, next) => {
 
 const clahe = async (req, res, next) => {
     try {
-        const {inClipLimit,gridRow,gridCol} = req.body;
+        const { inClipLimit, gridRow, gridCol } = req.body;
         const requestObj = {
-            in_clip_limit : inClipLimit,
-            grid_row : gridRow,
-            grid_col : gridCol,
+            in_clip_limit: inClipLimit,
+            grid_row: gridRow,
+            grid_col: gridCol,
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'ClaheFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'ClaheFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -66,12 +66,12 @@ const clahe = async (req, res, next) => {
 
 const intensityChange = async (req, res, next) => {
     try {
-        const {intensityValueAmountChange} = req.body;
+        const { intensityValueAmountChange } = req.body;
         const requestObj = {
-          intensity_value_amount_change : intensityValueAmountChange,
+            intensity_value_amount_change: intensityValueAmountChange,
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'IntensityChangeFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'IntensityChangeFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -80,14 +80,14 @@ const intensityChange = async (req, res, next) => {
 
 const hueSatValChange = async (req, res, next) => {
     try {
-        const {hueDegreeChange,saturationTimesChange,intensityValueAmountChange} = req.body;
+        const { hueDegreeChange, saturationTimesChange, intensityValueAmountChange } = req.body;
         const requestObj = {
-            hue_degree_change : hueDegreeChange,
-            saturation_times_change : saturationTimesChange,
-            intensity_value_amount_change : intensityValueAmountChange,
+            hue_degree_change: hueDegreeChange,
+            saturation_times_change: saturationTimesChange,
+            intensity_value_amount_change: intensityValueAmountChange,
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'HueSatValChangeFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'HueSatValChangeFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -95,12 +95,12 @@ const hueSatValChange = async (req, res, next) => {
 };
 const saturationChange = async (req, res, next) => {
     try {
-        const {saturationTimesChange} = req.body;
+        const { saturationTimesChange } = req.body;
         const requestObj = {
-          saturation_times_change : saturationTimesChange,
+            saturation_times_change: saturationTimesChange,
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'SaturationChangeFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'SaturationChangeFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -108,12 +108,12 @@ const saturationChange = async (req, res, next) => {
 };
 const hueChange = async (req, res, next) => {
     try {
-        const {hueDegreeChange} = req.body;
+        const { hueDegreeChange } = req.body;
         const requestObj = {
-          hue_degree_change : hueDegreeChange,
+            hue_degree_change: hueDegreeChange,
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'HueChangeFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'HueChangeFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -121,12 +121,12 @@ const hueChange = async (req, res, next) => {
 };
 const exposureControl = async (req, res, next) => {
     try {
-        const {exposureTimes} = req.body;
+        const { exposureTimes } = req.body;
         const requestObj = {
-            exposure_times:exposureTimes
+            exposure_times: exposureTimes
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'ExposureControlFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'ExposureControlFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -134,16 +134,16 @@ const exposureControl = async (req, res, next) => {
 };
 const curve = async (req, res, next) => {
     try {
-        const {curveXList,curveYList,curveColorChRed,curveColorChGreen,curveColorChBlue} = req.body;
+        const { curveXList, curveYList, curveColorChRed, curveColorChGreen, curveColorChBlue } = req.body;
         const requestObj = {
-            curve_x_list :curveXList,
-            curve_y_list : curveYList,
-            curve_color_ch_red : curveColorChRed,
-            curve_color_ch_green : curveColorChGreen,
-            curve_color_ch_blue : curveColorChBlue
+            curve_x_list: curveXList,
+            curve_y_list: curveYList,
+            curve_color_ch_red: curveColorChRed,
+            curve_color_ch_green: curveColorChGreen,
+            curve_color_ch_blue: curveColorChBlue
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'CurveFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'CurveFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -151,16 +151,16 @@ const curve = async (req, res, next) => {
 };
 const histogramEqualization = async (req, res, next) => {
     try {
-        const {histogramCalcOnFullImgFlag,inStRow,inEnRow,inStCol,inEnCol} = req.body;
+        const { histogramCalcOnFullImgFlag, inStRow, inEnRow, inStCol, inEnCol } = req.body;
         const requestObj = {
-                histogram_calc_on_full_img_flag : histogramCalcOnFullImgFlag,
-                in_st_row : inStRow,
-                in_en_row : inEnRow,
-                in_st_col : inStCol,
-                in_en_col : inEnCol,
+            histogram_calc_on_full_img_flag: histogramCalcOnFullImgFlag,
+            in_st_row: inStRow,
+            in_en_row: inEnRow,
+            in_st_col: inStCol,
+            in_en_col: inEnCol,
         };
-        const response = await filterOperation(req,res,next, requestObj,adjustServiceClient,'HistogramEqualizationFilter');
-        res.status(201).json(response);
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'HistogramEqualizationFilter');
+        res.status(200).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
