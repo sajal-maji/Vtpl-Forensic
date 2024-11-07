@@ -121,12 +121,16 @@ const generatePdf = async (req, res, next) => {
         const operationDetails = await pdfService.getOperationDetails(projectId);
 
         if (operationDetails && operationDetails.length > 0) {
+            let pdfDir = `public/pdfs/${projectId}_output.pdf`;
+            if (!fs.existsSync(pdfDir)) {
+                fs.mkdirSync(pdfDir, { recursive: true });
+            }
             const finalData = {
                 "processes": operationDetails,
                 "processes_meta": {
                     "input_output_image_show_report": false
                 },
-                "out_pdf_path": `path/to/output/${projectId}_output.pdf`
+                "out_pdf_path": pdfDir
             };
             // const requestObj = {
             //     sub_process_num: finalData
