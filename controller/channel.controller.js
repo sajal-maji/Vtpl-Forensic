@@ -111,28 +111,44 @@ const displaySelectedChannels = async (req, res, next) => {
     }
 };
 
-const genetarePdf = async (req, res, next) => {
+const generatePdf = async (req, res, next) => {
     try {
         const { projectId } = req.body;
+        if (!projectId) {
+            return res.status(400).json({ error: 'Project ID is required' });
+        }
+
         const operationDetails = await pdfService.getOperationDetails(projectId);
-        if (operationDetails.length > 0) {
-            let finalData = {
-                operationDetails,
+
+        if (operationDetails && operationDetails.length > 0) {
+            let pdfDir = `public/pdfs/${projectId}_output.pdf`;
+            if (!fs.existsSync(pdfDir)) {
+                fs.mkdirSync(pdfDir, { recursive: true });
+            }
+            const finalData = {
+                "processes": operationDetails,
                 "processes_meta": {
                     "input_output_image_show_report": false
                 },
-                "out_pdf_path": "path/to/output.pdf"
-            }
+                "out_pdf_path": pdfDir
+            };
             // const requestObj = {
-            //     sub_process_num: operationDetails
+            //     sub_process_num: finalData
             // };
             // const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'DisplaySelectedChannelFilter');
-            res.status(200).json(finalData);
+            return res.status(200).json(finalData);
+        } else {
+            return res.status(404).json({ message: 'No operation details found for the provided project ID' });
         }
+
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({
+            error: 'Internal server error',
+            details: error.message || error
+        });
     }
 };
+
 
 module.exports = {
     grayscaleRoute,
@@ -141,6 +157,6 @@ module.exports = {
     colorConversion,
     extractSingleChannel,
     displaySelectedChannels,
-    genetarePdf
+    generatePdf
 }
 

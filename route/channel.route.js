@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 
-const { grayscaleConversion, colorswitchConversion, colorConversion, extractSingleChannel, displaySelectedChannels, genetarePdf } = require('../controller/channel.controller');
+const { grayscaleConversion, colorswitchConversion, colorConversion, extractSingleChannel, displaySelectedChannels, generatePdf } = require('../controller/channel.controller');
 
 
 router.put('/grayscale-conversion', grayscaleConversion);
@@ -10,6 +10,7 @@ router.put('/color-conversion', colorConversion);
 router.put('/extract-single-channel', extractSingleChannel);
 router.put('/display-selected-channels', displaySelectedChannels);
 // router.put('/preview-filter', previewFilter);ColorConversionFilter
+router.put('/generate-pdf', generatePdf);
 
 
 
@@ -41,8 +42,7 @@ router.put('/canny', canny);
 router.put('/linear-filter', linearFilter);
 router.put('/biLinear', biLinear);
 router.put('/channel-selector', channelSelector);
-router.put('/generate-pdf', genetarePdf);
+router.put('/channel-demux', channelDemux);
 router.put('/fourier', fourier);
-
 
 module.exports = router;
