@@ -30,40 +30,7 @@ const changePointer = async function (userId, id, msg, logfile = 'systemlog.text
             message: 'Data not found'
         };
     }
-    let jsonData = {
-        'call_number': 1,
-        'process_no': 1,
-        'process_name': msg,
-        'Response' : 'Possible',
-        'currentFrameId': projectDetails.currentFrameId,
-        'undoVideoLimit' : projectDetails.undoVideoLimit,
-        'undoImageLimit' : projectDetails.undoImageLimit,
-        'videoFolInPtr' : projectDetails.videoFolInPtr,
-        'imageFolInPtr' : projectDetails.imageFolInPtr,
-        'videoPossibleUndoCount': projectDetails.videoPossibleUndoCount,
-        'imagePossibleUndoCount': projectDetails.imagePossibleUndoCount,
-        'videoPossibleRedoCount': projectDetails.videoPossibleRedoCount,
-        'imagePossibleRedoCount': projectDetails.imagePossibleRedoCount,
-        'curDisplayThumbnailFolType': projectDetails.curDisplayThumbnailFolType,
-        'curDisplayThumbnailFolPtr': projectDetails.curDisplayThumbnailFolPtr,
-        'curDisplayPreviewFolType': projectDetails.curDisplayPreviewFolType,
-        'curDisplayPreviewFolPtr': projectDetails.curDisplayPreviewFolPtr,
-        'curProcessingSourceFolType': projectDetails.curProcessingSourceFolType,
-        'curProcessingSourceFolPtr': projectDetails.curProcessingSourceFolPtr,
-        'curProcessingDestinationFolType': projectDetails.curProcessingDestinationFolType,
-        'curProcessingDestinationFolPtr': projectDetails.curProcessingDestinationFolPtr,
-        'curProcessingPreviewSourceFolType': projectDetails.curProcessingPreviewSourceFolType,
-        'curProcessingPreviewSourceFolPtr': projectDetails.curProcessingPreviewSourceFolPtr,
-        'curProcessingPreviewDestinationFolType': projectDetails.curProcessingPreviewDestinationFolType,
-        'curProcessingPreviewDestinationFolPtr': projectDetails.curProcessingPreviewDestinationFolPtr,
-        'operatePossibleOnVideoFlag': projectDetails.operatePossibleOnVideoFlag,
-        'handoverPossibleImageToVideoFlag': projectDetails.handoverPossibleImageToVideoFlag,
-        'processingGoingOnVideoOrFrameFlag': projectDetails.processingGoingOnVideoOrFrameFlag,
-        'processingGoingOnVideoNotFrame': projectDetails.processingGoingOnVideoNotFrame,
-        'refreshThumbnailFlag': projectDetails.refreshThumbnailFlag,
-        'videoToFrameWarningPopUp': projectDetails.videoToFrameWarningPopUp,
-
-    }
+    let jsonData = [1,msg,projectDetails.currentFrameId,projectDetails.undoVideoLimit,projectDetails.undoImageLimit,projectDetails.videoFolInPtr,projectDetails.imageFolInPtr,projectDetails.videoPossibleUndoCount,projectDetails.imagePossibleUndoCount,projectDetails.videoPossibleRedoCount,projectDetails.imagePossibleRedoCount,projectDetails.curDisplayThumbnailFolType,projectDetails.curDisplayThumbnailFolPtr,projectDetails.curDisplayPreviewFolType,projectDetails.curDisplayPreviewFolPtr,projectDetails.curProcessingSourceFolType,projectDetails.curProcessingSourceFolPtr,projectDetails.curProcessingDestinationFolType,projectDetails.curProcessingDestinationFolPtr,projectDetails.curProcessingPreviewSourceFolType,projectDetails.curProcessingPreviewSourceFolPtr,projectDetails.curProcessingPreviewDestinationFolType,projectDetails.curProcessingPreviewDestinationFolPtr,projectDetails.operatePossibleOnVideoFlag,projectDetails.handoverPossibleImageToVideoFlag,projectDetails.processingGoingOnVideoOrFrameFlag,projectDetails.processingGoingOnVideoNotFrame,projectDetails.refreshThumbnailFlag,projectDetails.videoToFrameWarningPopUp]
     let msgWithData = `${msg} - ${JSON.stringify(jsonData)}`;
     const currentDate = new Date();
     const year = currentDate.getFullYear();

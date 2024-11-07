@@ -49,7 +49,7 @@ const createProject = async (req, catId, projectName) => {
     }
 };
 
-const resetPointer = async (id, updateData) => {
+const resetPointer = async (userId, id, updateData) => {
     const projectDetails = await Project.findById(id);
     if (!projectDetails) {
         return {
@@ -59,7 +59,7 @@ const resetPointer = async (id, updateData) => {
         };
     }
     const project = await Project.findByIdAndUpdate(id, updateData, { new: true });
-
+    logger.changePointer(userId, id, 'RTH', 'pointerDetails');
     return {
         statusCode: 200,
         status: 'Success',
@@ -245,6 +245,24 @@ const applyUndoAction = async (id, userId) => {
 
         refreshThumbnailFlag = false;
 
+        let projectUpdate = await Project.findByIdAndUpdate(id, {
+            imagePossibleUndoCount,
+            imagePossibleRedoCount,
+            videoPossibleUndoCount,
+            videoPossibleRedoCount,
+            imageFolInPtr,
+            videoFolInPtr,
+            curDisplayPreviewFolType,
+            curDisplayPreviewFolPtr,
+            curProcessingPreviewSourceFolType,
+            curProcessingPreviewSourceFolPtr,
+            curProcessingPreviewDestinationFolType,
+            curProcessingPreviewDestinationFolPtr,
+            curDisplayThumbnailFolType,
+            curDisplayThumbnailFolPtr,
+            refreshThumbnailFlag
+        }, { new: true });
+
     } else if (project.imagePossibleUndoCount == 1) {
         if (project.handoverPossibleImageToVideoFlag) {
             imagePossibleUndoCount = 0
@@ -279,6 +297,23 @@ const applyUndoAction = async (id, userId) => {
             curProcessingPreviewDestinationFolPtr = 1;
             refreshThumbnailFlag = false
         }
+        let projectUpdate = await Project.findByIdAndUpdate(id, {
+            imagePossibleUndoCount,
+            imagePossibleRedoCount,
+            videoPossibleUndoCount,
+            videoPossibleRedoCount,
+            imageFolInPtr,
+            videoFolInPtr,
+            curDisplayPreviewFolType,
+            curDisplayPreviewFolPtr,
+            curProcessingPreviewSourceFolType,
+            curProcessingPreviewSourceFolPtr,
+            curProcessingPreviewDestinationFolType,
+            curProcessingPreviewDestinationFolPtr,
+            curDisplayThumbnailFolType,
+            curDisplayThumbnailFolPtr,
+            refreshThumbnailFlag
+        }, { new: true });
     } else {
         if ((project.handoverPossibleImageToVideoFlag) && (project.videoPossibleUndoCount > 0)) {
             videoPossibleUndoCount = project.videoPossibleUndoCount - 1;
@@ -298,32 +333,31 @@ const applyUndoAction = async (id, userId) => {
             curProcessingPreviewDestinationFolPtr = 1;
 
             refreshThumbnailFlag = true
+
+            let projectUpdate = await Project.findByIdAndUpdate(id, {
+                imagePossibleUndoCount,
+                imagePossibleRedoCount,
+                videoPossibleUndoCount,
+                videoPossibleRedoCount,
+                imageFolInPtr,
+                videoFolInPtr,
+                curDisplayPreviewFolType,
+                curDisplayPreviewFolPtr,
+                curProcessingPreviewSourceFolType,
+                curProcessingPreviewSourceFolPtr,
+                curProcessingPreviewDestinationFolType,
+                curProcessingPreviewDestinationFolPtr,
+                curDisplayThumbnailFolType,
+                curDisplayThumbnailFolPtr,
+                refreshThumbnailFlag
+            }, { new: true });
         }
     }
-
-    const projectUpdate = await Project.findByIdAndUpdate(id, {
-        imagePossibleUndoCount,
-        imagePossibleRedoCount,
-        videoPossibleUndoCount,
-        videoPossibleRedoCount,
-        imageFolInPtr,
-        videoFolInPtr,
-        curDisplayPreviewFolType,
-        curDisplayPreviewFolPtr,
-        curProcessingPreviewSourceFolType,
-        curProcessingPreviewSourceFolPtr,
-        curProcessingPreviewDestinationFolType,
-        curProcessingPreviewDestinationFolPtr,
-        curDisplayThumbnailFolType,
-        curDisplayThumbnailFolPtr,
-        refreshThumbnailFlag
-    }, { new: true });
     logger.changePointer(userId, id, 'UN', 'pointerDetails');
     return {
         statusCode: 200,
         status: 'Success',
-        message: 'Successfully authenticated.',
-        projectUpdate
+        message: 'Successfully authenticated.'
     };
 };
 
@@ -340,7 +374,6 @@ const applyRedoAction = async (id, userId) => {
     let imagePossibleRedoCount = project.imagePossibleRedoCount;
     let videoPossibleUndoCount = project.videoPossibleUndoCount;
     let videoPossibleRedoCount = project.videoPossibleRedoCount;
-    let imageFolInPtr = (project.imageFolInPtr % project.totalImageFolderSet) + 1;
     let curDisplayThumbnailFolType = project.curDisplayThumbnailFolType;
     let curDisplayThumbnailFolPtr = project.curDisplayThumbnailFolPtr;
     let curDisplayPreviewFolType = project.curDisplayPreviewFolType;
@@ -370,6 +403,23 @@ const applyRedoAction = async (id, userId) => {
         curProcessingPreviewDestinationFolPtr = 1
 
         refreshThumbnailFlag = true;
+
+        let projectDetails = await Project.findByIdAndUpdate(id, {
+            imagePossibleUndoCount,
+            imagePossibleRedoCount,
+            videoPossibleUndoCount,
+            videoPossibleRedoCount,
+            videoFolInPtr,
+            curDisplayThumbnailFolType,
+            curDisplayThumbnailFolPtr,
+            curDisplayPreviewFolType,
+            curDisplayPreviewFolPtr,
+            curProcessingPreviewSourceFolType,
+            curProcessingPreviewSourceFolPtr,
+            curProcessingPreviewDestinationFolType,
+            curProcessingPreviewDestinationFolPtr,
+            refreshThumbnailFlag
+        }, { new: true });
     } else if (project.imagePossibleRedoCount > 0) {
         if (project.handoverPossibleImageToVideoFlag && (project.imagePossibleUndoCount == 0)) {
             imageFolInPtr = 1
@@ -386,6 +436,24 @@ const applyRedoAction = async (id, userId) => {
             curProcessingPreviewDestinationFolPtr = 1
 
             refreshThumbnailFlag = false;
+
+            let projectDetails = await Project.findByIdAndUpdate(id, {
+                imagePossibleUndoCount,
+                imagePossibleRedoCount,
+                videoPossibleUndoCount,
+                videoPossibleRedoCount,
+                videoFolInPtr,
+                imageFolInPtr,
+                curDisplayThumbnailFolType,
+                curDisplayThumbnailFolPtr,
+                curDisplayPreviewFolType,
+                curDisplayPreviewFolPtr,
+                curProcessingPreviewSourceFolType,
+                curProcessingPreviewSourceFolPtr,
+                curProcessingPreviewDestinationFolType,
+                curProcessingPreviewDestinationFolPtr,
+                refreshThumbnailFlag
+            }, { new: true });
         } else {
             imagePossibleRedoCount = project.imagePossibleRedoCount - 1
             imagePossibleUndoCount = project.imagePossibleUndoCount + 1
@@ -400,31 +468,31 @@ const applyRedoAction = async (id, userId) => {
             curProcessingPreviewDestinationFolPtr = 1
 
             refreshThumbnailFlag = false;
+
+            let projectDetails = await Project.findByIdAndUpdate(id, {
+                imagePossibleUndoCount,
+                imagePossibleRedoCount,
+                videoPossibleUndoCount,
+                videoPossibleRedoCount,
+                videoFolInPtr,
+                imageFolInPtr,
+                curDisplayThumbnailFolType,
+                curDisplayThumbnailFolPtr,
+                curDisplayPreviewFolType,
+                curDisplayPreviewFolPtr,
+                curProcessingPreviewSourceFolType,
+                curProcessingPreviewSourceFolPtr,
+                curProcessingPreviewDestinationFolType,
+                curProcessingPreviewDestinationFolPtr,
+                refreshThumbnailFlag
+            }, { new: true });
         }
     }
-    const projectDetails = await Project.findByIdAndUpdate(id, {
-        imagePossibleUndoCount,
-        imagePossibleRedoCount,
-        videoPossibleUndoCount,
-        videoPossibleRedoCount,
-        videoFolInPtr,
-        imageFolInPtr,
-        curDisplayThumbnailFolType,
-        curDisplayThumbnailFolPtr,
-        curDisplayPreviewFolType,
-        curDisplayPreviewFolPtr,
-        curProcessingPreviewSourceFolType,
-        curProcessingPreviewSourceFolPtr,
-        curProcessingPreviewDestinationFolType,
-        curProcessingPreviewDestinationFolPtr,
-        refreshThumbnailFlag
-    }, { new: true });
     logger.changePointer(userId, id, 'RE', 'pointerDetails');
     return {
         statusCode: 200,
         status: 'Success',
-        message: 'Successfully authenticated.',
-        projectDetails
+        message: 'Successfully authenticated.'
     };
 };
 
@@ -471,6 +539,7 @@ const selectThumbnailFrame = async (req, id, frameId) => {
         handoverPossibleImageToVideoFlag,
         refreshThumbnailFlag,
     }, { new: true });
+    logger.changePointer(req.user.id, id, 'TNL', 'pointerDetails');
     logger.logCreate(`selectThumbnailFrame: Updated project details : ${projectUpdate}`, 'systemlog');
 
     return {

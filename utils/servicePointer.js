@@ -382,7 +382,7 @@ const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
         const srcType = (isPreview) ? proDetails.curProcessingPreviewSourceFolType : proDetails.curProcessingSourceFolType
         const srcPtr = (isPreview) ? proDetails.curProcessingPreviewSourceFolPtr : proDetails.curProcessingSourceFolPtr
         const rootPath = `${req.user.id}/${id}`;
-        const frameId = (isPreview && srcType == 'temp') ? proDetails.currentPreviewFrameId : proDetails.curFrameId
+        const frameId = proDetails.curFrameId
         if (!fs.existsSync(`public/${rootPath}/${srcType}/${srcPtr}/${frameId}`)) {
 
             // const project = await Project.findByIdAndUpdate(id, {
@@ -606,8 +606,9 @@ const applyToFrame = async (project, defaultImg) => {
                 curProcessingPreviewDestinationFolType,
                 curProcessingPreviewDestinationFolPtr,
 
-                currentPreviewFrameId : project.currentPreviewFrameId
+                currentPreviewFrameId : project.currentPreviewFrameId,
 
+                refreshThumbnailFlag
             }
         })
     } else {
@@ -663,7 +664,9 @@ const applyToFrame = async (project, defaultImg) => {
                 curProcessingPreviewDestinationFolType,
                 curProcessingPreviewDestinationFolPtr,
 
-                currentPreviewFrameId : project.currentPreviewFrameId
+                currentPreviewFrameId : project.currentPreviewFrameId,
+
+                refreshThumbnailFlag
             }
         })
 
