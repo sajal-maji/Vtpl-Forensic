@@ -359,7 +359,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
         processType: 'undo',
         processName: 'undo',
         exeDetailsAvailFlag: (requestObj) ? true : false,
-        exeDetails: requestObj? JSON.stringify(requestObj): {}
+        exeDetails: requestObj? JSON.stringify(requestObj): ''
     }
     await Imageoperation.createOperation(oppData)
     logger.changePointer(userId, id, 'UN', 'pointerDetails');
@@ -502,7 +502,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
         processType: 'redo',
         processName: 'redo',
         exeDetailsAvailFlag: (requestObj) ? true : false,
-        exeDetails: requestObj? JSON.stringify(requestObj): {}
+        exeDetails: requestObj? JSON.stringify(requestObj): ''
     }
     await Imageoperation.createOperation(oppData)
     logger.changePointer(userId, id, 'RE', 'pointerDetails');
