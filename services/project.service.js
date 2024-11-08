@@ -10,6 +10,7 @@ const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
 const TempFolder = 'temp'
 const logger = require("../helpers/logEvents");
+const Imageoperation = require('../services/imageoperation.service');
 
 const createProject = async (req, catId, projectName) => {
     let casefolder = await Casefolder.findById(catId);
@@ -204,7 +205,7 @@ const projectDetails = async (req, id) => {
     };
 };
 
-const applyUndoAction = async (id, userId) => {
+const applyUndoAction = async (id, userId, requestObj) => {
     const project = await Project.findById(id);
     if (!project) {
         return ({
@@ -353,6 +354,14 @@ const applyUndoAction = async (id, userId) => {
             }, { new: true });
         }
     }
+    const oppData = {
+        projectId: id,
+        processType: 'undo',
+        processName: 'undo',
+        exeDetailsAvailFlag: (requestObj) ? true : false,
+        exeDetails: JSON.stringify(requestObj)
+    }
+    await Imageoperation.createOperation(req, oppData)
     logger.changePointer(userId, id, 'UN', 'pointerDetails');
     return {
         statusCode: 200,
@@ -361,7 +370,7 @@ const applyUndoAction = async (id, userId) => {
     };
 };
 
-const applyRedoAction = async (id, userId) => {
+const applyRedoAction = async (id, userId, requestObj) => {
     const project = await Project.findById(id);
     if (!project) {
         return {
@@ -488,6 +497,14 @@ const applyRedoAction = async (id, userId) => {
             }, { new: true });
         }
     }
+    const oppData = {
+        projectId: id,
+        processType: 'redo',
+        processName: 'redo',
+        exeDetailsAvailFlag: (requestObj) ? true : false,
+        exeDetails: JSON.stringify(requestObj)
+    }
+    await Imageoperation.createOperation(req, oppData)
     logger.changePointer(userId, id, 'RE', 'pointerDetails');
     return {
         statusCode: 200,
@@ -631,7 +648,7 @@ const saveImage = async (req, id) => {
             console.log('Snap File copied successfully.');
         }
     });
-    
+
     return {
         statusCode: 200,
         status: 'Success',
