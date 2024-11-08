@@ -1,6 +1,6 @@
 const Imageoperation = require('../model/imageoperation.model');
 
-const createOperation = async (req, dataObj) => {
+const createOperation = async (dataObj) => {
     console.log('operation Data',dataObj);
     const imageope = new Imageoperation(dataObj);
     await imageope.save();

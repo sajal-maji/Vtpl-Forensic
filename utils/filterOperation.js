@@ -51,7 +51,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
             exeDetailsAvailFlag: (requestObj) ? true : false,
             exeDetails: JSON.stringify(requestObj)
         }
-        await Imageoperation.createOperation(req, oppData)
+        await Imageoperation.createOperation(oppData)
     }
 
     const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
