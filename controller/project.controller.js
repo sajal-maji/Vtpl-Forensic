@@ -269,13 +269,13 @@ const getProjectDetails = async (req, res, next) => {
 };
 
 const getAction = async (req, res, next) => {
-    const { projectId: id, actionType } = req.body;
+    const { projectId: id, actionType, requestObj} = req.body;
     try {
         let applyChanges = '';
         if (actionType === 'undo') {
-            applyChanges = await projectService.applyUndoAction(id, req.user.id);
+            applyChanges = await projectService.applyUndoAction(id, req.user.id, requestObj);
         } else if (actionType === 'redo') {
-            applyChanges = await projectService.applyRedoAction(id, req.user.id);
+            applyChanges = await projectService.applyRedoAction(id, req.user.id, requestObj);
         }
         res.status(200).json(applyChanges)
     } catch (error) {

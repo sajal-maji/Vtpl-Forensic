@@ -6,7 +6,7 @@ const Imageoperation = require('../services/imageoperation.service');
 
 const { managePointer, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
 
-const filterOperation = async (req, res, next, requestObj, grpcServiceName, processName,operationName=null) => {
+const filterOperation = async (req, res, next, requestObj, grpcServiceName, processName, operationName = null) => {
     logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
     const { projectId: id, isApplyToAll, frame, isPreview } = req.body;
 
@@ -33,9 +33,6 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         };
     }
 
-   
-    
-
     const { errStatus, message } = await checkFile(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`checkFile: response status - ${errStatus} and response message - ${message}`, 'systemlog');
 
@@ -50,11 +47,11 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         const oppData = {
             projectId: id,
             processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
-            operationName,
+            processName: operationName,
             exeDetailsAvailFlag: (requestObj) ? true : false,
             exeDetails: JSON.stringify(requestObj)
         }
-    await Imageoperation.createOperation(req, oppData)
+        await Imageoperation.createOperation(req, oppData)
     }
 
     const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
@@ -67,7 +64,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         frameLoc[0] = proDetails.currentPreviewFrameId;
     }
 
-    
+
 
     const jobObj = {
         process_all_flag: false,   // Process all flag
@@ -77,7 +74,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         in_img_path: imgBasePathFrom,
         out_img_path: imgBasePathTo
     };
-    
+
     const request = Object.assign({}, requestObj, jobObj);
 
     if (isApplyToAll) {
