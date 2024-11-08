@@ -36,9 +36,16 @@ const ExtractServiceClient = new grpcPackage.ExtractService(
     grpc.credentials.createInsecure() // Use insecure credentials for local testing
 );
 
+// Create the gRPC client for PDFGenerateService
+const PDFGenerateServiceClient = new grpcPackage.PDFGenerateService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
 // Export the clients
 module.exports = {
     channelServiceClient,
     adjustServiceClient,
-    ExtractServiceClient
+    ExtractServiceClient,
+    PDFGenerateServiceClient
 };
