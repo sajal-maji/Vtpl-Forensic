@@ -126,18 +126,33 @@ const generatePdf = async (req, res, next) => {
             if (!fs.existsSync(pdfDir)) {
                 fs.mkdirSync(pdfDir, { recursive: true });
             }
-            const finalData = {
-                "processes": operationDetails,
-                "processes_meta": {
-                    "input_output_image_show_report": false
-                },
-                "out_pdf_path": pdfDir
-            };
+
+            const rootDir = path.resolve(__dirname, '..', '..');
+            const uploadPdfPath = path.join(rootDir, `forensic_be/${pdfDir}`);
+
+
             const requestObj = {
-                sub_process_num: finalData
+                processes: operationDetails,
+                processes_meta: {
+                    input_output_image_show_report: false
+                },
+                out_docs_path: uploadPdfPath
             };
-            const response = await filterOperation(req, res, next, requestObj, PDFGenerateServiceClient, 'PDFGeneretion');
-            return res.status(200).json(response);
+
+
+            PDFGenerateServiceClient.PDFGeneretion(requestObj, (error, response) => {
+                if (error) {
+                    // console.error("gRPC error:", error);
+                    return res.status(404).json({ message: 'gRPC call failed', details: error });
+                }
+    
+                // Respond with the gRPC response
+                return res.status(200).json({
+                    message: 'Processing successfully Done',
+                    response
+                });
+            });
+           
         } else {
             return res.status(404).json({ message: 'No operation details found for the provided project ID' });
         }
@@ -145,7 +160,7 @@ const generatePdf = async (req, res, next) => {
     } catch (error) {
         return res.status(500).json({
             error: 'Internal server error',
-            details: error.message || error
+            details: error
         });
     }
 };
