@@ -1,4 +1,4 @@
-const { channelServiceClient } = require('../grpcClient'); // Import gRPC client
+const { channelServiceClient,PDFGenerateServiceClient } = require('../grpcClient'); // Import gRPC client
 const projectService = require("../services/project.service");
 const Imagefilter = require('../model/imagefilter.model');
 const Project = require('../model/projects.model');
@@ -47,7 +47,7 @@ const colorswitchConversion = async (req, res, next) => {
         const requestObj = {
             sub_process_num: subProcessNum
         };
-        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'ColorSwitchFilter');
+        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'ColorSwitchFilter','color_switch');
         res.status(200).json(response);
 
     } catch (error) {
@@ -59,7 +59,7 @@ const grayscaleConversion = async (req, res, next) => {
     try {
         const requestObj = {
         };
-        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'GrayscaleFilter');
+        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'GrayscaleFilter','grayscale');
         res.status(200).json(response);
 
     } catch (error) {
@@ -75,7 +75,7 @@ const colorConversion = async (req, res, next) => {
             sub_process_white: subProcessWhite,
             sub_process_mid: subProcessMid
         };
-        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'ColorConversionFilter');
+        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'ColorConversionFilter','color_conversion');
         res.status(200).json(response);
 
     } catch (error) {
@@ -89,7 +89,7 @@ const extractSingleChannel = async (req, res, next) => {
         const requestObj = {
             sub_process_num: subProcessNum
         };
-        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'ExtractSingleChannelFilter');
+        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'ExtractSingleChannelFilter','extract_single_channel');
         res.status(200).json(response);
 
     } catch (error) {
@@ -103,7 +103,7 @@ const displaySelectedChannels = async (req, res, next) => {
         const requestObj = {
             sub_process_num: subProcessNum
         };
-        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'DisplaySelectedChannelFilter');
+        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'DisplaySelectedChannelFilter','display_selected_channels');
         res.status(200).json(response);
 
     } catch (error) {
@@ -121,7 +121,8 @@ const generatePdf = async (req, res, next) => {
         const operationDetails = await pdfService.getOperationDetails(projectId);
 
         if (operationDetails && operationDetails.length > 0) {
-            let pdfDir = `public/pdfs/${projectId}_output.pdf`;
+            const rootPath = `${req.user.id}/${projectId}`;
+            let pdfDir = `public/${rootPath}/pdf`;
             if (!fs.existsSync(pdfDir)) {
                 fs.mkdirSync(pdfDir, { recursive: true });
             }
@@ -132,11 +133,11 @@ const generatePdf = async (req, res, next) => {
                 },
                 "out_pdf_path": pdfDir
             };
-            // const requestObj = {
-            //     sub_process_num: finalData
-            // };
-            // const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'DisplaySelectedChannelFilter');
-            return res.status(200).json(finalData);
+            const requestObj = {
+                sub_process_num: finalData
+            };
+            const response = await filterOperation(req, res, next, requestObj, PDFGenerateServiceClient, 'PDFGeneretion');
+            return res.status(200).json(response);
         } else {
             return res.status(404).json({ message: 'No operation details found for the provided project ID' });
         }

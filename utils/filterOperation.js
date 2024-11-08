@@ -6,7 +6,7 @@ const Imageoperation = require('../services/imageoperation.service');
 
 const { managePointer, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
 
-const filterOperation = async (req, res, next, requestObj, grpcServiceName, processName) => {
+const filterOperation = async (req, res, next, requestObj, grpcServiceName, processName,operationName=null) => {
     logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
     const { projectId: id, isApplyToAll, frame, isPreview } = req.body;
 
@@ -33,13 +33,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         };
     }
 
-    const oppData = {
-        projectId: id,
-        processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
-        processName,
-        exeDetailsAvailFlag: (requestObj) ? true : false,
-        exeDetails: JSON.stringify(requestObj)
-    }
+   
     
 
     const { errStatus, message } = await checkFile(id, isApplyToAll, isPreview, proDetails, req, res);
@@ -52,8 +46,16 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
             message
         };
     }
-
+    if (operationName) {
+        const oppData = {
+            projectId: id,
+            processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
+            operationName,
+            exeDetailsAvailFlag: (requestObj) ? true : false,
+            exeDetails: JSON.stringify(requestObj)
+        }
     await Imageoperation.createOperation(req, oppData)
+    }
 
     const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`folderPath: imgBasePathFrom - ${imgBasePathFrom}, imgBasePathTo - ${imgBasePathTo}`, 'systemlog');
