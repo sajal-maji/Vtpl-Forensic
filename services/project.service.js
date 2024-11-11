@@ -126,7 +126,7 @@ const projectList = async (req, catId) => {
                 'dstFolPtr': val.imageFolInPtr,
                 'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
                 'updateAt': project.updateAt,
-                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${val.videoFolInPtr}/${(val.currentFrameId) ? val.currentFrameId : 'frame_1.png'}`
+                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${val.videoFolInPtr}/${(val.currentFrameId) ? val.currentFrameId : 'frame_1.jpg'}`
             }
         )
     });

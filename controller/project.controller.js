@@ -178,7 +178,7 @@ const uploadFiles = async (req, res, next) => {
                 const frameNumber = 0; // Example frame number
                 const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
 
-                const frameOutputDir = `${basePath}/main/frame_%d.png`; // %d will be replaced by frame number
+                const frameOutputDir = `${basePath}/main/frame_%d.jpg`; // %d will be replaced by frame number
                 const videoCon = await convertVideo(outputPath, frameOutputDir);  // Await async function
 
                 const dataFiles = await getTotalFiles(`${basePath}/main`);
@@ -368,7 +368,7 @@ async function convertVideo(inputPath, outputDir) {
                 reject(`Error extracting frames: ${err.message}`);
             })
             .outputOptions('-vf', 'fps=10')
-            .outputOptions('-q:v', '5')
+            .outputOptions('-q:v', '1')
             .output(outputDir)
             .run();
     });
