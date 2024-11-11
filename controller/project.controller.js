@@ -216,7 +216,7 @@ const uploadFiles = async (req, res, next) => {
                 const updateproject = await Project.findByIdAndUpdate(project.id,
                     {
                         'filesName': JSON.stringify(dataFiles.filesName),
-                        'currentFrameId': 'frame_1.png',
+                        'currentFrameId': 'frame_1.jpg',
                         'projectDetails': JSON.stringify(projectDetails)
                     }, { new: true });
 
@@ -269,13 +269,13 @@ const getProjectDetails = async (req, res, next) => {
 };
 
 const getAction = async (req, res, next) => {
-    const { projectId: id, actionType, requestObj} = req.body;
+    const { projectId: id, actionType } = req.body;
     try {
         let applyChanges = '';
         if (actionType === 'undo') {
-            applyChanges = await projectService.applyUndoAction(id, req.user.id, requestObj);
+            applyChanges = await projectService.applyUndoAction(id, req.user.id);
         } else if (actionType === 'redo') {
-            applyChanges = await projectService.applyRedoAction(id, req.user.id, requestObj);
+            applyChanges = await projectService.applyRedoAction(id, req.user.id);
         }
         res.status(200).json(applyChanges)
     } catch (error) {
