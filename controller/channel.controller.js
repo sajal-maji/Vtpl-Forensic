@@ -59,7 +59,7 @@ const grayscaleConversion = async (req, res, next) => {
     try {
         const requestObj = {
         };
-        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'GrayscaleFilter','grayscale');
+        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'GrayscaleFilter','grayscale_conversion');
         res.status(200).json(response);
 
     } catch (error) {
@@ -89,7 +89,7 @@ const extractSingleChannel = async (req, res, next) => {
         const requestObj = {
             sub_process_num: subProcessNum
         };
-        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'ExtractSingleChannelFilter','extract_single_channel');
+        const response = await filterOperation(req, res, next, requestObj, channelServiceClient, 'ExtractSingleChannelFilter','extract_channel');
         res.status(200).json(response);
 
     } catch (error) {
