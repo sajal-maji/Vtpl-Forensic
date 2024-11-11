@@ -214,7 +214,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         //     frameName = proDetails.currentPreviewFrameId;
         // }
         const oldFilePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`;
-        const newFileName = timestamp + 'new_frame_name.png'; // Replace this with the new file name
+        const newFileName = timestamp + 'new_frame_name.jpg'; // Replace this with the new file name
         // const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
         const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
         frameName = newFileName
