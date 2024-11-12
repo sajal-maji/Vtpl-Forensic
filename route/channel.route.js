@@ -45,4 +45,10 @@ router.put('/channel-selector', channelSelector);
 router.put('/channel-demux', channelDemux);
 router.put('/fourier', fourier);
 
+
+const { measureOneD, measureTwoD, measureThreeD} = require('../controller/measure.controller');
+router.put('/measure-one-d', measureOneD);
+router.put('/measure-two-d', measureTwoD);
+router.put('/measure-three-d', measureThreeD);
+
 module.exports = router;
