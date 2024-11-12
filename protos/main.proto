@@ -6,6 +6,7 @@ import "channel.proto";
 import "adjust.proto";
 import "extract.proto";
 import "pdf_generate.proto";
+import "measure.proto";
 service ChannelService {
     rpc GrayscaleFilter (GrayScaleRequest) returns (JobStatusResponse);
     rpc ColorSwitchFilter (ColorSwitchRequest) returns (JobStatusResponse);
@@ -47,5 +48,10 @@ service ExtractService {
 
 service PDFGenerateService{
     rpc PDFGeneretion(PDFGenerateRequest) returns (PDFGenerateResponse);
+}
 
+service MeasureService{
+    rpc MeasureOneD (MeasureOneDRequest) returns (MeasureResponse);
+    rpc MeasureTwoD (MeasureTwoDRequest) returns (MeasureResponse);
+    rpc MeasureThreeD (MeasureThreeDRequest) returns (MeasureResponse);
 }

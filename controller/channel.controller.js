@@ -149,7 +149,11 @@ const generatePdf = async (req, res, next) => {
                 // Respond with the gRPC response
                 return res.status(200).json({
                     message: 'Processing successfully Done',
-                    response
+                    data:{
+                            pdfUrl:`${rootPath}/pdf/report.pdf`,
+                            docUrl:`${rootPath}/pdf/report.docx`
+                        }
+                    // response
                 });
             });
            

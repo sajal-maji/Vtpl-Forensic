@@ -42,10 +42,17 @@ const PDFGenerateServiceClient = new grpcPackage.PDFGenerateService(
     grpc.credentials.createInsecure() // Use insecure credentials for local testing
 );
 
+// Create the gRPC client for MeasureService
+const MeasureServiceClient = new grpcPackage.MeasureService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
 // Export the clients
 module.exports = {
     channelServiceClient,
     adjustServiceClient,
     ExtractServiceClient,
-    PDFGenerateServiceClient
+    PDFGenerateServiceClient,
+    MeasureServiceClient
 };
