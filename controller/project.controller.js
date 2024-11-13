@@ -1,6 +1,7 @@
 const projectService = require("../services/project.service");
 const Project = require('../model/projects.model');
 const Casefolder = require('../model/casefolder.model');
+const Imageoperation = require('../model/imageoperation.model');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
@@ -405,6 +406,32 @@ async function getTotalFiles(folderPath) {
     });
 };
 
+const operationHistory = async (req, res, next) => {
+    try {
+        const { projectId } = req.body;
+        if (!projectId) {
+            return res.status(400).json({ error: 'Project ID is required' });
+        }
+
+        const operationDetails = await Imageoperation.find({ projectId: projectId }).select('processName processType').sort({ createdAt: -1 });
+
+        if (operationDetails && operationDetails.length > 0) {
+            return res.status(200).json({
+                message: 'Successfully Done',
+                data: operationDetails
+            });
+        } else {
+            return res.status(404).json({ message: 'No operation details found for the provided project ID' });
+        }
+
+    } catch (error) {
+        return res.status(500).json({
+            error: 'Internal server error',
+            details: error
+        });
+    }
+};
+
 
 module.exports = {
     createProject,
@@ -417,5 +444,6 @@ module.exports = {
     selectFream,
     discardFream,
     saveSnapImage,
-    resetPointer
+    resetPointer,
+    operationHistory
 };

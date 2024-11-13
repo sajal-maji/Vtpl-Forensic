@@ -4,6 +4,7 @@ const path = require('path');
 
 const getOperationDetails = async (projectId) => {    
     const operationDetails = await Imageoperation.find({ projectId: projectId });
+    console.log('kkkkkkkkkkkkkkkkkk'+JSON.stringify(operationDetails));
     
     let processes = [];
     if (operationDetails.length > 0) {
@@ -13,7 +14,7 @@ const getOperationDetails = async (projectId) => {
                 "process_name": operationDetails[i].processName,
                 "exe_details_avail_flag": operationDetails[i].exeDetailsAvailFlag,
                 "exe_details": {
-                    "details": JSON.parse(operationDetails[i].exeDetails)
+                    "details": operationDetails[i].exeDetails ? JSON.parse(operationDetails[i].exeDetails) : ''
                 }
             }
             processes.push(data);

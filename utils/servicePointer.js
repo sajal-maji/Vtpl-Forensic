@@ -119,8 +119,7 @@ const copyFolderExcluding = async (sourceDir, destDir, exclude = []) => {
     } catch (error) {
         console.log('Error copying folder:', error);
     }
-}
-
+};
 
 const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response) => {
     const rootPath = `${req.user.id}/${id}`;
@@ -207,7 +206,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
     // }else{
 
     if (isPreview) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         const rootPath = `${req.user.id}/${id}`;
         const timestamp = Date.now();
         // if (proDetails.curProcessingPreviewSourceFolType == 'temp') {
@@ -236,6 +235,16 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             } else {
                 logger.logCreate(`copyimage: response success`, 'systemlog');
                 console.log('File copied successfully.');
+                // const deletedImagePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${proDetails.currentPreviewFrameId}`;
+                // fsExtra.remove(deletedImagePath, (removeErr) => {
+                //     if (removeErr) {
+                //         logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
+                //         console.error('Error deleting the old file:', removeErr);
+                //     } else {
+                //         logger.logCreate(`deleteimage: response success`, 'systemlog');
+                //         console.log('Old file deleted successfully.');
+                //     }
+                // });
             }
         });
     }
