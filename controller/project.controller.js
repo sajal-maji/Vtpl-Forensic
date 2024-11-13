@@ -413,7 +413,7 @@ const operationHistory = async (req, res, next) => {
             return res.status(400).json({ error: 'Project ID is required' });
         }
 
-        const operationDetails = await Imageoperation.find({ projectId: projectId }).select('process_name').sort({ createdAt: -1 });
+        const operationDetails = await Imageoperation.find({ projectId: projectId }).select('processName processType').sort({ createdAt: -1 });
 
         if (operationDetails && operationDetails.length > 0) {
             return res.status(200).json({
