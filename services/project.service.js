@@ -183,6 +183,7 @@ const projectDetails = async (req, id) => {
             'imageFolInPtr': projectDetails.imageFolInPtr,
             'videoFolInPtr': projectDetails.videoFolInPtr,
             'operatePossibleOnVideoFlag': projectDetails.operatePossibleOnVideoFlag,
+            'processingGoingOnVideoOrFrameFlag': projectDetails.processingGoingOnVideoOrFrameFlag,
             'curProcessingSourceFolType': projectDetails.curProcessingSourceFolType,
             'curProcessingSourceFolPtr': projectDetails.curProcessingSourceFolPtr,
             'curProcessingDestinationFolType': projectDetails.curProcessingDestinationFolType,
@@ -663,7 +664,6 @@ function createFolder(folderPath) {
         }
     });
 };
-
 
 
 module.exports = {
