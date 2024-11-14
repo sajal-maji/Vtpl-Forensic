@@ -4,7 +4,7 @@ const { ExtractServiceClient } = require('../grpcClient');
 const negativeFilter = async (req, res, next) => {
     try {
         const requestObj = {};
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'NegativeFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'NegativeFilter','negative');
         res.status(200).json(response);
 
     } catch (error) {
@@ -19,7 +19,7 @@ const thresholdFilter = async (req, res, next) => {
             threshold_option: thresholdOption,
             threshold_level: thresholdLevel      
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ThresholdFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ThresholdFilter','threshold');
         res.status(200).json(response);
 
     } catch (error) {
@@ -35,7 +35,7 @@ const adaptiveThreshold = async (req, res, next) => {
             ad_th_edge_reducer: adThEdgeReducer,
             adaptive_threshold_option: adaptiveThresholdOption      
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'AdaptiveThresholdFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'AdaptiveThresholdFilter','adaptive_threshold');
         res.status(200).json(response);
 
     } catch (error) {
@@ -49,7 +49,7 @@ const laplace = async (req, res, next) => {
         const requestObj = {
             in_kernal_size: inKernalSize,
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'LaplaceFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'LaplaceFilter','laplace');
         res.status(200).json(response);
 
     } catch (error) {
@@ -61,7 +61,7 @@ const prewitt = async (req, res, next) => {
     try {
         const requestObj = {
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'PrewittFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'PrewittFilter','prewitt');
         res.status(200).json(response);
 
     } catch (error) {
@@ -75,7 +75,7 @@ const sobel = async (req, res, next) => {
         const requestObj = {
             in_kernal_size: inKernalSize,    
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'SobelFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'SobelFilter','sobel');
         res.status(200).json(response);
 
     } catch (error) {
@@ -87,7 +87,7 @@ const scharr = async (req, res, next) => {
     try {
         const requestObj = {
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ScharrFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ScharrFilter','scharr');
         res.status(200).json(response);
 
     } catch (error) {
@@ -102,7 +102,7 @@ const canny = async (req, res, next) => {
             in_inclusion_lower_level: inInclusionLowerLevel,
             in_rejection_upper_level: inRejectionUpperLevel      
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'CannyFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'CannyFilter','canny');
         res.status(200).json(response);
 
     } catch (error) {
@@ -119,7 +119,7 @@ const linearFilter = async (req, res, next) => {
             in_filter_display_mode:inFilterDisplayMode,
             kernal_request_format:kernalRequestFormat   
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'LinearFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'LinearFilter','linear_filter');
         res.status(200).json(response);
 
     } catch (error) {
@@ -134,7 +134,7 @@ const biLinear = async (req, res, next) => {
             in_kernal_1: inKernalOne,
             in_kernal_2: inKernalTwo,
         }
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'BiLinearFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'BiLinearFilter','bilinear_filter');
         res.status(200).json(response);
 
     } catch (error) {
@@ -151,7 +151,7 @@ const channelSelector = async (req, res, next) => {
             in_mid_color_val: inMidColorVal,
             in_spread_color: inSpreadColor
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ChannelSelectorFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ChannelSelectorFilter','channel_mixer');
         res.status(200).json(response);
 
     } catch (error) {
@@ -168,7 +168,7 @@ const channelDemux = async (req, res, next) => {
             in_filter_pass_true_block_false_flag:inFilterPassTrueBlockFalseFlag,
             in_filter_power:inFilterPower      
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ChannelDemuxFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'ChannelDemuxFilter','color_deconvolution');
         res.status(200).json(response);
 
     } catch (error) {
@@ -183,7 +183,7 @@ const fourier = async (req, res, next) => {
             in_period_closeness : inPeriodCloseness,
             in_clarity_strength : inClarityStrength
         };
-        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'FourierFilter');
+        const response = await filterOperation(req,res,next, requestObj,ExtractServiceClient,'FourierFilter','fourier');
         res.status(200).json(response);
 
     } catch (error) {

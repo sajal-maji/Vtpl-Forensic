@@ -127,7 +127,7 @@ const projectList = async (req, catId) => {
                 'dstFolPtr': val.imageFolInPtr,
                 'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
                 'updateAt': project.updateAt,
-                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${val.videoFolInPtr}/${(val.currentFrameId) ? val.currentFrameId : 'frame_1.jpg'}`
+                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_1.jpg'}`
             }
         )
     });
@@ -641,24 +641,33 @@ const saveImage = async (req, id,image) => {
         };
     }
     const rootPath = `${req.user.id}/${id}`;
-
-    fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${image}`, `public/${rootPath}/snap/${image}`, (err) => {
-        if (err) {
-            // console.log('Error copying the file:', err);
+    if(image && image.length > 0){
+        image.forEach((val) => {
+            fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${val}`, `public/${rootPath}/snap/${val}`, (err) => {
+                if (err) {
+                    // console.log('Error copying the file:', err);
+                    return {
+                        statusCode: 404,
+                        status: 'Failed',
+                        message: 'Error copying the file: '+err
+                    };
+                } else {
+                    console.log('Snap File copied successfully.');
+                }
+            });
+        });
+        
             return {
-                statusCode: 404,
-                status: 'Failed',
-                message: 'Error copying the file: '+err
+                statusCode: 200,
+                status: 'Success',
+                message: 'Successfully authenticated.'
             };
-        } else {
-            console.log('Snap File copied successfully.');
-        }
-    });
-
+    }
+    
     return {
-        statusCode: 200,
-        status: 'Success',
-        message: 'Successfully authenticated.'
+        statusCode: 404,
+        status: 'Failed',
+        message: 'Image Not found.'
     };
 };
 
