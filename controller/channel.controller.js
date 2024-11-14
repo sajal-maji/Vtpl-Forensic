@@ -134,7 +134,7 @@ const generatePdf = async (req, res, next) => {
             const requestObj = {
                 processes: operationDetails,
                 processes_meta: {
-                    input_output_image_show_report: false
+                    input_output_image_show_report: true
                 },
                 out_docs_path: uploadPdfPath
             };
