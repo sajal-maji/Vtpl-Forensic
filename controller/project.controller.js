@@ -305,9 +305,9 @@ const discardFream = async (req, res, next) => {
 };
 
 const saveSnapImage = async (req, res, next) => {
-    const { projectId: id } = req.body;
+    const { projectId: id,image } = req.body;
     try {
-        const saveImage = await projectService.saveImage(req, id);
+        const saveImage = await projectService.saveImage(req, id,image);
         res.status(200).json(saveImage)
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -408,13 +408,13 @@ async function getTotalFiles(folderPath) {
 
 const operationHistory = async (req, res, next) => {
     try {
-        const { projectId } = req.body;
+        const { projectId } = req.query;
         if (!projectId) {
             return res.status(400).json({ error: 'Project ID is required' });
         }
 
-        const operationDetails = await Imageoperation.find({ projectId: projectId }).select('processName processType').sort({ createdAt: -1 });
-
+        const operationDetails = await Imageoperation.find({ projectId: projectId, processType: { $ne: 'preview' }  }).sort({ createdAt: -1 });
+//
         if (operationDetails && operationDetails.length > 0) {
             return res.status(200).json({
                 message: 'Successfully Done',
@@ -423,6 +423,46 @@ const operationHistory = async (req, res, next) => {
         } else {
             return res.status(404).json({ message: 'No operation details found for the provided project ID' });
         }
+
+    } catch (error) {
+        return res.status(500).json({
+            error: 'Internal server error',
+            details: error
+        });
+    }
+};
+
+const filesList = async (req, res, next) => {
+    try {
+        const { projectId } = req.query;
+        const rootPath = `${req.user.id}/${projectId}`;
+        const fs = require('fs');
+        const path = require('path');
+        const directoryPath = path.join(__dirname, `../public/${rootPath}/snap/`); // Replace with your folder path
+        console.log(directoryPath);
+        
+        let filesArr=[]
+        fs.readdir(directoryPath, (err, files) => {
+          if (err) {
+            return res.status(404).json({ message: 'Unable to scan directory '+directoryPath });
+          } 
+          // Listing all files in the directory
+          files.forEach(file => {
+            let fPath=`${rootPath}/snap/${file}`
+            filesArr.push(fPath)
+            console.log(file);
+          });
+          if (filesArr && filesArr.length > 0) {
+            return res.status(200).json({
+                message: 'Successfully Done',
+                data: filesArr
+            });
+        } else {
+            return res.status(404).json({ message: 'No Files are found' });
+        }
+        });
+
+        
 
     } catch (error) {
         return res.status(500).json({
@@ -445,5 +485,6 @@ module.exports = {
     discardFream,
     saveSnapImage,
     resetPointer,
-    operationHistory
+    operationHistory,
+    filesList
 };

@@ -631,7 +631,7 @@ const discardImage = async (id) => {
     }
 };
 
-const saveImage = async (req, id) => {
+const saveImage = async (req, id,image) => {
     const project = await Project.findById(id);
     if (!project) {
         return {
@@ -642,9 +642,14 @@ const saveImage = async (req, id) => {
     }
     const rootPath = `${req.user.id}/${id}`;
 
-    fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${project.currentFrameId}`, `public/${rootPath}/snap/${project.currentFrameId}`, (err) => {
+    fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${image}`, `public/${rootPath}/snap/${image}`, (err) => {
         if (err) {
-            console.log('Error copying the file:', err);
+            // console.log('Error copying the file:', err);
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Error copying the file: '+err
+            };
         } else {
             console.log('Snap File copied successfully.');
         }
