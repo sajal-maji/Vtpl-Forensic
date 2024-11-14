@@ -11,7 +11,7 @@ const levelControl = async (req, res, next) => {
             out_level_st: outLevelSt,
             out_level_en: outLevelEn,
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'LevelControlFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'LevelControlFilter','levels');
         res.status(200).json(response);
 
     } catch (error) {
@@ -26,7 +26,7 @@ const brightnessContrast = async (req, res, next) => {
             brightness_amount_change: brightnessAmountChange,
             contrast_change_factor: contrastChangeFactor,
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'BrightnessContrastChangeFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'BrightnessContrastChangeFilter','contrast_and_brightness');
         res.status(200).json(response);
 
     } catch (error) {
@@ -40,7 +40,7 @@ const contrastStretch = async (req, res, next) => {
         const requestObj = {
             in_con_stretch_amt: inConStretchAmt,
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'ContrastStretchFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'ContrastStretchFilter','contrast_stretch');
         res.status(200).json(response);
 
     } catch (error) {
@@ -56,7 +56,7 @@ const clahe = async (req, res, next) => {
             grid_row: gridRow,
             grid_col: gridCol,
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'ClaheFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'ClaheFilter','clahe');
         res.status(200).json(response);
 
     } catch (error) {
@@ -70,7 +70,7 @@ const intensityChange = async (req, res, next) => {
         const requestObj = {
             intensity_value_amount_change: intensityValueAmountChange,
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'IntensityChangeFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'IntensityChangeFilter','intensity');
         res.status(200).json(response);
 
     } catch (error) {
@@ -86,7 +86,7 @@ const hueSatValChange = async (req, res, next) => {
             saturation_times_change: saturationTimesChange,
             intensity_value_amount_change: intensityValueAmountChange,
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'HueSatValChangeFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'HueSatValChangeFilter','hsv');
         res.status(200).json(response);
 
     } catch (error) {
@@ -99,7 +99,7 @@ const saturationChange = async (req, res, next) => {
         const requestObj = {
             saturation_times_change: saturationTimesChange,
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'SaturationChangeFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'SaturationChangeFilter','hsv');
         res.status(200).json(response);
 
     } catch (error) {
@@ -112,7 +112,7 @@ const hueChange = async (req, res, next) => {
         const requestObj = {
             hue_degree_change: hueDegreeChange,
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'HueChangeFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'HueChangeFilter','hsv');
         res.status(200).json(response);
 
     } catch (error) {
@@ -125,7 +125,7 @@ const exposureControl = async (req, res, next) => {
         const requestObj = {
             exposure_times: exposureTimes
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'ExposureControlFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'ExposureControlFilter','exposure');
         res.status(200).json(response);
 
     } catch (error) {
@@ -142,7 +142,7 @@ const curve = async (req, res, next) => {
             curve_color_ch_green: curveColorChGreen,
             curve_color_ch_blue: curveColorChBlue
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'CurveFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'CurveFilter','curves');
         res.status(200).json(response);
 
     } catch (error) {
@@ -159,7 +159,7 @@ const histogramEqualization = async (req, res, next) => {
             in_st_col: inStCol,
             in_en_col: inEnCol,
         };
-        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'HistogramEqualizationFilter');
+        const response = await filterOperation(req, res, next, requestObj, adjustServiceClient, 'HistogramEqualizationFilter','histogram_equalization');
         res.status(200).json(response);
 
     } catch (error) {
