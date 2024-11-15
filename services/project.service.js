@@ -172,6 +172,7 @@ const projectDetails = async (req, id) => {
             message: 'Data not found'
         };
     }
+    const rootPath = `${req.user.id}/${id}`;
     let isUndoPossible = false;
     let isSaveFramePossible = false;
     let isDiscardFramePossible = false;
@@ -225,6 +226,8 @@ const projectDetails = async (req, id) => {
             'framePath': `${req.user.id}/${id}/${projectDetails.curDisplayPreviewFolType}/${(projectDetails.curDisplayPreviewFolType && projectDetails.curDisplayPreviewFolPtr > 0) ? projectDetails.curDisplayPreviewFolPtr : 1}`,
             'basePath': `${req.user.id}/${id}/${projectDetails.curDisplayThumbnailFolType}/${(projectDetails.curDisplayThumbnailFolPtr && projectDetails.curDisplayThumbnailFolPtr > 0) ? projectDetails.curDisplayThumbnailFolPtr : 1}`,
             'projectDetails': JSON.parse(projectDetails.projectDetails),
+            'orginalImgPath':`${rootPath}/main`,
+            'previousImgPath':`${rootPath}/${projectDetails.curProcessingPreviewSourceFolType}/${projectDetails.curProcessingPreviewSourceFolPtr}`,
             'filesName': (projectDetails.filesName) ? JSON.parse(projectDetails.filesName) : '',
         }
     };
