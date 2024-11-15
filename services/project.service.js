@@ -1,4 +1,5 @@
 const Project = require('../model/projects.model');
+const User = require('../model/user.model');
 const Casefolder = require('../model/casefolder.model');
 const fs = require('fs');
 const path = require('path');
@@ -165,6 +166,15 @@ const projectList = async (req, catId) => {
 
 const projectDetails = async (req, id) => {
     const projectDetails = await Project.findById(id);
+    const userDetails = await User.findById(req.user.id);
+    if (!userDetails) {
+        return {
+            statusCode: 404,
+            status: 'Failed',
+            isActiveUser : false,
+            message: 'User not found'
+        };
+    }
     if (!projectDetails) {
         return {
             statusCode: 404,
