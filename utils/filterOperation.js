@@ -43,7 +43,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
             message
         };
     }
-    if (operationName) {
+    if (operationName && !isPreview) {
         const oppData = {
             projectId: id,
             processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',

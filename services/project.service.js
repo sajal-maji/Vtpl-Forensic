@@ -88,6 +88,7 @@ const updateProject = async (id, projectName) => {
     };
 };
 
+
 const deleteProject = async (id) => {
     const project = await Project.findByIdAndDelete(id);
     if (!project) {
@@ -102,6 +103,29 @@ const deleteProject = async (id) => {
         statusCode: 200,
         status: 'Success',
         message: 'Project deleted successfully.',
+    };
+};
+
+const imageCompair = async (req,id) => {
+    
+    const project = await Project.findById(id);
+    // console.log(project)
+    if (!project) {
+        return {
+            statusCode: 404,
+            status: 'Failed',
+            message: 'Data not found'
+        };
+    }
+    
+    const rootPath = `${req.user.id}/${id}`;
+
+    return {
+        statusCode: 200,
+        status: 'Success',
+        orginalImgPath:`${rootPath}/main`,
+        previousImgPath:`${rootPath}/${project.curProcessingPreviewSourceFolType}/${project.curProcessingPreviewSourceFolPtr}`,
+        message: 'Successfully authenticated.'
     };
 };
 
@@ -230,6 +254,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
     let curDisplayThumbnailFolType = project.curDisplayThumbnailFolType;
     let curDisplayThumbnailFolPtr = project.curDisplayThumbnailFolPtr
     let refreshThumbnailFlag = project.refreshThumbnailFlag;
+    let operatePossibleOnVideoFlag = project.operatePossibleOnVideoFlag;
 
     if (project.imagePossibleUndoCount > 1) {
         imagePossibleUndoCount = project.imagePossibleUndoCount - 1;
@@ -282,6 +307,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
 
+            operatePossibleOnVideoFlag = true
             refreshThumbnailFlag = false
         } else {
             imagePossibleUndoCount = project.imagePossibleUndoCount - 1;
@@ -297,6 +323,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
 
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
+            operatePossibleOnVideoFlag = project.operatePossibleOnVideoFlag
             refreshThumbnailFlag = false
         }
         let projectUpdate = await Project.findByIdAndUpdate(id, {
@@ -314,6 +341,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewDestinationFolPtr,
             curDisplayThumbnailFolType,
             curDisplayThumbnailFolPtr,
+            operatePossibleOnVideoFlag,
             refreshThumbnailFlag
         }, { new: true });
     } else {
@@ -334,6 +362,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewDestinationFolType = TempFolder;
             curProcessingPreviewDestinationFolPtr = 1;
 
+            operatePossibleOnVideoFlag = true
             refreshThumbnailFlag = true
 
             let projectUpdate = await Project.findByIdAndUpdate(id, {
@@ -351,6 +380,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
                 curProcessingPreviewDestinationFolPtr,
                 curDisplayThumbnailFolType,
                 curDisplayThumbnailFolPtr,
+                operatePossibleOnVideoFlag,
                 refreshThumbnailFlag
             }, { new: true });
         }
@@ -394,6 +424,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
     let curProcessingPreviewDestinationFolPtr = project.curProcessingPreviewDestinationFolPtr
     let refreshThumbnailFlag = project.refreshThumbnailFlag;
     let videoFolInPtr = project.videoFolInPtr
+    let operatePossibleOnVideoFlag = project.operatePossibleOnVideoFlag
 
 
 
@@ -412,6 +443,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
         curProcessingPreviewDestinationFolType = TempFolder
         curProcessingPreviewDestinationFolPtr = 1
 
+        operatePossibleOnVideoFlag = true
         refreshThumbnailFlag = true;
 
         let projectDetails = await Project.findByIdAndUpdate(id, {
@@ -428,6 +460,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
             curProcessingPreviewSourceFolPtr,
             curProcessingPreviewDestinationFolType,
             curProcessingPreviewDestinationFolPtr,
+            operatePossibleOnVideoFlag,
             refreshThumbnailFlag
         }, { new: true });
     } else if (project.imagePossibleRedoCount > 0) {
@@ -445,6 +478,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
             curProcessingPreviewDestinationFolType = TempFolder
             curProcessingPreviewDestinationFolPtr = 1
 
+            operatePossibleOnVideoFlag = false
             refreshThumbnailFlag = false;
 
             let projectDetails = await Project.findByIdAndUpdate(id, {
@@ -462,6 +496,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
                 curProcessingPreviewSourceFolPtr,
                 curProcessingPreviewDestinationFolType,
                 curProcessingPreviewDestinationFolPtr,
+                operatePossibleOnVideoFlag,
                 refreshThumbnailFlag
             }, { new: true });
         } else {
@@ -477,6 +512,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
             curProcessingPreviewDestinationFolType = TempFolder
             curProcessingPreviewDestinationFolPtr = 1
 
+            operatePossibleOnVideoFlag = false
             refreshThumbnailFlag = false;
 
             let projectDetails = await Project.findByIdAndUpdate(id, {
@@ -494,6 +530,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
                 curProcessingPreviewSourceFolPtr,
                 curProcessingPreviewDestinationFolType,
                 curProcessingPreviewDestinationFolPtr,
+                operatePossibleOnVideoFlag,
                 refreshThumbnailFlag
             }, { new: true });
         }
@@ -643,7 +680,9 @@ const saveImage = async (req, id,image) => {
     const rootPath = `${req.user.id}/${id}`;
     if(image && image.length > 0){
         image.forEach((val) => {
-            fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${val}`, `public/${rootPath}/snap/${val}`, (err) => {
+            const timestamp = Date.now();
+            const newFileName = timestamp + '_frame.jpg';
+            fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${val}`, `public/${rootPath}/snap/${newFileName}`, (err) => {
                 if (err) {
                     // console.log('Error copying the file:', err);
                     return {
@@ -691,5 +730,6 @@ module.exports = {
     applyRedoAction,
     discardImage,
     saveImage,
-    resetPointer
+    resetPointer,
+    imageCompair
 };
