@@ -1,5 +1,6 @@
 const Casefolder = require('../model/casefolder.model');
 const { where } = require('../model/user.model');
+const Project = require('../model/projects.model');
 
 const getFolder = async (req) => {
     const casefolder = await Casefolder.find({ 'userId': req.user.id }).select('folderName').sort({ createdAt: -1 });
@@ -47,8 +48,27 @@ const updateFolder = async (id, folderName) => {
     }
 };
 
+const deleteFolder = async (id) => {
+    const casefolder = await Casefolder.findByIdAndDelete(id);
+    if (!casefolder) {
+        const result = await Project.deleteMany({ catId: id });
+        return {
+            statusCode: 404,
+            status: 'Failed',
+            message: 'Casefolder not found',
+        };
+    }
+
+    return {
+        statusCode: 200,
+        status: 'Success',
+        message: 'Casefolder deleted successfully.',
+    };
+};
+
 module.exports = {
     getFolder,
     createFolder,
-    updateFolder
+    updateFolder,
+    deleteFolder
 }

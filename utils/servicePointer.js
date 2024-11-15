@@ -206,7 +206,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
     // }else{
 
     if (isPreview) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 50));
         const rootPath = `${req.user.id}/${id}`;
         const timestamp = Date.now();
         // if (proDetails.curProcessingPreviewSourceFolType == 'temp') {
@@ -411,7 +411,7 @@ const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
 const preview = async (project, id, req, defaultImg) => {
     const rootPath = `${req.user.id}/${id}`;
     const imagePath = `public/${rootPath}/temp/`;
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // await new Promise((resolve) => setTimeout(resolve, 50));
     const curDisplayPreviewFolType = TempFolder
     let curDisplayPreviewFolPtr = 1;
     if (project.processingGoingOnVideoOrFrameFlag == true) {

@@ -42,6 +42,16 @@ const deleteProject = async (req, res, next) => {
     }
 };
 
+const imageComparison = async (req, res, next) => {
+    const { projectId: id } = req.query;
+    try {
+        const response = await projectService.imageCompair(req,id);
+        res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+
 const uploadFiles = async (req, res, next) => {
     const { catId: id } = req.query;
     const totalSeconds = (req.query.startTime) ? req.query.startTime : 0;
@@ -439,7 +449,7 @@ const filesList = async (req, res, next) => {
         const fs = require('fs');
         const path = require('path');
         const directoryPath = path.join(__dirname, `../public/${rootPath}/snap/`); // Replace with your folder path
-        console.log(directoryPath);
+        // console.log(directoryPath);
         
         let filesArr=[]
         fs.readdir(directoryPath, (err, files) => {
@@ -449,7 +459,7 @@ const filesList = async (req, res, next) => {
           // Listing all files in the directory
           files.forEach(file => {
             let fPath=`${rootPath}/snap/${file}`
-            filesArr.push(fPath)
+            filesArr.push({'basePath':fPath,'imageName':file})
             console.log(file);
           });
           if (filesArr && filesArr.length > 0) {
@@ -479,6 +489,7 @@ module.exports = {
     deleteProject,
     uploadFiles,
     getProjectByCat,
+    imageComparison,
     getProjectDetails,
     getAction,
     selectFream,
