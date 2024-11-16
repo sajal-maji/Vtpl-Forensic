@@ -48,11 +48,18 @@ const MeasureServiceClient = new grpcPackage.MeasureService(
     grpc.credentials.createInsecure() // Use insecure credentials for local testing
 );
 
+// Create the gRPC client for EditService
+const EditServiceClient = new grpcPackage.EditService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
 // Export the clients
 module.exports = {
     channelServiceClient,
     adjustServiceClient,
     ExtractServiceClient,
     PDFGenerateServiceClient,
-    MeasureServiceClient
+    MeasureServiceClient,
+    EditServiceClient
 };

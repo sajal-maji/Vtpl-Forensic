@@ -42,6 +42,48 @@ const deleteProject = async (req, res, next) => {
     }
 };
 
+const deleteImage = async (req, res, next) => {
+    const { url } = req.body;
+    try {
+        const imagePath = `public/${url}`;
+
+        // Check if the image file exists before attempting to delete
+        fs.stat(imagePath, (err, stats) => {
+            if (err) {
+                // console.error('Error checking file or directory:', err);
+                // res.status(200).json({
+                //     statusCode: 404,
+                //     status: 'Failed',
+                //     message: 'Image not found : '+err
+                // });
+            } else if (stats.isFile()) {
+                fsExtra.remove(imagePath, (err) => {
+                    if (err) {
+                        //console.error('Error removing file:', err);
+                        // res.status(200).json({
+                        //     statusCode: 404,
+                        //     status: 'Failed',
+                        //     message: 'Image not found '+err
+                        // });
+                    } else {
+                        console.log('File removed successfully.');
+                    }
+                });
+            } else {
+                console.log('Path is a directory; not removing.');
+            }
+        });
+        res.status(200).json({
+            statusCode: 200,
+            status: 'Success',
+            message: 'Image deleted successfully.',
+            data: items
+        });
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+
 const imageComparison = async (req, res, next) => {
     const { projectId: id } = req.query;
     try {
@@ -497,5 +539,6 @@ module.exports = {
     saveSnapImage,
     resetPointer,
     operationHistory,
-    filesList
+    filesList,
+    deleteImage
 };

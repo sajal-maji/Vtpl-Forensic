@@ -51,4 +51,17 @@ router.put('/measure-one-d', measureOneD);
 router.put('/measure-two-d', measureTwoD);
 router.put('/measure-three-d', measureThreeD);
 
+const { cropFilter, flipFilter, rotateFilter, resizeFilter, perspectiveFilter, undistortFilter, aspectRatioFilter, fisheyeFilter,  smartResizeFilter} = require('../controller/edit.controller');
+router.put('/crop', cropFilter);
+router.put('/flip', flipFilter);
+router.put('/rotate', rotateFilter);
+
+router.put('/resize', resizeFilter);
+router.put('/perspective', perspectiveFilter);
+router.put('/undistort', undistortFilter);
+
+router.put('/aspect-ratio', aspectRatioFilter);
+router.put('/fisheye', fisheyeFilter);
+router.put('/smart-resize', smartResizeFilter);
+
 module.exports = router;
