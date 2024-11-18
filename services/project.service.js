@@ -152,7 +152,7 @@ const projectList = async (req, catId) => {
                 'dstFolPtr': val.imageFolInPtr,
                 'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
                 'updateAt': project.updateAt,
-                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_1.jpg'}`
+                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
             }
         )
     });

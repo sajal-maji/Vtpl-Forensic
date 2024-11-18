@@ -229,9 +229,9 @@ const uploadFiles = async (req, res, next) => {
                 }
 
                 const frameNumber = 0; // Example frame number
-                const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
+                // const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
 
-                const frameOutputDir = `${basePath}/main/frame_%d.jpg`; // %d will be replaced by frame number
+                const frameOutputDir = `${basePath}/main/frame_%06d.jpg`; // %d will be replaced by frame number
                 const videoCon = await convertVideo(outputPath, frameOutputDir);  // Await async function
 
                 const dataFiles = await getTotalFiles(`${basePath}/main`);
@@ -269,7 +269,7 @@ const uploadFiles = async (req, res, next) => {
                 const updateproject = await Project.findByIdAndUpdate(project.id,
                     {
                         'filesName': JSON.stringify(dataFiles.filesName),
-                        'currentFrameId': 'frame_1.jpg',
+                        'currentFrameId': 'frame_000001.jpg',
                         'projectDetails': JSON.stringify(projectDetails)
                     }, { new: true });
 
@@ -473,7 +473,7 @@ const operationHistory = async (req, res, next) => {
                 data: operationDetails
             });
         } else {
-            return res.status(404).json({ message: 'No operation details found for the provided project ID' });
+            return res.status(200).json({ message: 'No operation details found for the provided project ID',data: operationDetails });
         }
 
     } catch (error) {
@@ -510,7 +510,7 @@ const filesList = async (req, res, next) => {
                 data: filesArr
             });
         } else {
-            return res.status(404).json({ message: 'No Files are found' });
+            return res.status(200).json({ message: 'No Files are found',data: filesArr });
         }
         });
 

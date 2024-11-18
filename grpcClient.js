@@ -54,6 +54,18 @@ const EditServiceClient = new grpcPackage.EditService(
     grpc.credentials.createInsecure() // Use insecure credentials for local testing
 );
 
+// Create the gRPC client for SharpenService
+const SharpenServiceClient = new grpcPackage.SharpenService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
+// Create the gRPC client for DenoiseService
+const DenoiseServiceClient = new grpcPackage.DenoiseService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
 // Export the clients
 module.exports = {
     channelServiceClient,
@@ -61,5 +73,7 @@ module.exports = {
     ExtractServiceClient,
     PDFGenerateServiceClient,
     MeasureServiceClient,
-    EditServiceClient
+    EditServiceClient,
+    SharpenServiceClient,
+    DenoiseServiceClient
 };
