@@ -20,8 +20,10 @@ const cropFilter = async (req, res, next) => {
 
 const flipFilter = async (req, res, next) => {
     try {
-        // const { } = req.body;
-        const requestObj = { };
+        const { inFlipHoriTrueVertFalse} = req.body;
+        const requestObj = {
+            in_flip_hori_true_vert_false: inFlipHoriTrueVertFalse 
+        };
         const response = await filterOperation(req, res, next, requestObj, EditServiceClient, 'FlipFilter','flip');
         res.status(200).json(response);
 
@@ -107,8 +109,12 @@ const aspectRatioFilter = async (req, res, next) => {
 
 const fisheyeFilter = async (req, res, next) => {
     try {
-        // const {} = req.body;
-        const requestObj = {};
+        const {inDistortionPower,inDirection,inStartClockPos} = req.body;
+        const requestObj = {
+            in_distortion_power : inDistortionPower,
+            in_direction  : inDirection,
+            in_start_clock_pos : inStartClockPos,
+        };
         const response = await filterOperation(req, res, next, requestObj, EditServiceClient, 'FisheyeFilter','correct_fisheye');
         res.status(200).json(response);
 
@@ -119,7 +125,7 @@ const fisheyeFilter = async (req, res, next) => {
 
 const smartResizeFilter = async (req, res, next) => {
     try {
-        const { inLevelSt, inLevelMid, inLevelEn, outLevelSt, outLevelEn } = req.body;
+        const { inEnCol, inEnRow, inStCol, inStRow, inScaleFact } = req.body;
         const requestObj = {
             in_en_col: inEnCol,
             in_en_row: inEnRow,

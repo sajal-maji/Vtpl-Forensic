@@ -123,7 +123,7 @@ const copyFolderExcluding = async (sourceDir, destDir, exclude = []) => {
 
 const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response) => {
     const rootPath = `${req.user.id}/${id}`;
-    let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_1.jpg';
+    let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_000001.jpg';
     // Determine the filter type based on the `isApplyToAll` flag
     // if(!isPreview){
 
@@ -281,6 +281,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             total_input_images: response.total_input_images,
             processed_image_count: response.processed_image_count,
             status_message: response.status_message,
+            objectLength:(response.object_length)?response.object_length:'',
             basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
         }
     }

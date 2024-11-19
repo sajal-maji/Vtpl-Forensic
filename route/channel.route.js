@@ -55,13 +55,22 @@ const { cropFilter, flipFilter, rotateFilter, resizeFilter, perspectiveFilter, u
 router.put('/crop', cropFilter);
 router.put('/flip', flipFilter);
 router.put('/rotate', rotateFilter);
-
 router.put('/resize', resizeFilter);
 router.put('/perspective', perspectiveFilter);
 router.put('/undistort', undistortFilter);
-
 router.put('/aspect-ratio', aspectRatioFilter);
 router.put('/fisheye', fisheyeFilter);
 router.put('/smart-resize', smartResizeFilter);
+
+const { laplacianFilter, unsharp} = require('../controller/sharpen.controller');
+router.put('/laplacian', laplacianFilter);
+router.put('/unsharp', unsharp);
+
+const { averagingFilter, gaussianFilter, bilateral, medianFilter, wiener} = require('../controller/denoise.controller');
+router.put('/averaging', averagingFilter);
+router.put('/gaussian', gaussianFilter);
+router.put('/bilateral', bilateral);
+router.put('/median', medianFilter);
+router.put('/wiener', wiener);
 
 module.exports = router;
