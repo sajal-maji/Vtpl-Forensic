@@ -8,6 +8,7 @@ const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
 const TempFolder = 'temp'
 const logger = require("../helpers/logEvents");
+const operationHistoryService = require("../services/operationhistory.service");
 
 const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
     try {
@@ -164,6 +165,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         project = await Project.findByIdAndUpdate(id, proArr, { new: true });
         logger.changePointer(req.user.id, id, 'PW', 'pointerDetails');
     } else {
+        await operationHistoryService.addOrUpdateOperation(id);
         const jobArr = { jobId: response.job_id, projectId: id };
         const mergedArr = Object.assign({}, proArr, jobArr);
         await Project.findByIdAndUpdate(id, proArr, { new: true });
