@@ -1,4 +1,5 @@
 const projectService = require("../services/project.service");
+const operationHistoryService = require("../services/operationhistory.service");
 const Project = require('../model/projects.model');
 const Casefolder = require('../model/casefolder.model');
 const Imageoperation = require('../model/imageoperation.model');
@@ -376,6 +377,16 @@ const resetPointer = async (req, res, next) => {
     }
 };
 
+const revertOperation = async (req, res, next) => {
+    const { projectId} = req.body;
+    try {
+         const response = await operationHistoryService.revertOperation(projectId);
+        res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+
 function createFolder(folderPath) {
     fs.mkdir(folderPath, { recursive: true }, (err) => {
         if (err) {
@@ -540,5 +551,6 @@ module.exports = {
     resetPointer,
     operationHistory,
     filesList,
-    deleteImage
+    deleteImage,
+    revertOperation
 };
