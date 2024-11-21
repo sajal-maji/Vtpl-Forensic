@@ -66,6 +66,12 @@ const DenoiseServiceClient = new grpcPackage.DenoiseService(
     grpc.credentials.createInsecure() // Use insecure credentials for local testing
 );
 
+// Create the gRPC client for StablizationService
+const StablizationServiceClient = new grpcPackage.StablizationService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
 // Export the clients
 module.exports = {
     channelServiceClient,
@@ -75,5 +81,6 @@ module.exports = {
     MeasureServiceClient,
     EditServiceClient,
     SharpenServiceClient,
-    DenoiseServiceClient
+    DenoiseServiceClient,
+    StablizationServiceClient
 };
