@@ -73,4 +73,8 @@ router.put('/bilateral', bilateral);
 router.put('/median', medianFilter);
 router.put('/wiener', wiener);
 
+const { localStablization, globalStabization} = require('../controller/stablization.controller');
+router.put('/local-stablization', localStablization);
+router.put('/global-stablization', globalStabization);
+
 module.exports = router;
