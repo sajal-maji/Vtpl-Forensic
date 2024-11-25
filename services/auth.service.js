@@ -92,7 +92,7 @@ const verifyUser = async (userName, password) => {
         return {
             statusCode: 401,
             status: 'Unauthorized',
-            message: 'Failed to authenticate user.'
+            message: 'Incorrect Password.'
         }
     }
 

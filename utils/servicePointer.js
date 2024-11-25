@@ -236,17 +236,16 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
                 console.error('Error copying the file:', err);
             } else {
                 logger.logCreate(`copyimage: response success`, 'systemlog');
-                console.log('File copied successfully.');
-                // const deletedImagePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${proDetails.currentPreviewFrameId}`;
-                // fsExtra.remove(deletedImagePath, (removeErr) => {
-                //     if (removeErr) {
-                //         logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
-                //         console.error('Error deleting the old file:', removeErr);
-                //     } else {
-                //         logger.logCreate(`deleteimage: response success`, 'systemlog');
-                //         console.log('Old file deleted successfully.');
-                //     }
-                // });
+                const deletedImagePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${proDetails.currentPreviewFrameId}`;
+                fsExtra.remove(deletedImagePath, (removeErr) => {
+                    if (removeErr) {
+                        logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
+                        console.error('Error deleting the old file:', removeErr);
+                    } else {
+                        logger.logCreate(`deleteimage: response success`, 'systemlog');
+                        console.log('Old file deleted successfully.');
+                    }
+                });
             }
         });
     }
