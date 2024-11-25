@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { createCasefolder, getFolderAll, updateCasefolder, deleteCaseFolder } = require('../controller/casefolder.controller');
-const { createProject, updateProject, deleteProject, uploadFiles, getProjectByCat, getProjectDetails, imageComparison, getAction, selectFream, discardFream, saveSnapImage, resetPointer, operationHistory, filesList, deleteImage, revertOperation } = require('../controller/project.controller');
+const { createProject, updateProject, deleteProject,getRecentProject, uploadFiles, getProjectByCat, getProjectDetails, imageComparison, getAction, selectFream, discardFream, saveSnapImage, resetPointer, operationHistory, filesList, deleteImage, revertOperation } = require('../controller/project.controller');
 
 router.post('/create-folder', createCasefolder);
 router.put('/update-folder', updateCasefolder);
@@ -12,6 +12,7 @@ router.delete('/delete-project', deleteProject);
 router.delete('/delete-folder', deleteCaseFolder);
 router.post('/upload-files', uploadFiles);
 router.get('/', getProjectByCat);
+router.get('/recent-project', getRecentProject);
 router.get('/project-details', getProjectDetails);
 router.put('/undo-redo-action', getAction);
 router.put('/select-image', selectFream);
