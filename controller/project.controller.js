@@ -88,7 +88,7 @@ const deleteImage = async (req, res, next) => {
 const imageComparison = async (req, res, next) => {
     const { projectId: id } = req.query;
     try {
-        const response = await projectService.imageCompair(req,id);
+        const response = await projectService.imageCompair(req, id);
         res.status(200).json(response);
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -96,9 +96,55 @@ const imageComparison = async (req, res, next) => {
 };
 
 const uploadFiles = async (req, res, next) => {
-    const { catId: id } = req.query;
-    const totalSeconds = (req.query.startTime) ? req.query.startTime : 0;
-    try {
+    const formKeys = Object.keys(req.body);
+    const storage = multer.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, 'public/uploads');  // Folder where the videos will be stored
+        },
+        filename: function (req, file, cb) {
+            cb(null, Date.now() + path.extname(file.originalname));  // Append timestamp to the file name
+        }
+    });
+
+    const fileFilter = (req, file, cb) => {
+        const allowedFileTypes = /mp4|mkv|avi|mov|wmv/;
+        const extName = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimeType = allowedFileTypes.test(file.mimetype);
+        if (mimeType && extName) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only videos are allowed'), false);
+        }
+    };
+
+    const upload = multer({
+        storage: storage,
+        limits: { fileSize: 1000000000 },  // 1GB
+        fileFilter: fileFilter
+    });
+
+    // Handle the file upload
+    upload.single('video')(req, res, async (err) => {  // Mark this callback as async
+        if (err) {
+            const errorMessage = err.code === 'LIMIT_FILE_SIZE' ? 'File too large. Max limit is 1GB' : err.message;
+            return res.status(400).json({
+                statusCode: 400,
+                status: 'Failed',
+                message: errorMessage,
+            });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({
+                statusCode: 400,
+                status: 'Failed',
+                message: 'Please upload a video.',
+            });
+        }
+
+        const { catId: id } = req.body;
+        const totalSeconds = (req.body.startTime) ? req.body.startTime : 0;
+
         // Calculate hours, minutes, and seconds
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -153,153 +199,103 @@ const uploadFiles = async (req, res, next) => {
             const dynamicFolderNameImg = `${basePath}/image/${i}`; // Create a folder with the project limit
             createFolder(dynamicFolderNameImg);
         }
+        const rootDir = path.resolve(__dirname, '..', '..');
+        const inputPath = req.file.path; //path.join(rootDir, req.file.path);
+        let outputPath = `public/uploads/crop/${req.file.filename}`;//path.join(rootDir, `public/uploads/videos/crop/${req.file.filename}`);
 
-        const storage = multer.diskStorage({
-            destination: function (req, file, cb) {
-                cb(null, 'public/uploads');  // Folder where the videos will be stored
-            },
-            filename: function (req, file, cb) {
-                cb(null, Date.now() + path.extname(file.originalname));  // Append timestamp to the file name
-            }
-        });
+        try {
+            const fileMetadata = await getVideoDuration(inputPath);  // Await inside async function
+            const videoDuration = fileMetadata.format.duration;
+            console.log(`Video duration: ${videoDuration} seconds`);
 
-        const fileFilter = (req, file, cb) => {
-            const allowedFileTypes = /mp4|mkv|avi|mov|wmv/;
-            const extName = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
-            const mimeType = allowedFileTypes.test(file.mimetype);
-            if (mimeType && extName) {
-                cb(null, true);
+            const maxDuration = 120; // 2 minutes in seconds
+            const startTime = formattedTime; // Start 3 seconds into the video
+            const cutDuration = 120; // Cut 10 seconds of the video
+
+            // Cut the video if it's longer than 2 minutes
+            if (videoDuration > maxDuration) {
+                console.log(`Video is longer than 2 minutes, cutting it to ${maxDuration} seconds.`);
+                await cutVideo(inputPath, outputPath, startTime, cutDuration);  // Await async function
             } else {
-                cb(new Error('Only videos are allowed'), false);
-            }
-        };
-
-        const upload = multer({
-            storage: storage,
-            limits: { fileSize: 1000000000 },  // 1GB
-            fileFilter: fileFilter
-        });
-
-        // Handle the file upload
-        upload.single('video')(req, res, async (err) => {  // Mark this callback as async
-            if (err) {
-                const errorMessage = err.code === 'LIMIT_FILE_SIZE' ? 'File too large. Max limit is 1GB' : err.message;
-                return res.status(400).json({
-                    statusCode: 400,
-                    status: 'Failed',
-                    message: errorMessage,
-                });
+                console.log('Video is 2 minutes or less, no cutting needed.');
             }
 
-            if (!req.file) {
-                return res.status(400).json({
-                    statusCode: 400,
-                    status: 'Failed',
-                    message: 'Please upload a video.',
-                });
-            }
-
-            const rootDir = path.resolve(__dirname, '..', '..');
-            const inputPath = req.file.path; //path.join(rootDir, req.file.path);
-            let outputPath = `public/uploads/crop/${req.file.filename}`;//path.join(rootDir, `public/uploads/videos/crop/${req.file.filename}`);
-
-            try {
-                const fileMetadata = await getVideoDuration(inputPath);  // Await inside async function
-                const videoDuration = fileMetadata.format.duration;
-                console.log(`Video duration: ${videoDuration} seconds`);
-
-                const maxDuration = 120; // 2 minutes in seconds
-                const startTime = formattedTime; // Start 3 seconds into the video
-                const cutDuration = 120; // Cut 10 seconds of the video
-
-                // Cut the video if it's longer than 2 minutes
-                if (videoDuration > maxDuration) {
-                    console.log(`Video is longer than 2 minutes, cutting it to ${maxDuration} seconds.`);
-                    await cutVideo(inputPath, outputPath, startTime, cutDuration);  // Await async function
-                } else {
-                    console.log('Video is 2 minutes or less, no cutting needed.');
-                }
-
-                // Convert the video to frames
-                if (videoDuration < maxDuration) {
-                    fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
-                        if (err) return console.error('Error copying the file:', err);
-                        console.log('File copied successfully.');
-                    });
-                    outputPath = inputPath;
-                }
-
-                const frameNumber = 0; // Example frame number
-                // const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
-
-                const frameOutputDir = `${basePath}/main/frame_%06d.jpg`; // %d will be replaced by frame number
-                const videoCon = await convertVideo(outputPath, frameOutputDir);  // Await async function
-
-                const dataFiles = await getTotalFiles(`${basePath}/main`);
-
-
-
-                fsExtra.unlink(inputPath, (unlinkErr) => {
-                    console.log('Video file deleted successfully.');
-                });
-                // Success response
-
-                fsExtra.copy(`${basePath}/main`, `${basePath}/video/1`, (err) => {
+            // Convert the video to frames
+            if (videoDuration < maxDuration) {
+                fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
                     if (err) return console.error('Error copying the file:', err);
                     console.log('File copied successfully.');
                 });
-                const projectDetails = {
-                    "fileName": req.file.filename,
-                    "fileSize": fileMetadata.format.size,
-                    "fileResolution": fileMetadata.format.bit_rate,
-                    "fileDuration": fileMetadata.format.duration,
-                    "fileFrameRate": '',
-                    "fileAspectRatio": '',
-                    "createOn": ''
-                }
-
-                dataFiles.filesName.sort((a, b) => {
-                    // Extract the numbers from the file names
-                    const numA = parseInt(a.match(/\d+/)[0]);
-                    const numB = parseInt(b.match(/\d+/)[0]);
-
-                    // Sort numerically
-                    return numA - numB;
-                });
-
-                const updateproject = await Project.findByIdAndUpdate(project.id,
-                    {
-                        'filesName': JSON.stringify(dataFiles.filesName),
-                        'currentFrameId': 'frame_000001.jpg',
-                        'projectDetails': JSON.stringify(projectDetails)
-                    }, { new: true });
-
-                res.status(200).json({
-                    statusCode: 200,
-                    status: 'Success',
-                    message: 'Video uploaded and processed successfully.',
-                    data: {
-                        totalFiles: dataFiles.totalFiles,
-                        'folderId': updateproject.catId,
-                        'projectId': updateproject.id,
-                        'curFrameId': updateproject.currentFrameId,
-                        'srcFolType': VideoFolderSet,
-                        'srcFolPtr': updateproject.videoFolInPtr,
-                        'videoToFrameWarmPopUp': true,
-                        'filesName': dataFiles.filesName,
-                        projectDetails: projectDetails
-                    }
-
-                });
-            } catch (error) {
-                res.status(500).json({ message: 'Server error', error: error.message });
+                outputPath = inputPath;
             }
 
-        });
-    } catch (error) {
-        errorLogger.info(error);
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
+            const frameNumber = 0; // Example frame number
+            // const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
+
+            const frameOutputDir = `${basePath}/main/frame_%06d.jpg`; // %d will be replaced by frame number
+            const videoCon = await convertVideo(outputPath, frameOutputDir);  // Await async function
+
+            const dataFiles = await getTotalFiles(`${basePath}/main`);
+
+
+
+            fsExtra.unlink(inputPath, (unlinkErr) => {
+                console.log('Video file deleted successfully.');
+            });
+            // Success response
+
+            fsExtra.copy(`${basePath}/main`, `${basePath}/video/1`, (err) => {
+                if (err) return console.error('Error copying the file:', err);
+                console.log('File copied successfully.');
+            });
+            const projectDetails = {
+                "fileName": req.file.filename,
+                "fileSize": fileMetadata.format.size,
+                "fileResolution": fileMetadata.format.bit_rate,
+                "fileDuration": fileMetadata.format.duration,
+                "fileFrameRate": '',
+                "fileAspectRatio": '',
+                "createOn": ''
+            }
+
+            dataFiles.filesName.sort((a, b) => {
+                // Extract the numbers from the file names
+                const numA = parseInt(a.match(/\d+/)[0]);
+                const numB = parseInt(b.match(/\d+/)[0]);
+
+                // Sort numerically
+                return numA - numB;
+            });
+
+            const updateproject = await Project.findByIdAndUpdate(project.id,
+                {
+                    'filesName': JSON.stringify(dataFiles.filesName),
+                    'currentFrameId': 'frame_000001.jpg',
+                    'projectDetails': JSON.stringify(projectDetails)
+                }, { new: true });
+
+            res.status(200).json({
+                statusCode: 200,
+                status: 'Success',
+                message: 'Video uploaded and processed successfully.',
+                data: {
+                    totalFiles: dataFiles.totalFiles,
+                    'folderId': updateproject.catId,
+                    'projectId': updateproject.id,
+                    'curFrameId': updateproject.currentFrameId,
+                    'srcFolType': VideoFolderSet,
+                    'srcFolPtr': updateproject.videoFolInPtr,
+                    'videoToFrameWarmPopUp': true,
+                    'filesName': dataFiles.filesName,
+                    projectDetails: projectDetails
+                }
+
+            });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error', error: error.message });
+        }
+
+    });
 };
 
 const getProjectByCat = async (req, res, next) => {
@@ -368,9 +364,9 @@ const discardFream = async (req, res, next) => {
 };
 
 const saveSnapImage = async (req, res, next) => {
-    const { projectId: id,image } = req.body;
+    const { projectId: id, image } = req.body;
     try {
-        const saveImage = await projectService.saveImage(req, id,image);
+        const saveImage = await projectService.saveImage(req, id, image);
         res.status(200).json(saveImage)
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -388,9 +384,9 @@ const resetPointer = async (req, res, next) => {
 };
 
 const revertOperation = async (req, res, next) => {
-    const { projectId} = req.body;
+    const { projectId } = req.body;
     try {
-         const response = await operationHistoryService.revertOperation(projectId);
+        const response = await operationHistoryService.revertOperation(projectId);
         res.status(200).json(response);
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
@@ -486,15 +482,15 @@ const operationHistory = async (req, res, next) => {
             return res.status(400).json({ error: 'Project ID is required' });
         }
 
-        const operationDetails = await Imageoperation.find({ projectId: projectId, processType: { $ne: 'preview' }  }).sort({ createdAt: -1 });
-//
+        const operationDetails = await Imageoperation.find({ projectId: projectId, processType: { $ne: 'preview' } }).sort({ createdAt: -1 });
+        //
         if (operationDetails && operationDetails.length > 0) {
             return res.status(200).json({
                 message: 'Successfully Done',
                 data: operationDetails
             });
         } else {
-            return res.status(200).json({ message: 'No operation details found for the provided project ID',data: operationDetails });
+            return res.status(200).json({ message: 'No operation details found for the provided project ID', data: operationDetails });
         }
 
     } catch (error) {
@@ -513,29 +509,29 @@ const filesList = async (req, res, next) => {
         const path = require('path');
         const directoryPath = path.join(__dirname, `../public/${rootPath}/snap/`); // Replace with your folder path
         // console.log(directoryPath);
-        
-        let filesArr=[]
+
+        let filesArr = []
         fs.readdir(directoryPath, (err, files) => {
-          if (err) {
-            return res.status(404).json({ message: 'Unable to scan directory '+directoryPath });
-          } 
-          // Listing all files in the directory
-          files.forEach(file => {
-            let fPath=`${rootPath}/snap/${file}`
-            filesArr.push({'basePath':fPath,'imageName':file})
-            console.log(file);
-          });
-          if (filesArr && filesArr.length > 0) {
-            return res.status(200).json({
-                message: 'Successfully Done',
-                data: filesArr
+            if (err) {
+                return res.status(404).json({ message: 'Unable to scan directory ' + directoryPath });
+            }
+            // Listing all files in the directory
+            files.forEach(file => {
+                let fPath = `${rootPath}/snap/${file}`
+                filesArr.push({ 'basePath': fPath, 'imageName': file })
+                console.log(file);
             });
-        } else {
-            return res.status(200).json({ message: 'No Files are found',data: filesArr });
-        }
+            if (filesArr && filesArr.length > 0) {
+                return res.status(200).json({
+                    message: 'Successfully Done',
+                    data: filesArr
+                });
+            } else {
+                return res.status(200).json({ message: 'No Files are found', data: filesArr });
+            }
         });
 
-        
+
 
     } catch (error) {
         return res.status(500).json({
