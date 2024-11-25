@@ -312,6 +312,16 @@ const getProjectByCat = async (req, res, next) => {
     }
 };
 
+
+const getRecentProject = async (req, res, next) => {
+    try {
+        const projectList = await projectService.recentprojectList(req, req.user.id);
+        res.status(200).json(projectList)
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+
 const getProjectDetails = async (req, res, next) => {
     const { projectId: id } = req.query;
     try {
@@ -552,5 +562,6 @@ module.exports = {
     operationHistory,
     filesList,
     deleteImage,
-    revertOperation
+    revertOperation,
+    getRecentProject
 };

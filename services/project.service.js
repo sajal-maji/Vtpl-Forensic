@@ -164,6 +164,40 @@ const projectList = async (req, catId) => {
     }
 };
 
+const recentprojectList = async (req, userId) => {
+    const project = await Project.find({ 'userId': userId }).sort({ updateAt: -1 });
+    if (!project) {
+        return {
+            statusCode: 404,
+            status: 'Failed',
+            message: 'Data not found'
+        };
+    }
+    let items = [];
+    project.forEach((val) => {
+        items.push(
+            {
+                'folderId': val.catId,
+                'projectId': val.id,
+                'curFrameId': val.currentFrameId,
+                'srcFolType': VideoFolderSet,
+                'srcFolPtr': val.videoFolInPtr,
+                'dstFolType': ImageFolderSet,
+                'dstFolPtr': val.imageFolInPtr,
+                'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
+                'updateAt': project.updateAt,
+                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
+            }
+        )
+    });
+    return {
+        statusCode: 200,
+        status: 'Success',
+        message: 'Successfully authenticated.',
+        data: items
+    }
+};
+
 const projectDetails = async (req, id) => {
     const projectDetails = await Project.findById(id);
     const userDetails = await User.findById(req.user.id);
@@ -744,5 +778,6 @@ module.exports = {
     discardImage,
     saveImage,
     resetPointer,
-    imageCompair
+    imageCompair,
+    recentprojectList
 };
