@@ -78,13 +78,14 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     };
 
     const request = Object.assign({}, requestObj, jobObj);
-    if (!isPreview) {
-        const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
-        await removeAndCreateFolder(operationPath);
-    }
+    const rootPath = `${req.user.id}/${id}`;
+
+    // if (!isPreview) {
+    //     const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
+    //     await removeAndCreateFolder(operationPath);
+    // }
 
     if (isApplyToAll) {
-        const rootPath = `${req.user.id}/${id}`;
         const sourceFolder = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
         const destinationFolder = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`;
         await copyFolderExcluding(sourceFolder, destinationFolder, frame);
