@@ -80,10 +80,10 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     const request = Object.assign({}, requestObj, jobObj);
     const rootPath = `${req.user.id}/${id}`;
 
-    // if (!isPreview) {
-    //     const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
-    //     await removeAndCreateFolder(operationPath);
-    // }
+    if (!isPreview) {
+        const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
+        await removeAndCreateFolder(operationPath);
+    }
 
     if (isApplyToAll) {
         const sourceFolder = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
@@ -100,14 +100,12 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
 async function removeAndCreateFolder(operationPath) {
     fsExtra.remove(operationPath, (removeErr) => {
         if (removeErr) {
-            fs.mkdir(operationPath, { recursive: true }, (err) => {
-                if (err) {
-                }
-            });
             logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
         } else {
             logger.logCreate(`deleteimage: response success`, 'systemlog');
         }
+        fs.mkdir(operationPath, { recursive: true }, (err) => {
+        });
     });
 }
 
