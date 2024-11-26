@@ -3,6 +3,8 @@ const Project = require('../model/projects.model');
 const logger = require("../helpers/logEvents");
 const projectService = require("../services/project.service");
 const Imageoperation = require('../services/imageoperation.service');
+const fs = require('fs');
+const fsExtra = require('fs-extra');
 
 const { managePointer, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
 
@@ -76,6 +78,10 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     };
 
     const request = Object.assign({}, requestObj, jobObj);
+    if (!isPreview) {
+        const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
+        await removeAndCreateFolder(operationPath);
+    }
 
     if (isApplyToAll) {
         const rootPath = `${req.user.id}/${id}`;
@@ -90,6 +96,19 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     const responseData = await callGrpcService(grpcServiceName, processName, request, req, res, proDetails);
     return responseData
 };
+async function removeAndCreateFolder(operationPath) {
+    fsExtra.remove(operationPath, (removeErr) => {
+        if (removeErr) {
+            fs.mkdir(operationPath, { recursive: true }, (err) => {
+                if (err) {
+                }
+            });
+            logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
+        } else {
+            logger.logCreate(`deleteimage: response success`, 'systemlog');
+        }
+    });
+}
 
 async function callGrpcService(grpcServiceName, processName, request, req, res, proDetails) {
     return new Promise((resolve, reject) => {
