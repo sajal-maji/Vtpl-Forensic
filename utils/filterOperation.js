@@ -3,6 +3,8 @@ const Project = require('../model/projects.model');
 const logger = require("../helpers/logEvents");
 const projectService = require("../services/project.service");
 const Imageoperation = require('../services/imageoperation.service');
+const fs = require('fs');
+const fsExtra = require('fs-extra');
 
 const { managePointer, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
 
