@@ -1,4 +1,4 @@
-const Imagefilter = require('../model/imagefilter.model');
+// const Imagefilter = require('../model/imagefilter.model');
 const Project = require('../model/projects.model');
 const JobProject = require('../model/jobprojects.model');
 const path = require('path');
@@ -166,15 +166,15 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         logger.changePointer(req.user.id, id, 'PW', 'pointerDetails');
     } else {
         await operationHistoryService.addOrUpdateOperation(id);
-        const jobArr = { jobId: response.job_id, projectId: id };
-        const mergedArr = Object.assign({}, proArr, jobArr);
+        const jobArr = { jobId: response.job_id, projectId: id,JobStatus:'incomplete' };
+        // const mergedArr = Object.assign({}, proArr, jobArr);
         await Project.findByIdAndUpdate(id, proArr, { new: true });
         if (isApplyToAll) {
             logger.changePointer(req.user.id, id, 'AA', 'pointerDetails');
         } else {
             logger.changePointer(req.user.id, id, 'AF', 'pointerDetails');
         }
-        project = new JobProject(mergedArr);
+        project = new JobProject(jobArr);
         await project.save();
     }
 

@@ -108,5 +108,5 @@ const operationhistorySchema = new mongoose.Schema({
     }
 }, { timestamps: true })
 
-const operationhistory = mongoose.model('operationhistory', operationhistorySchema);
+const operationhistory = mongoose.model('temporaryprojectdetails', operationhistorySchema);
 module.exports = operationhistory;

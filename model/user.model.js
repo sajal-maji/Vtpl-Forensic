@@ -12,6 +12,16 @@ const userSchema = new mongoose.Schema({
     email: {
         type: String,
     },
+    organizationID : {
+        type: String,
+        default: null, 
+        required: false,
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'deleted'], // Allowed values
+        default: 'active', // Default value
+    },
     phoneNumber: {
         type: String
     },

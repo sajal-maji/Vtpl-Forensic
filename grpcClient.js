@@ -72,6 +72,12 @@ const StablizationServiceClient = new grpcPackage.StablizationService(
     grpc.credentials.createInsecure() // Use insecure credentials for local testing
 );
 
+// Create the gRPC client for AbortService
+const abortServiceClient = new grpcPackage.AbortService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
 // Export the clients
 module.exports = {
     channelServiceClient,
@@ -82,5 +88,6 @@ module.exports = {
     EditServiceClient,
     SharpenServiceClient,
     DenoiseServiceClient,
-    StablizationServiceClient
+    StablizationServiceClient,
+    abortServiceClient
 };

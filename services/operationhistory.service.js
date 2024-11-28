@@ -1,6 +1,8 @@
 const Operationhistory = require('../model/operationhistory.model');
 const projects = require('../model/projects.model');
 const Project = require('../model/projects.model');
+const { abortServiceClient } = require('../grpcClient');
+const JobProject = require('../model/jobprojects.model');
 
 const addOrUpdateOperation = async (projectId) => {
     const projectDetails = await Project.findById(projectId);
@@ -48,6 +50,38 @@ const addOrUpdateOperation = async (projectId) => {
 };
 
 const revertOperation = async (projectId) => {
+    const jobDetails = await JobProject.findOne({ projectId });
+    if (!jobDetails) {
+        return {
+            statusCode: 404,
+            status: 'Failed',
+            message: 'Data not found'
+        };
+    }
+
+    const jobId= jobDetails.jobId;
+    return new Promise((resolve, reject) => {
+        const request = { job_id:jobId };
+        abortServiceClient.AbortProcess(request, async (error, response) => {
+            if (error) {
+                return resolve({
+                    statusCode: 404,
+                    status: 'Failed',
+                    message: error.message || error
+                });
+            }
+            if (response && response.completed) {
+                await updateProjectDetails(projectId);
+            }
+            const jobProjectDetails = await Operationhistory.findOne({ jobId });
+            resolve({response,'jobDetails':jobProjectDetails});
+        });
+    });
+
+
+};
+
+async function updateProjectDetails(projectId) {
     const projectDetails = await Project.findById(projectId);
     if (!projectDetails) {
         return {

@@ -80,7 +80,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     const request = Object.assign({}, requestObj, jobObj);
     const rootPath = `${req.user.id}/${id}`;
 
-    if (!isPreview) {
+    if (isApplyToAll) {
         const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
         await removeAndCreateFolder(operationPath);
     }
@@ -139,6 +139,7 @@ async function callGrpcService(grpcServiceName, processName, request, req, res, 
                 });
             } catch (saveError) {
                 reject({
+                    statusCode: 500,
                     error: 'Failed to save image filter',
                     details: saveError.message
                 });

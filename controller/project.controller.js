@@ -19,7 +19,7 @@ const createProject = async (req, res, next) => {
         const response = await projectService.createProject(req, catId, projectName);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -29,17 +29,17 @@ const updateProject = async (req, res, next) => {
         const response = await projectService.updateProject(id, projectName);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
 const deleteProject = async (req, res, next) => {
     const { projectId: id } = req.body;
     try {
-        const response = await projectService.deleteProject(id);
+        const response = await projectService.deleteProject(req,id);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -81,7 +81,7 @@ const deleteImage = async (req, res, next) => {
             data: items
         });
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -91,7 +91,7 @@ const imageComparison = async (req, res, next) => {
         const response = await projectService.imageCompair(req, id);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -292,29 +292,30 @@ const uploadFiles = async (req, res, next) => {
 
             });
         } catch (error) {
-            res.status(500).json({ message: 'Server error', error: error.message });
+            res.status(500).json({statusCode: 500, message: 'Server error', error: error.message });
         }
 
     });
 };
 
 const getProjectByCat = async (req, res, next) => {
-    const { catId } = req.query;
+    const { catId,keyword,sort } = req.query;
     try {
-        const projectList = await projectService.projectList(req, catId);
+        const projectList = await projectService.projectList(req, catId,keyword,sort);
         res.status(200).json(projectList)
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
 
 const getRecentProject = async (req, res, next) => {
     try {
-        const projectList = await projectService.recentprojectList(req, req.user.id);
+        const { keyword,sort } = req.query;
+        const projectList = await projectService.recentprojectList(req, req.user.id,keyword,sort);
         res.status(200).json(projectList)
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -324,7 +325,7 @@ const getProjectDetails = async (req, res, next) => {
         const projectDetails = await projectService.projectDetails(req, id);
         res.status(200).json(projectDetails)
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -339,7 +340,7 @@ const getAction = async (req, res, next) => {
         }
         res.status(200).json(applyChanges)
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -349,7 +350,7 @@ const selectFream = async (req, res, next) => {
         const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frameId);
         res.status(200).json(selectThumbnailFrame)
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -359,7 +360,7 @@ const discardFream = async (req, res, next) => {
         const discardImage = await projectService.discardImage(id);
         res.status(200).json(discardImage)
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500,error: 'Internal server error', details: error });
     }
 };
 
@@ -369,7 +370,7 @@ const saveSnapImage = async (req, res, next) => {
         const saveImage = await projectService.saveImage(req, id, image);
         res.status(200).json(saveImage)
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500,error: 'Internal server error', details: error });
     }
 };
 
@@ -379,7 +380,7 @@ const resetPointer = async (req, res, next) => {
         const updatePointer = await projectService.resetPointer(req.user.id, id, updateData);
         res.status(200).json(updatePointer)
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -389,7 +390,7 @@ const revertOperation = async (req, res, next) => {
         const response = await operationHistoryService.revertOperation(projectId);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -495,6 +496,7 @@ const operationHistory = async (req, res, next) => {
 
     } catch (error) {
         return res.status(500).json({
+            statusCode: 500,
             error: 'Internal server error',
             details: error
         });
@@ -535,6 +537,7 @@ const filesList = async (req, res, next) => {
 
     } catch (error) {
         return res.status(500).json({
+            statusCode: 500,
             error: 'Internal server error',
             details: error
         });

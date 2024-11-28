@@ -18,6 +18,10 @@ const getStatus = async (job_id, userId) => {
                 return reject({ error: 'Error fetching job status', details: error });
             }
             if (response && response.completed) {
+                const proArr = {
+                    JobStatus: 'complete',
+                }
+                await updateJobDetails(response.job_id, proArr);
                 await updateProjectDetails(response.job_id, userId);
             }
             const jobProjectDetails = await JobProject.findOne({ jobId: response.job_id });
@@ -26,39 +30,13 @@ const getStatus = async (job_id, userId) => {
     });
 };
 
-async function updateJobDetails(jobId) {
+async function updateJobDetails(jobId,proArr) {
     const jobProjectDetails = await JobProject.findOne({ jobId: jobId.toString() });
     if (!jobProjectDetails) {
         return;
     }
     let id = jobProjectDetails.projectId;
-    const proArr = {
-        currentFrameId: jobProjectDetails.currentFrameId,
-        imageFolInPtr: jobProjectDetails.imageFolInPtr,
-        videoFolInPtr: jobProjectDetails.videoFolInPtr,
-        imagePossibleUndoCount: jobProjectDetails.imagePossibleUndoCount,
-        imagePossibleRedoCount: jobProjectDetails.imagePossibleRedoCount,
-        operatePossibleOnVideoFlag: jobProjectDetails.operatePossibleOnVideoFlag,
-        handoverPossibleImageToVideoFlag: jobProjectDetails.handoverPossibleImageToVideoFlag,
-        curProcessingSourceFolType: jobProjectDetails.curProcessingSourceFolType,
-        curProcessingSourceFolPtr: jobProjectDetails.curProcessingSourceFolPtr,
-        curProcessingDestinationFolType: jobProjectDetails.curProcessingDestinationFolType,
-        curProcessingDestinationFolPtr: jobProjectDetails.curProcessingDestinationFolPtr,
-        videoPossibleUndoCount: jobProjectDetails.videoPossibleUndoCount,
-
-        videoToFrameWarningPopUp: jobProjectDetails.videoToFrameWarningPopUp,
-        processingGoingOnVideoOrFrameFlag: jobProjectDetails.processingGoingOnVideoOrFrameFlag,
-        processingGoingOnVideoNotFrame: jobProjectDetails.processingGoingOnVideoNotFrame,
-
-        curDisplayPreviewFolType: jobProjectDetails.curDisplayPreviewFolType,
-        curDisplayPreviewFolPtr: jobProjectDetails.curDisplayPreviewFolPtr,
-
-        curProcessingPreviewSourceFolType: jobProjectDetails.curProcessingPreviewSourceFolType,
-        curProcessingPreviewSourceFolPtr: jobProjectDetails.curProcessingPreviewSourceFolPtr,
-        curProcessingPreviewDestinationFolType: jobProjectDetails.curProcessingPreviewDestinationFolType,
-        curProcessingPreviewDestinationFolPtr: jobProjectDetails.curProcessingPreviewDestinationFolPtr,
-
-    }
+    
 
     await Project.findByIdAndUpdate(id, proArr, { new: true });
 };

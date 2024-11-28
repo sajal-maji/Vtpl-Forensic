@@ -12,6 +12,7 @@ const ImageFolderSet = 'image'
 const TempFolder = 'temp'
 const logger = require("../helpers/logEvents");
 const Imageoperation = require('../services/imageoperation.service');
+const moment = require('moment');
 
 const createProject = async (req, catId, projectName) => {
     let casefolder = await Casefolder.findById(catId);
@@ -90,7 +91,7 @@ const updateProject = async (id, projectName) => {
 };
 
 
-const deleteProject = async (id) => {
+const deleteProject = async (req,id) => {
     const project = await Project.findByIdAndDelete(id);
     if (!project) {
         return {
@@ -99,13 +100,25 @@ const deleteProject = async (id) => {
             message: 'Project not found',
         };
     }
-
+    const rootPath = `${req.user.id}/${id}`;
+    const operationPath = `public/${rootPath}`
+    // await removeFolder(operationPath);
     return {
         statusCode: 200,
         status: 'Success',
         message: 'Project deleted successfully.',
     };
 };
+
+async function removeFolder(operationPath) {
+    fsExtra.remove(operationPath, (removeErr) => {
+        if (removeErr) {
+            logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
+        } else {
+            logger.logCreate(`deleteimage: response success`, 'systemlog');
+        }
+    });
+}
 
 const imageCompair = async (req,id) => {
     
@@ -130,8 +143,25 @@ const imageCompair = async (req,id) => {
     };
 };
 
-const projectList = async (req, catId) => {
-    const project = await Project.find({ 'catId': catId }).sort({ updateAt: -1 });
+const projectList = async (req, catId,keyword=null,sort) => {
+    
+    // if(keyword!=''){
+    //     let projects = await Project.find({ 'catId': catId , projectName: { $regex: 'keyword', $options: 'i' } })
+    //     .sort({ updateAt: -1 });
+    // }else{
+    //     let project = await Project.find({ 'catId': catId }).sort({ updateAt: -1 });
+    // }
+    
+    let query = { catId: catId };
+    const sortOrder = sort === 'asc' ? 1 : -1;
+    // Add the "like" query conditionally
+    if (typeof keyword === 'string' && keyword.trim() !== '') {
+        query.projectName = { $regex: keyword, $options: 'i' };
+    }
+
+    let project = await Project.find(query).sort({ updatedAt: sortOrder });
+
+    const folderDetails = await Casefolder.findById(catId).select('folderName');
     if (!project) {
         return {
             statusCode: 404,
@@ -140,18 +170,21 @@ const projectList = async (req, catId) => {
         };
     }
     let items = [];
-    project.forEach((val) => {
+    project.forEach((val, index) => {
+        const formattedUpdatedAt = moment(val.updatedAt).format('YYYY-MM-DD HH:mm:ss');
         items.push(
             {
                 'folderId': val.catId,
+                folderName: folderDetails?.folderName === 'anonymous' ? `Case Folder ${index + 1}` : folderDetails?.folderName || 'Unknown Folder',
                 'projectId': val.id,
+                'projectName':val.projectName,
                 'curFrameId': val.currentFrameId,
                 'srcFolType': VideoFolderSet,
                 'srcFolPtr': val.videoFolInPtr,
                 'dstFolType': ImageFolderSet,
                 'dstFolPtr': val.imageFolInPtr,
                 'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
-                'updateAt': project.updateAt,
+                'updatedAt': formattedUpdatedAt,
                 'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
             }
         )
@@ -164,8 +197,20 @@ const projectList = async (req, catId) => {
     }
 };
 
-const recentprojectList = async (req, userId) => {
-    const project = await Project.find({ 'userId': userId }).sort({ updateAt: -1 });
+const recentprojectList = async (req, userId, keyword, sort) => {
+    // const project = await Project.find({ 'userId': userId }).sort({ updateAt: -1 });
+
+    let query = { userId: userId };
+    const sortOrder = sort === 'asc' ? 1 : -1;
+    // Add the "like" query conditionally
+    if (typeof keyword === 'string' && keyword.trim() !== '') {
+        query.projectName = { $regex: keyword, $options: 'i' };
+    }
+
+
+    let project = await Project.find(query).sort({ updatedAt: sortOrder });
+    
+
     if (!project) {
         return {
             statusCode: 404,
@@ -173,28 +218,40 @@ const recentprojectList = async (req, userId) => {
             message: 'Data not found'
         };
     }
-    let items = [];
-    project.forEach((val) => {
-        items.push(
-            {
-                'folderId': val.catId,
-                'projectId': val.id,
-                'curFrameId': val.currentFrameId,
-                'srcFolType': VideoFolderSet,
-                'srcFolPtr': val.videoFolInPtr,
-                'dstFolType': ImageFolderSet,
-                'dstFolPtr': val.imageFolInPtr,
-                'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
-                'updateAt': project.updateAt,
-                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
+    const items = await Promise.all(
+        project.map(async (val, index) => {
+            try {
+                const folderDetails = await Casefolder.findById(val.catId).select('folderName');
+                const formattedUpdatedAt = moment(val.updatedAt).format('YYYY-MM-DD HH:mm:ss');
+                return {
+                    folderId: val.catId,
+                    folderName: folderDetails?.folderName === 'anonymous' ? `Case Folder ${index + 1}` : folderDetails?.folderName || 'Unknown Folder',
+                    projectId: val.id,
+                    projectName: val.projectName,
+                    curFrameId: val.currentFrameId,
+                    srcFolType: VideoFolderSet,
+                    srcFolPtr: val.videoFolInPtr,
+                    dstFolType: ImageFolderSet,
+                    dstFolPtr: val.imageFolInPtr,
+                    videoToFrameWarmPopUp: val.videoToFrameWarningPopUp,
+                    updatedAt: formattedUpdatedAt,
+                    basePath: `${req.user.id}/${val.id}/${VideoFolderSet}/${val.curDisplayThumbnailFolPtr > 0 ? val.curDisplayThumbnailFolPtr : 1}/${val.currentFrameId || 'frame_000001.jpg'}`
+                };
+            } catch (error) {
+                console.error(`Error processing project with ID ${val.id}:`, error);
+                return null; // Return null for failed items
             }
-        )
-    });
+        })
+    );
+    
+    // Filter out any null items
+    const validItems = items.filter(item => item !== null);
+
     return {
         statusCode: 200,
         status: 'Success',
         message: 'Successfully authenticated.',
-        data: items
+        data: validItems
     }
 };
 
