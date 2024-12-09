@@ -82,7 +82,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
 
     if (isApplyToAll) {
         const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
-        await removeAndCreateFolder(operationPath);
+        // await removeAndCreateFolder(operationPath);
     }
 
     if (isApplyToAll) {

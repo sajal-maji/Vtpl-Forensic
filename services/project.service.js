@@ -17,8 +17,9 @@ const moment = require('moment');
 const createProject = async (req, catId, projectName) => {
     let casefolder = await Casefolder.findById(catId);
     if (!casefolder) {
+        const totalCount = await Casefolder.countDocuments({ userId: req.user.id });
         casefolder = new Casefolder({
-            folderName: 'anonymous',
+            folderName: `Case Folder ${totalCount + 1}`,
             userId: req.user.id
         })
         await casefolder.save();
@@ -238,7 +239,7 @@ const recentprojectList = async (req, userId, keyword, sort) => {
                     basePath: `${req.user.id}/${val.id}/${VideoFolderSet}/${val.curDisplayThumbnailFolPtr > 0 ? val.curDisplayThumbnailFolPtr : 1}/${val.currentFrameId || 'frame_000001.jpg'}`
                 };
             } catch (error) {
-                console.error(`Error processing project with ID ${val.id}:`, error);
+                console.log(`Error processing project with ID ${val.id}:`, error);
                 return null; // Return null for failed items
             }
         })
@@ -293,6 +294,8 @@ const projectDetails = async (req, id) => {
     }
     logger.logCreate(`project details: ${JSON.stringify(projectDetails)}`, 'systemlog');
     logger.changePointer(req.user.id, id, 'JOB 100', 'pointerDetails');
+    const folderDetails = await Casefolder.findById(projectDetails.catId).select('folderName');
+    const formattedUpdatedAt = moment(projectDetails.updatedAt).format('YYYY-MM-DD HH:mm:ss');
     return {
         statusCode: 200,
         status: 'Success',
@@ -300,6 +303,9 @@ const projectDetails = async (req, id) => {
         data: {
             'folderId': projectDetails.catId,
             'projectId': projectDetails.id,
+            'folderName': folderDetails?.folderName === 'anonymous' ? `Case Folder ` : folderDetails?.folderName || 'Unknown Folder',
+            'projectName':projectDetails.projectName,
+            'updatedAt': formattedUpdatedAt,
             'curFrameId': (projectDetails.curDisplayPreviewFolType == 'temp') ? projectDetails.currentPreviewFrameId : projectDetails.currentFrameId,
             'isUndoPossible': isUndoPossible,
             'isRedoPossible': isRedoPossible,
@@ -772,7 +778,7 @@ const discardImage = async (id) => {
     }
 };
 
-const saveImage = async (req, id,image) => {
+const saveImage = async (req, id,image,exeName='jpg') => {
     const project = await Project.findById(id);
     if (!project) {
         return {
@@ -785,7 +791,7 @@ const saveImage = async (req, id,image) => {
     if(image && image.length > 0){
         image.forEach((val) => {
             const timestamp = Date.now();
-            const newFileName = timestamp + '_frame.jpg';
+            const newFileName = `${timestamp}_frame.${exeName}`;
             fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${val}`, `public/${rootPath}/snap/${newFileName}`, (err) => {
                 if (err) {
                     // console.log('Error copying the file:', err);
@@ -817,7 +823,7 @@ const saveImage = async (req, id,image) => {
 function createFolder(folderPath) {
     fs.mkdir(folderPath, { recursive: true }, (err) => {
         if (err) {
-            return console.error(`Error creating folder: ${err.message}`);
+            return console.log(`Error creating folder: ${err.message}`);
         }
     });
 };

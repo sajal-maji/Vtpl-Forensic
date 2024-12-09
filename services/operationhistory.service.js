@@ -49,19 +49,12 @@ const addOrUpdateOperation = async (projectId) => {
     }
 };
 
-const revertOperation = async (projectId) => {
-    const jobDetails = await JobProject.findOne({ projectId });
-    if (!jobDetails) {
-        return {
-            statusCode: 404,
-            status: 'Failed',
-            message: 'Data not found'
-        };
-    }
+const revertOperation = async (jobId,projectId) => {
+   
 
-    const jobId= jobDetails.jobId;
     return new Promise((resolve, reject) => {
         const request = { job_id:jobId };
+        console.log('----------------',request)
         abortServiceClient.AbortProcess(request, async (error, response) => {
             if (error) {
                 return resolve({
@@ -70,11 +63,24 @@ const revertOperation = async (projectId) => {
                     message: error.message || error
                 });
             }
-            if (response && response.completed) {
+
+            const jobDetails = await JobProject.findOne({ jobId }).sort({ createdAt: -1 });
+            if (!jobDetails) {
+                return resolve({
+                    statusCode: 404,
+                    status: 'Failed',
+                    message: 'Data not found'
+                });
+            }
+
+            if (response && response.status_code==200) {
                 await updateProjectDetails(projectId);
             }
-            const jobProjectDetails = await Operationhistory.findOne({ jobId });
-            resolve({response,'jobDetails':jobProjectDetails});
+            const jobProjectDetails = await Operationhistory.findOne({ projectId });
+            resolve({
+                statusCode: response.status_code,
+                message: response.message?response.message:'ok',
+                response,'jobDetails':jobProjectDetails});
         });
     });
 

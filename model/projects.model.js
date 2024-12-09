@@ -154,6 +154,10 @@ const projectsSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    fps: {
+        type: Number,
+        default: 10,
+    },
     isDeleted: {
         type: String
     }

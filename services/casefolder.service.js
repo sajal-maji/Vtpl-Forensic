@@ -26,7 +26,7 @@ const createFolder = async (req, folderName) => {
     const casefolder = new Casefolder({
         folderName,
         userId: req.user.id,
-        slag: slag
+        // slag: slag
     });
     await casefolder.save();
 

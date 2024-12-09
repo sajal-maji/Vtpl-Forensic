@@ -43,6 +43,37 @@ const deleteProject = async (req, res, next) => {
     }
 };
 
+const exportProject = async (req, res, next) => {
+    const { projectId:id,exeName } = req.query;
+    const projectDetails = await Project.findById(id);
+    if (!projectDetails) {
+        return res.status(404).json({
+            statusCode: 404,
+            status: 'Failed',
+            message: 'Data not found'
+        });
+    }
+    const exe = exeName?exeName:'mp4'
+    const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${id}`;
+    createFolder(`${basePath}/exportvideo`);
+    const imageDir = `public/${req.user.id}/${id}/${projectDetails.curDisplayThumbnailFolType}/${(projectDetails.curDisplayThumbnailFolPtr && projectDetails.curDisplayThumbnailFolPtr > 0) ? projectDetails.curDisplayThumbnailFolPtr : 1}`
+   const outputDir= `${basePath}/exportvideo`;
+   const timestamp = Date.now();
+   const outputPath = path.join(outputDir, `video_${timestamp}.${exe}`);
+    try {
+        const fps = projectDetails.fps?projectDetails.fps:10
+        const videoCon = await imagesToMp4(imageDir, outputPath, fps) // 1 frame per second
+        res.status(200).json({
+            statusCode: 200,
+            status: 'Success',
+            message: 'Successfully authenticated.',
+            vodeoUrl:`${req.user.id}/${id}/exportvideo/video_${timestamp}.${exe}`
+        });
+    } catch (error) {
+        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error.message });
+    }
+};
+
 const deleteImage = async (req, res, next) => {
     const { url } = req.body;
     try {
@@ -119,10 +150,10 @@ const uploadFiles = async (req, res, next) => {
 
     const upload = multer({
         storage: storage,
-        limits: { fileSize: 1000000000 },  // 1GB
+        limits: { fileSize: 2000000000 },  // 1GB
         fileFilter: fileFilter
     });
-
+    
     // Handle the file upload
     upload.single('video')(req, res, async (err) => {  // Mark this callback as async
         if (err) {
@@ -162,16 +193,18 @@ const uploadFiles = async (req, res, next) => {
                 });
             }
         } else {
+            const totalCount = await Casefolder.countDocuments({ userId: req.user.id });
             var casefolder = new Casefolder({
-                folderName: 'anonymous',
+                folderName: `Case Folder ${totalCount + 1}`,
                 userId: req.user.id,
             })
 
             await casefolder.save();
         }
 
+        const totalCountPro = await Project.countDocuments({ userId: req.user.id });
         const project = new Project({
-            projectName: 'anonymous',
+            projectName: `Project ${totalCountPro + 1}`,
             catId: casefolder.id,
             catName: casefolder.folderName,
             userId: req.user.id,
@@ -183,6 +216,7 @@ const uploadFiles = async (req, res, next) => {
         const rootPath = `${req.user.id}/${project.id}`;
         const baseUrl = `${process.env.BASE_URL}:${process.env.PORT}/`;
 
+        // createFolder(`${basePath}/uploads`);
         createFolder(`${basePath}/main`);
         createFolder(`${basePath}/snap`);
         createFolder(`${basePath}/temp/1`);
@@ -208,32 +242,40 @@ const uploadFiles = async (req, res, next) => {
             const videoDuration = fileMetadata.format.duration;
             console.log(`Video duration: ${videoDuration} seconds`);
 
+            let fps =10;
+            const videoStream = fileMetadata.streams.find((stream) => stream.codec_type === 'video');
+            if (videoStream || videoStream.r_frame_rate) {
+                //  fps = eval(videoStream.r_frame_rate);
+            }
+           
+            console.log(`Video fps: ${fps} seconds`);
+
             const maxDuration = 120; // 2 minutes in seconds
             const startTime = formattedTime; // Start 3 seconds into the video
             const cutDuration = 120; // Cut 10 seconds of the video
 
             // Cut the video if it's longer than 2 minutes
-            if (videoDuration > maxDuration) {
-                console.log(`Video is longer than 2 minutes, cutting it to ${maxDuration} seconds.`);
-                await cutVideo(inputPath, outputPath, startTime, cutDuration);  // Await async function
-            } else {
-                console.log('Video is 2 minutes or less, no cutting needed.');
-            }
+            // if (videoDuration > maxDuration) {
+            //     console.log(`Video is longer than 2 minutes, cutting it to ${maxDuration} seconds.`);
+            //     await cutVideo(inputPath, outputPath, startTime, cutDuration);  // Await async function
+            // } else {
+            //     console.log('Video is 2 minutes or less, no cutting needed.');
+            // }
 
             // Convert the video to frames
-            if (videoDuration < maxDuration) {
+            // if (videoDuration < maxDuration) {
                 fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
-                    if (err) return console.error('Error copying the file:', err);
+                    if (err) {console.log('Error copying the file:', err);} 
                     console.log('File copied successfully.');
                 });
-                outputPath = inputPath;
-            }
+                // outputPath = inputPath;
+            // }
 
             const frameNumber = 0; // Example frame number
             // const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
 
             const frameOutputDir = `${basePath}/main/frame_%06d.jpg`; // %d will be replaced by frame number
-            const videoCon = await convertVideo(outputPath, frameOutputDir);  // Await async function
+            const videoCon = await convertVideo(outputPath, frameOutputDir,fps);  // Await async function
 
             const dataFiles = await getTotalFiles(`${basePath}/main`);
 
@@ -245,9 +287,10 @@ const uploadFiles = async (req, res, next) => {
             // Success response
 
             fsExtra.copy(`${basePath}/main`, `${basePath}/video/1`, (err) => {
-                if (err) return console.error('Error copying the file:', err);
-                console.log('File copied successfully.');
+                if (err) {console.log('Error copying the file:', err);} 
+                // console.log('File copied successfully.');
             });
+            console.log('File copied successfully.');
             const projectDetails = {
                 "fileName": req.file.filename,
                 "fileSize": fileMetadata.format.size,
@@ -258,36 +301,47 @@ const uploadFiles = async (req, res, next) => {
                 "createOn": ''
             }
 
-            dataFiles.filesName.sort((a, b) => {
-                // Extract the numbers from the file names
-                const numA = parseInt(a.match(/\d+/)[0]);
-                const numB = parseInt(b.match(/\d+/)[0]);
+            // dataFiles.filesName.sort((a, b) => {
+            //     // Extract the numbers from the file names
+            //     const numA = parseInt(a.match(/\d+/)[0]);
+            //     const numB = parseInt(b.match(/\d+/)[0]);
 
-                // Sort numerically
-                return numA - numB;
-            });
+            //     // Sort numerically
+            //     return numA - numB;
+            // });
 
             const updateproject = await Project.findByIdAndUpdate(project.id,
                 {
                     'filesName': JSON.stringify(dataFiles.filesName),
                     'currentFrameId': 'frame_000001.jpg',
-                    'projectDetails': JSON.stringify(projectDetails)
+                    'projectDetails': JSON.stringify(projectDetails),
+                    fps
                 }, { new: true });
-
-            res.status(200).json({
-                statusCode: 200,
-                status: 'Success',
-                message: 'Video uploaded and processed successfully.',
-                data: {
-                    totalFiles: dataFiles.totalFiles,
+                console.log('Project Details....',{
+                    'totalFiles': dataFiles.totalFiles,
                     'folderId': updateproject.catId,
                     'projectId': updateproject.id,
                     'curFrameId': updateproject.currentFrameId,
                     'srcFolType': VideoFolderSet,
                     'srcFolPtr': updateproject.videoFolInPtr,
                     'videoToFrameWarmPopUp': true,
-                    'filesName': dataFiles.filesName,
-                    projectDetails: projectDetails
+                    // 'filesName': dataFiles.filesName,
+                    'projectDetails': projectDetails
+                });
+            res.status(200).json({
+                statusCode: 200,
+                status: 'Success',
+                message: 'Video uploaded and processed successfully.',
+                data: {
+                    'totalFiles': dataFiles.totalFiles,
+                    'folderId': updateproject.catId,
+                    'projectId': updateproject.id,
+                    'curFrameId': updateproject.currentFrameId,
+                    'srcFolType': VideoFolderSet,
+                    'srcFolPtr': updateproject.videoFolInPtr,
+                    'videoToFrameWarmPopUp': true,
+                    // 'filesName': dataFiles.filesName,
+                    'projectDetails': projectDetails
                 }
 
             });
@@ -365,9 +419,9 @@ const discardFream = async (req, res, next) => {
 };
 
 const saveSnapImage = async (req, res, next) => {
-    const { projectId: id, image } = req.body;
+    const { projectId: id, image,exeName } = req.body;
     try {
-        const saveImage = await projectService.saveImage(req, id, image);
+        const saveImage = await projectService.saveImage(req, id, image,exeName);
         res.status(200).json(saveImage)
     } catch (error) {
         return res.status(500).json({ statusCode: 500,error: 'Internal server error', details: error });
@@ -385,10 +439,10 @@ const resetPointer = async (req, res, next) => {
 };
 
 const revertOperation = async (req, res, next) => {
-    const { projectId } = req.body;
+    const { jobId,projectId } = req.body;
     try {
-        const response = await operationHistoryService.revertOperation(projectId);
-        res.status(200).json(response);
+        const response = await operationHistoryService.revertOperation(jobId,projectId);
+        res.status(response.statusCode).json(response);
     } catch (error) {
         return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
     }
@@ -397,7 +451,7 @@ const revertOperation = async (req, res, next) => {
 function createFolder(folderPath) {
     fs.mkdir(folderPath, { recursive: true }, (err) => {
         if (err) {
-            return console.error(`Error creating folder: ${err.message}`);
+             console.log(`Error creating folder: ${err.message}`);
         }
     });
 };
@@ -426,7 +480,7 @@ async function cutVideo(inputPath, outputPath, startTime, duration) {
     });
 };
 
-async function convertVideo(inputPath, outputDir) {
+async function convertVideo(inputPath, outputDir,fps) {
     return new Promise((resolve, reject) => {
         if (`${process.env.NODE_ENV}` == 'development')
             ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
@@ -438,13 +492,39 @@ async function convertVideo(inputPath, outputDir) {
             .on('error', (err) => {
                 reject(`Error extracting frames: ${err.message}`);
             })
-            .outputOptions('-vf', 'fps=10')
+            .outputOptions('-vf', `fps=${fps}`)
             .outputOptions('-q:v', '1')
             .output(outputDir)
             .run();
     });
 
 };
+
+function imagesToMp4(imageDir, outputPath, frameRate = 1) {
+    return new Promise((resolve, reject) => {
+        if (`${process.env.NODE_ENV}` == 'development')
+            ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
+
+        ffmpeg()
+            .input(`${imageDir}/frame_%06d.jpg`) // Input sequentially numbered images
+            .inputOptions('-framerate', frameRate) // Set the frame rate
+            .outputOptions([
+                '-c:v libx264', // Video codec
+                '-crf 25', // Quality factor
+                '-pix_fmt yuv420p', // Pixel format for compatibility
+            ])
+            .output(outputPath)
+            .on('end', () => {
+                console.log('MP4 video created successfully!');
+                resolve(outputPath);
+            })
+            .on('error', (err) => {
+                console.log('Error:', err.message);
+                reject(err);
+            })
+            .run();
+    });
+}
 
 async function getVideoDuration(inputPath) {
     return new Promise((resolve, reject) => {
@@ -562,5 +642,6 @@ module.exports = {
     filesList,
     deleteImage,
     revertOperation,
-    getRecentProject
+    getRecentProject,
+    exportProject
 };

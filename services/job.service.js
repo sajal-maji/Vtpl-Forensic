@@ -14,7 +14,7 @@ const getStatus = async (job_id, userId) => {
     return new Promise((resolve, reject) => {
         channelServiceClient.GetJobStatus(request, async (error, response) => {
             if (error) {
-                console.error("Error fetching job status:", error);
+                console.log("Error fetching job status:", error);
                 return reject({ error: 'Error fetching job status', details: error });
             }
             if (response && response.completed) {
@@ -109,7 +109,7 @@ function copyImage(currentFrameId, id, userId, source, destination) {
     // Use fs.copyFile to copy the file
     fs.copyFile(sourcePath, destinationPath, (err) => {
         if (err) {
-            console.error(`Error copying image: ${err.message}`);
+            console.log(`Error copying image: ${err.message}`);
         } else {
             console.log(`Copied image ${currentFrameId} from ${source.folderType} (${source.folderPtr}) to ${destination.folderType} (${destination.folderPtr})`);
         }

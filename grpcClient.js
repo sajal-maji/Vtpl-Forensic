@@ -78,6 +78,12 @@ const abortServiceClient = new grpcPackage.AbortService(
     grpc.credentials.createInsecure() // Use insecure credentials for local testing
 );
 
+// Create the gRPC client for DeblurService
+const DeblurServiceClient = new grpcPackage.DeblurService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
 // Export the clients
 module.exports = {
     channelServiceClient,
@@ -89,5 +95,6 @@ module.exports = {
     SharpenServiceClient,
     DenoiseServiceClient,
     StablizationServiceClient,
-    abortServiceClient
+    abortServiceClient,
+    DeblurServiceClient
 };

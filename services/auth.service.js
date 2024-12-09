@@ -42,7 +42,7 @@ const createUser = async (name, email, password, userName) => {
     const basePath = process.env.MEDIA_BASE_PATH;
     fs.mkdir(`${basePath}/${userData.id}`, { recursive: true }, (err) => {
         if (err) {
-            return console.error(err);
+            return console.log(err);
         }
     });
 

@@ -14,7 +14,7 @@ const logCreate = async function (msg, logfile = 'systemlog.text') {
     const message = `${moment(new Date()).format('YYYY-MM-DDTHH:mm:ss')} : ${msg}\n`;
     ccavnueResponceStream.write(message, (error) => {
         if (error) {
-            console.error('Error writing log:', error);
+            console.log('Error writing log:', error);
         } else {
             console.log('Log written successfully.');
         }
@@ -44,7 +44,7 @@ const changePointer = async function (userId, id, msg, logfile = 'systemlog.text
     const message = `${moment(new Date()).format('YYYY-MM-DDTHH:mm:ss')} : ${msgWithData}\n`;
     ccavnueResponceStream.write(message, (error) => {
         if (error) {
-            console.error('Error writing log:', error);
+            console.log('Error writing log:', error);
         } else {
             console.log('Log written successfully.');
         }

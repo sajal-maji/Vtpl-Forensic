@@ -208,16 +208,16 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
     // }else{
 
     if (isPreview) {
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         const rootPath = `${req.user.id}/${id}`;
         const timestamp = Date.now();
         // if (proDetails.curProcessingPreviewSourceFolType == 'temp') {
         //     frameName = proDetails.currentPreviewFrameId;
         // }
-        const oldFilePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`;
+        const oldFilePath = `public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}/${frameName}`;
         const newFileName = timestamp + 'new_frame_name.jpg'; // Replace this with the new file name
         // const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
-        const newFilePath = path.join(`public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}`, newFileName);
+        const newFilePath = path.join(`public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`, newFileName);
         frameName = newFileName
         project = await Project.findByIdAndUpdate(id, { 'currentPreviewFrameId': frameName }, { new: true });
         // Rename the file
@@ -233,14 +233,14 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         fsExtra.copy(oldFilePath, newFilePath, (err) => {
             if (err) {
                 logger.logCreate(`copyimage: response ${err}`, 'systemlog');
-                console.error('Error copying the file:', err);
+                console.log('Error copying the file:', err);
             } else {
                 logger.logCreate(`copyimage: response success`, 'systemlog');
-                const deletedImagePath = `public/${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${proDetails.currentPreviewFrameId}`;
+                const deletedImagePath = `public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}/${proDetails.currentPreviewFrameId}`;
                 fsExtra.remove(deletedImagePath, (removeErr) => {
                     if (removeErr) {
                         logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
-                        console.error('Error deleting the old file:', removeErr);
+                        console.log('Error deleting the old file:', removeErr);
                     } else {
                         logger.logCreate(`deleteimage: response success`, 'systemlog');
                         console.log('Old file deleted successfully.');
@@ -283,7 +283,8 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             processed_image_count: response.processed_image_count,
             status_message: response.status_message,
             objectLength:(response.object_length)?response.object_length:'',
-            basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
+            // basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
+            basePath: `${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}/${frameName}`,
         }
     }
 };
@@ -332,11 +333,11 @@ const cloneImage = async (id, isApplyToAll, frame, req, res) => {
             // Check if the image file exists before attempting to delete
             fs.stat(imagePath, (err, stats) => {
                 if (err) {
-                    console.error('Error checking file or directory:', err);
+                    console.log('Error checking file or directory:', err);
                 } else if (stats.isFile()) {
                     fsExtra.remove(imagePath, (err) => {
                         if (err) {
-                            console.error('Error removing file:', err);
+                            console.log('Error removing file:', err);
                         } else {
                             console.log('File removed successfully.');
                         }

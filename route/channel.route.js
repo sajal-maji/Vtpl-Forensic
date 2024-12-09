@@ -77,4 +77,8 @@ const { localStablization, globalStabization} = require('../controller/stablizat
 router.put('/local-stablization', localStablization);
 router.put('/global-stablization', globalStabization);
 
+const { motionDeblur, OpticalDeblur} = require('../controller/deblur.controller');
+router.put('/motion', motionDeblur);
+router.put('/optical', OpticalDeblur);
+
 module.exports = router;
