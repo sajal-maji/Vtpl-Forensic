@@ -10,7 +10,7 @@ const { managePointer, folderPath, savePointer, cloneImage, checkFile, copyFolde
 
 const filterOperation = async (req, res, next, requestObj, grpcServiceName, processName, operationName = null) => {
     logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
-    const { projectId: id, isApplyToAll, frame, isPreview } = req.body;
+    const { projectId: id, isApplyToAll, frame, isPreview,parStRow,parEnRow,parStCol,parEnCol,parProcessFlag } = req.body;
 
     const project = await Project.findById(id);
     if (!project) {
@@ -74,7 +74,12 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         // in_img_list: isPreview && srcTypeLoc == 'temp' ? frameLoc : frame,  
         in_img_list: frame,                 // Input image list
         in_img_path: imgBasePathFrom,
-        out_img_path: imgBasePathTo
+        out_img_path: imgBasePathTo,
+        par_st_row: parStRow,
+        par_en_row: parEnRow,
+        par_st_col: parStCol,
+        par_en_col: parEnCol,
+        par_process_flag: (parProcessFlag)?parProcessFlag:false
     };
 
     const request = Object.assign({}, requestObj, jobObj);
@@ -82,7 +87,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
 
     if (isApplyToAll) {
         const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
-        // await removeAndCreateFolder(operationPath);
+        await removeAndCreateFolder(operationPath);
     }
 
     if (isApplyToAll) {

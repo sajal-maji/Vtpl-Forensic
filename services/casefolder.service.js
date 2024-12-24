@@ -3,7 +3,9 @@ const { where } = require('../model/user.model');
 const Project = require('../model/projects.model');
 
 const getFolder = async (req) => {
-    const casefolder = await Casefolder.find({ 'userId': req.user.id }).select('folderName').sort({ createdAt: -1 });
+    const casefolderOthers = await Casefolder.find({ 'userId': req.user.id,'status':'active','slag':'others' }).select('folderName').sort({ createdAt: -1 });
+    const casefolderInbox = await Casefolder.find({ 'userId': req.user.id,'status':'active',slag: { $ne: 'others' }  }).select('folderName').sort({ createdAt: 1 });
+    const casefolder = [...casefolderInbox, ...casefolderOthers];
     if (!casefolder) {
         return {
             statusCode: 404,
@@ -16,7 +18,7 @@ const getFolder = async (req) => {
         statusCode: 200,
         status: 'Success',
         message: 'Successfully authenticated.',
-        casefolder
+        casefolder:casefolder
     };
 };
 
@@ -48,17 +50,20 @@ const updateFolder = async (id, folderName) => {
     }
 };
 
-const deleteFolder = async (id) => {
-    const casefolder = await Casefolder.findByIdAndDelete(id);
+const deleteFolder = async (req,id) => {
+    const casefolder = await Casefolder.findByIdAndUpdate(id,{'status':'deleted'}, { new: true });
     if (!casefolder) {
-        const result = await Project.deleteMany({ catId: id });
+        // const result = await Project.deleteMany({ catId: id });
         return {
             statusCode: 404,
             status: 'Failed',
             message: 'Casefolder not found',
         };
     }
-
+    const casefolderRecyle = await Casefolder.findOne({ 'userId': req.user.id,slag: 'recyclebin' });
+    const catId=casefolderRecyle.id
+    const result = await Project.updateMany({ catId: id },{'status':'deleted','catId':catId});
+    console.log(`${result.nModified} documents updated.`);
     return {
         statusCode: 200,
         status: 'Success',

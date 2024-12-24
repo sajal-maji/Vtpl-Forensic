@@ -115,7 +115,7 @@ const generatePdf = async (req, res, next) => {
     try {
         const { projectId } = req.body;
         if (!projectId) {
-            return res.status(400).json({ error: 'Project ID is required' });
+            return res.status(400).json({ statusCode: 404,message: 'Project ID is required' });
         }
 
         const operationDetails = await pdfService.getOperationDetails(projectId);
@@ -143,7 +143,7 @@ const generatePdf = async (req, res, next) => {
             PDFGenerateServiceClient.PDFGeneretion(requestObj, (error, response) => {
                 if (error) {
                     // console.error("gRPC error:", error);
-                    return res.status(404).json({ message: 'gRPC call failed', details: error });
+                    return res.status(404).json({ statusCode: 404,message: 'gRPC call failed', details: error });
                 }
     
                 // Respond with the gRPC response
@@ -158,7 +158,7 @@ const generatePdf = async (req, res, next) => {
             });
            
         } else {
-            return res.status(404).json({ message: 'No operation details found for the provided project ID' });
+            return res.status(404).json({ statusCode: 404,message: 'No operation details found for the provided project ID' });
         }
 
     } catch (error) {

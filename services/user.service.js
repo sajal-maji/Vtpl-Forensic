@@ -60,7 +60,20 @@ const updateDetails = async (userId, email, userName, profileImage) => {
     };
 };
 
+const getUserList = async (req) => {
+    const user = await User.find({id : { $ne: req.user.id }}).select('_id name');
+
+    return {
+        statusCode: 200,
+        status: 'Success',
+        message: 'Successfully authenticated.',
+        user
+    };
+};
+
+
 module.exports = {
     getDetails,
-    updateDetails
+    updateDetails,
+    getUserList
 };

@@ -16,10 +16,14 @@ const TempFolder = 'temp'
 const createProject = async (req, res, next) => {
     const { projectName, catId } = req.body;
     try {
+        if(!catId){
+            const casefolderDetails = await Casefolder.findOne({ slag: 'default', userId: req.user.id });
+            catId=casefolderDetails.catId
+        }
         const response = await projectService.createProject(req, catId, projectName);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -29,22 +33,22 @@ const updateProject = async (req, res, next) => {
         const response = await projectService.updateProject(id, projectName);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
 const deleteProject = async (req, res, next) => {
     const { projectId: id } = req.body;
     try {
-        const response = await projectService.deleteProject(req,id);
+        const response = await projectService.deleteProject(req, id);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error.message });
     }
 };
 
 const exportProject = async (req, res, next) => {
-    const { projectId:id,exeName } = req.query;
+    const { projectId: id, exeName } = req.query;
     const projectDetails = await Project.findById(id);
     if (!projectDetails) {
         return res.status(404).json({
@@ -53,24 +57,24 @@ const exportProject = async (req, res, next) => {
             message: 'Data not found'
         });
     }
-    const exe = exeName?exeName:'mp4'
+    const exe = exeName ? exeName : 'mp4'
     const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${id}`;
     createFolder(`${basePath}/exportvideo`);
     const imageDir = `public/${req.user.id}/${id}/${projectDetails.curDisplayThumbnailFolType}/${(projectDetails.curDisplayThumbnailFolPtr && projectDetails.curDisplayThumbnailFolPtr > 0) ? projectDetails.curDisplayThumbnailFolPtr : 1}`
-   const outputDir= `${basePath}/exportvideo`;
-   const timestamp = Date.now();
-   const outputPath = path.join(outputDir, `video_${timestamp}.${exe}`);
+    const outputDir = `${basePath}/exportvideo`;
+    const timestamp = Date.now();
+    const outputPath = path.join(outputDir, `video_${timestamp}.${exe}`);
     try {
-        const fps = projectDetails.fps?projectDetails.fps:10
+        const fps = projectDetails.fps ? projectDetails.fps : 10
         const videoCon = await imagesToMp4(imageDir, outputPath, fps) // 1 frame per second
         res.status(200).json({
             statusCode: 200,
             status: 'Success',
             message: 'Successfully authenticated.',
-            vodeoUrl:`${req.user.id}/${id}/exportvideo/video_${timestamp}.${exe}`
+            vodeoUrl: `${req.user.id}/${id}/exportvideo/video_${timestamp}.${exe}`
         });
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error.message });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error.message });
     }
 };
 
@@ -112,7 +116,7 @@ const deleteImage = async (req, res, next) => {
             data: items
         });
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -122,11 +126,285 @@ const imageComparison = async (req, res, next) => {
         const response = await projectService.imageCompair(req, id);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
 const uploadFiles = async (req, res, next) => {
+    createFolder(`public/logs`);
+    createFolder(`public/uploads`);
+    createFolder(`public/uploads/crop`);
+    createFolder(`public/uploads/images`);
+    const upload = multer({
+        storage: multer.diskStorage({
+            destination: (req, file, cb) => {
+                // cb(null, 'public/uploads');
+                const isImage = file.mimetype.startsWith('image/');
+                cb(null, isImage ? 'public/uploads/images' : 'public/uploads'); // Separate folders for images and videos
+
+            },
+            filename: (req, file, cb) => {
+                cb(null, Date.now() + path.extname(file.originalname));
+            },
+        }),
+        fileFilter: (req, file, cb) => {
+            const allowedFileTypes = /jpeg|jpg|png|mp4|mkv|avi|mov|wmv/;
+            const extName = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
+            const mimeType = allowedFileTypes.test(file.mimetype);
+            if (mimeType && extName) {
+                cb(null, true);
+            } else {
+                cb(new Error('Invalid file type'));
+            }
+        },
+    }).fields([
+        { name: 'video', maxCount: 1 },
+        { name: 'images', maxCount: 100 },
+    ]);
+
+    upload(req, res, async (err) => {
+        if (err) {
+            if (err instanceof multer.MulterError && err.code === 'LIMIT_UNEXPECTED_FILE') {
+                return res.status(400).json({
+                    statusCode: 400,
+                    status: 'Failed',
+                    message: `Unexpected field: ${err.field}`,
+                });
+            }
+
+            return res.status(400).json({
+                statusCode: 400,
+                status: 'Failed',
+                message: err.message,
+            });
+        }
+
+        if (!req.files || (!req.files.video && !req.files.images)) {
+            return res.status(400).json({
+                statusCode: 400,
+                status: 'Failed',
+                message: 'Please upload at least a video or images.',
+            });
+        }
+
+        try {
+            // Process uploaded files
+            const videoDetails = req.files.video ? req.files.video[0] : null;
+            const imageDetails = req.files.images || [];
+
+            const { catId: id } = req.body;
+            const totalSeconds = (req.body.startTime) ? req.body.startTime : 0;
+
+            // Calculate hours, minutes, and seconds
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            // Format the result as 'hh:mm:ss'
+            const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+
+            if (id) {
+                var casefolder = await Casefolder.findById(id).select('folderName');
+                if (!casefolder) {
+                    return res.status(404).json({
+                        statusCode: 404,
+                        status: 'Failed',
+                        message: 'Data not found'
+                    });
+                }
+            } else {
+                var casefolder = await Casefolder.findOne({ slag: 'default', userId: req.user.id });
+                    
+                // const totalCount = await Casefolder.countDocuments({ userId: req.user.id });
+                // var casefolder = new Casefolder({
+                //     folderName: `Case Folder ${totalCount + 1}`,
+                //     userId: req.user.id,
+                // })
+
+                // await casefolder.save();
+            }
+
+            const totalCountPro = await Project.countDocuments({ userId: req.user.id });
+            const project = new Project({
+                projectName: `Project ${totalCountPro + 1}`,
+                catId: casefolder.id,
+                catName: casefolder.folderName,
+                userId: req.user.id,
+            })
+            await project.save();
+
+
+
+            const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
+            const rootPath = `${req.user.id}/${project.id}`;
+            const baseUrl = `${process.env.BASE_URL}:${process.env.PORT}/`;
+
+            // createFolder(`${basePath}/uploads`);
+            createFolder(`${basePath}/main`);
+            createFolder(`${basePath}/snap`);
+            createFolder(`${basePath}/temp/1`);
+            createFolder(`${basePath}/temp/2`);
+
+
+            for (let i = 1; i <= project.totalVideoFolderSet; i++) {
+                const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
+                createFolder(dynamicFolderName);
+            }
+
+
+            for (let i = 1; i <= project.totalImageFolderSet; i++) {
+                const dynamicFolderNameImg = `${basePath}/image/${i}`; // Create a folder with the project limit
+                createFolder(dynamicFolderNameImg);
+            }
+            let fps = 10;
+            const rootDir = path.resolve(__dirname, '..', '..');
+            let projectDetails = {}
+            if (videoDetails) {
+                let inputPath = videoDetails ? videoDetails.path : null; //path.join(rootDir, req.file.path);
+                let outputPath = `public/uploads/crop/${videoDetails ? videoDetails.filename : null}`;//path.join(rootDir, `public/uploads/videos/crop/${req.file.filename}`);
+                const images = req.files?.images || [];
+
+                const fileMetadata = await getVideoDuration(inputPath);  // Await inside async function
+                const videoDuration = fileMetadata.format.duration;
+                console.log(`Video duration: ${videoDuration} seconds`);
+
+
+                // const videoStream = fileMetadata.streams.find((stream) => stream.codec_type === 'video');
+                // if (videoStream || videoStream.r_frame_rate) {
+                //  fps = eval(videoStream.r_frame_rate);
+                // }
+
+                console.log(`Video fps: ${fps} seconds`);
+
+                const maxDuration = 120; // 2 minutes in seconds
+                const startTime = formattedTime; // Start 3 seconds into the video
+                const cutDuration = 120; // Cut 10 seconds of the video
+                fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
+                    if (err) { console.log('Error copying the file:', err); }
+                    console.log('File copied successfully.');
+                });
+
+                const frameNumber = 0; // Example frame number
+                // const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
+                console.log('Project Details....', req.file)
+                const frameOutputDir = `${basePath}/main/frame_%06d.jpg`; // %d will be replaced by frame number
+                const videoCon = await convertVideo(outputPath, frameOutputDir, fps);  // Await async function
+                fsExtra.unlink(inputPath, (unlinkErr) => {
+                    console.log('Video file deleted successfully.');
+                });
+
+                projectDetails = {
+                    "fileName": videoDetails ? videoDetails.filename : '',
+                    "fileSize": videoDetails ? fileMetadata.format.size : '',
+                    "fileResolution": videoDetails ? fileMetadata.format.bit_rate : '',
+                    "fileDuration": videoDetails ? fileMetadata.format.duration : '',
+                    "fileFrameRate": '',
+                    "fileAspectRatio": '',
+                    "createOn": ''
+                }
+
+            } else {
+                let inputPath = `public/uploads/images`
+                const imgCopyedBase = `${basePath}/main`;
+                await copyImages(imageDetails, imgCopyedBase);
+
+                projectDetails = {
+                    "fileName": 'imagefile.mp4',
+                    "fileSize": 10,
+                    "fileResolution": 10,
+                    "fileDuration": imageDetails.length,
+                    "fileFrameRate": '',
+                    "fileAspectRatio": '',
+                    "createOn": ''
+                }
+
+
+                fsExtra.remove(inputPath, (err) => {
+                    if (err) {
+                        console.error(`Error deleting folder: ${err.message}`);
+                    } else {
+                        console.log('Folder deleted successfully');
+                    }
+                });
+
+
+
+            }
+            const dataFiles = await getTotalFiles(`${basePath}/main`);
+
+            fsExtra.copy(`${basePath}/main`, `${basePath}/video/1`, (err) => {
+                if (err) { console.log('Error copying the file:', err); }
+                // console.log('File copied successfully.');
+            });
+            console.log('File copied successfully.');
+
+
+
+            const updateproject = await Project.findByIdAndUpdate(project.id,
+                {
+                    'filesName': JSON.stringify(dataFiles.filesName),
+                    'currentFrameId': 'frame_000001.jpg',
+                    'projectDetails': projectDetails ? JSON.stringify(projectDetails) : null,
+                    'uploadType': videoDetails ? 'video' : 'image',
+                    'fps': fps ? fps : 0
+                }, { new: true });
+
+            res.status(200).json({
+                statusCode: 200,
+                status: 'Success',
+                message: 'Video uploaded and processed successfully.',
+                data: {
+                    'totalFiles': dataFiles.totalFiles,
+                    'folderId': updateproject.catId,
+                    'projectId': updateproject.id,
+                    'curFrameId': updateproject.currentFrameId,
+                    'srcFolType': VideoFolderSet,
+                    'srcFolPtr': updateproject.videoFolInPtr,
+                    'videoToFrameWarmPopUp': true,
+                    'filesName': dataFiles.filesName,
+                    'projectDetails': projectDetails
+                }
+
+            });
+
+            // res.status(200).json({
+            //     statusCode: 200,
+            //     status: 'Success',
+            //     message: 'Files uploaded successfully.',
+            //     data: {
+            //         video: videoDetails,
+            //         images: imageDetails.map(image => ({
+            //             fileName: image.filename,
+            //             filePath: image.path,
+            //         })),
+            //         basePath
+            //     },
+            // });
+        } catch (error) {
+            res.status(500).json({ statusCode: 500, message: 'Server error', error });
+        }
+    });
+};
+
+
+
+async function copyImages(imageDetails, imgCopiedBase) {
+    try {
+        await Promise.all(
+            imageDetails.map((image, index) => {
+                const destinationPath = `${imgCopiedBase}/frame_${String(index + 1).padStart(6, '0')}.jpg`;
+                return fsExtra.copy(image.path, destinationPath)
+                    .then(() => console.log(`File copied successfully: ${image.path} to ${destinationPath}`));
+            })
+        );
+        console.log('All images copied successfully.');
+    } catch (err) {
+        console.error('Error copying files:', err);
+    }
+}
+
+
+const uploadFilesOld = async (req, res, next) => {
     const formKeys = Object.keys(req.body);
     const storage = multer.diskStorage({
         destination: function (req, file, cb) {
@@ -153,7 +431,7 @@ const uploadFiles = async (req, res, next) => {
         limits: { fileSize: 2000000000 },  // 1GB
         fileFilter: fileFilter
     });
-    
+
     // Handle the file upload
     upload.single('video')(req, res, async (err) => {  // Mark this callback as async
         if (err) {
@@ -242,12 +520,12 @@ const uploadFiles = async (req, res, next) => {
             const videoDuration = fileMetadata.format.duration;
             console.log(`Video duration: ${videoDuration} seconds`);
 
-            let fps =10;
-            const videoStream = fileMetadata.streams.find((stream) => stream.codec_type === 'video');
-            if (videoStream || videoStream.r_frame_rate) {
-                //  fps = eval(videoStream.r_frame_rate);
-            }
-           
+            let fps = 10;
+            // const videoStream = fileMetadata.streams.find((stream) => stream.codec_type === 'video');
+            // if (videoStream || videoStream.r_frame_rate) {
+            //  fps = eval(videoStream.r_frame_rate);
+            // }
+
             console.log(`Video fps: ${fps} seconds`);
 
             const maxDuration = 120; // 2 minutes in seconds
@@ -264,18 +542,18 @@ const uploadFiles = async (req, res, next) => {
 
             // Convert the video to frames
             // if (videoDuration < maxDuration) {
-                fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
-                    if (err) {console.log('Error copying the file:', err);} 
-                    console.log('File copied successfully.');
-                });
-                // outputPath = inputPath;
+            fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
+                if (err) { console.log('Error copying the file:', err); }
+                console.log('File copied successfully.');
+            });
+            // outputPath = inputPath;
             // }
 
             const frameNumber = 0; // Example frame number
             // const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
-
+            console.log('Project Details....', req.file)
             const frameOutputDir = `${basePath}/main/frame_%06d.jpg`; // %d will be replaced by frame number
-            const videoCon = await convertVideo(outputPath, frameOutputDir,fps);  // Await async function
+            const videoCon = await convertVideo(outputPath, frameOutputDir, fps);  // Await async function
 
             const dataFiles = await getTotalFiles(`${basePath}/main`);
 
@@ -287,7 +565,7 @@ const uploadFiles = async (req, res, next) => {
             // Success response
 
             fsExtra.copy(`${basePath}/main`, `${basePath}/video/1`, (err) => {
-                if (err) {console.log('Error copying the file:', err);} 
+                if (err) { console.log('Error copying the file:', err); }
                 // console.log('File copied successfully.');
             });
             console.log('File copied successfully.');
@@ -317,17 +595,7 @@ const uploadFiles = async (req, res, next) => {
                     'projectDetails': JSON.stringify(projectDetails),
                     fps
                 }, { new: true });
-                console.log('Project Details....',{
-                    'totalFiles': dataFiles.totalFiles,
-                    'folderId': updateproject.catId,
-                    'projectId': updateproject.id,
-                    'curFrameId': updateproject.currentFrameId,
-                    'srcFolType': VideoFolderSet,
-                    'srcFolPtr': updateproject.videoFolInPtr,
-                    'videoToFrameWarmPopUp': true,
-                    // 'filesName': dataFiles.filesName,
-                    'projectDetails': projectDetails
-                });
+
             res.status(200).json({
                 statusCode: 200,
                 status: 'Success',
@@ -346,30 +614,40 @@ const uploadFiles = async (req, res, next) => {
 
             });
         } catch (error) {
-            res.status(500).json({statusCode: 500, message: 'Server error', error: error.message });
+            res.status(500).json({ statusCode: 500, message: 'Server error', error });
         }
 
     });
 };
 
 const getProjectByCat = async (req, res, next) => {
-    const { catId,keyword,sort } = req.query;
+    const { catId, keyword, sort } = req.query;
     try {
-        const projectList = await projectService.projectList(req, catId,keyword,sort);
+        const projectList = await projectService.projectList(req, catId, keyword, sort);
         res.status(200).json(projectList)
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
+    }
+};
+
+const getDeletedProjectByCat = async (req, res, next) => {
+    const { catId, keyword, sort } = req.query;
+    try {
+        const projectList = await projectService.deletedProjectList(req, catId, keyword, sort);
+        res.status(200).json(projectList)
+    } catch (error) {
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
 
 const getRecentProject = async (req, res, next) => {
     try {
-        const { keyword,sort } = req.query;
-        const projectList = await projectService.recentprojectList(req, req.user.id,keyword,sort);
+        const { keyword, sort } = req.query;
+        const projectList = await projectService.recentprojectList(req, req.user.id, keyword, sort);
         res.status(200).json(projectList)
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -379,7 +657,7 @@ const getProjectDetails = async (req, res, next) => {
         const projectDetails = await projectService.projectDetails(req, id);
         res.status(200).json(projectDetails)
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -394,7 +672,7 @@ const getAction = async (req, res, next) => {
         }
         res.status(200).json(applyChanges)
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -404,7 +682,7 @@ const selectFream = async (req, res, next) => {
         const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frameId);
         res.status(200).json(selectThumbnailFrame)
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -414,17 +692,17 @@ const discardFream = async (req, res, next) => {
         const discardImage = await projectService.discardImage(id);
         res.status(200).json(discardImage)
     } catch (error) {
-        return res.status(500).json({ statusCode: 500,error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
 const saveSnapImage = async (req, res, next) => {
-    const { projectId: id, image,exeName } = req.body;
+    const { projectId: id, image, exeName } = req.body;
     try {
-        const saveImage = await projectService.saveImage(req, id, image,exeName);
+        const saveImage = await projectService.saveImage(req, id, image, exeName);
         res.status(200).json(saveImage)
     } catch (error) {
-        return res.status(500).json({ statusCode: 500,error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
@@ -434,24 +712,24 @@ const resetPointer = async (req, res, next) => {
         const updatePointer = await projectService.resetPointer(req.user.id, id, updateData);
         res.status(200).json(updatePointer)
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
 const revertOperation = async (req, res, next) => {
-    const { jobId,projectId } = req.body;
+    const { jobId, projectId } = req.body;
     try {
-        const response = await operationHistoryService.revertOperation(jobId,projectId);
+        const response = await operationHistoryService.revertOperation(jobId, projectId);
         res.status(response.statusCode).json(response);
     } catch (error) {
-        return res.status(500).json({statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };
 
 function createFolder(folderPath) {
     fs.mkdir(folderPath, { recursive: true }, (err) => {
         if (err) {
-             console.log(`Error creating folder: ${err.message}`);
+            console.log(`Error creating folder: ${err.message}`);
         }
     });
 };
@@ -480,7 +758,7 @@ async function cutVideo(inputPath, outputPath, startTime, duration) {
     });
 };
 
-async function convertVideo(inputPath, outputDir,fps) {
+async function convertVideo(inputPath, outputDir, fps) {
     return new Promise((resolve, reject) => {
         if (`${process.env.NODE_ENV}` == 'development')
             ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
@@ -500,7 +778,7 @@ async function convertVideo(inputPath, outputDir,fps) {
 
 };
 
-function imagesToMp4(imageDir, outputPath, frameRate = 1) {
+function imagesToMp4(imageDir, outputPath, frameRate = 10) {
     return new Promise((resolve, reject) => {
         if (`${process.env.NODE_ENV}` == 'development')
             ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
@@ -508,10 +786,19 @@ function imagesToMp4(imageDir, outputPath, frameRate = 1) {
         ffmpeg()
             .input(`${imageDir}/frame_%06d.jpg`) // Input sequentially numbered images
             .inputOptions('-framerate', frameRate) // Set the frame rate
+            // .input(`${imageDir}/%d.jpg`)
+            // .inputOptions('-start_number', 586)
+            // .outputOptions([
+            //     '-c:v libx264', // Video codec
+            //     '-crf 25', // Quality factor
+            //     '-pix_fmt yuv420p', // Pixel format for compatibility
+            // ])
             .outputOptions([
-                '-c:v libx264', // Video codec
-                '-crf 25', // Quality factor
-                '-pix_fmt yuv420p', // Pixel format for compatibility
+                '-c:v libx264',    // H.264 codec
+                '-crf 20',         // Higher quality
+                '-pix_fmt yuv420p', // Pixel format
+                '-preset veryfast', // Encoding speed/efficiency trade-off
+                '-r 30',           // Fixed frame rate
             ])
             .output(outputPath)
             .on('end', () => {
@@ -624,6 +911,50 @@ const filesList = async (req, res, next) => {
     }
 };
 
+const shareProjectToUser = async (req, res, next) => {
+    try {
+        const { shareUserId,projectId } = req.body;
+        const casefolderInbox = await Casefolder.findOne({ 'userId': shareUserId,'status':'active',slag: 'inbox' });
+        const catId=casefolderInbox.id
+        const response = await projectService.shareProject(req, shareUserId,projectId,catId);
+        res.status(200).json( {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Shared Successfully.'
+        });
+
+
+    } catch (error) {
+        return res.status(500).json({
+            statusCode: 500,
+            error: 'Internal server error',
+            details: error.message
+        });
+    }
+};
+const draganddropProject = async (req, res, next) => {
+    try {
+        const { projectId } = req.body;
+        const shareUserId=req.user.id
+        const casefolderInbox = await Casefolder.findOne({ 'userId': shareUserId,'status':'active',slag: 'inbox' });
+        const catId=casefolderInbox.id
+        const response = await projectService.moveProject(req, shareUserId,projectId,catId);
+        res.status(200).json( {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Shared Successfully.'
+        });
+
+
+    } catch (error) {
+        return res.status(500).json({
+            statusCode: 500,
+            error: 'Internal server error',
+            details: error.message
+        });
+    }
+};
+
 
 module.exports = {
     createProject,
@@ -643,5 +974,8 @@ module.exports = {
     deleteImage,
     revertOperation,
     getRecentProject,
-    exportProject
+    exportProject,
+    getDeletedProjectByCat,
+    shareProjectToUser,
+    draganddropProject
 };

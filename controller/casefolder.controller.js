@@ -32,10 +32,10 @@ const updateCasefolder = async (req, res, next) => {
 const deleteCaseFolder = async (req, res, next) => {
     const {id } = req.body;
     try {
-        const response = await caseFolderService.deleteFolder(id);
+        const response = await caseFolderService.deleteFolder(req,id);
         res.status(200).json(response);
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error', details: error });
+        return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 };
 

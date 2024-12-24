@@ -93,22 +93,47 @@ const updateProject = async (id, projectName) => {
 
 
 const deleteProject = async (req,id) => {
-    const project = await Project.findByIdAndDelete(id);
-    if (!project) {
+    const checkProject = await Project.findOne({ _id: id,status:'deleted'});
+    if(checkProject){
+        const project = await Project.findByIdAndDelete(id);
+        if (!project) {
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Project not found',
+            };
+        }
+
+        const rootPath = `${req.user.id}/${id}`;
+        const operationPath = `public/${rootPath}`
+        await removeFolder(operationPath);
+
         return {
-            statusCode: 404,
-            status: 'Failed',
-            message: 'Project not found',
+            statusCode: 200,
+            status: 'Success',
+            message: 'Project successfully deleted.',
         };
+
+    }else{
+        const casefolderRecyle = await Casefolder.findOne({ 'userId': req.user.id,slag: 'recyclebin' });
+        const catId=casefolderRecyle.id
+        const project = await Project.findByIdAndUpdate(id,{'status':'deleted','catId':catId}, { new: true });
+        if (!project) {
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Project not found',
+            };
+        }
+
+        return {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Project successfully moved to recycle bin',
+        };
+
     }
-    const rootPath = `${req.user.id}/${id}`;
-    const operationPath = `public/${rootPath}`
-    // await removeFolder(operationPath);
-    return {
-        statusCode: 200,
-        status: 'Success',
-        message: 'Project deleted successfully.',
-    };
+    
 };
 
 async function removeFolder(operationPath) {
@@ -160,6 +185,63 @@ const projectList = async (req, catId,keyword=null,sort) => {
         query.projectName = { $regex: keyword, $options: 'i' };
     }
 
+    const folderDetails = await Casefolder.findById(catId).select('folderName slag');
+    if(folderDetails.slag=='recyclebin')
+    query.status='deleted'
+    else
+    query.status='active'
+
+        
+    let project = await Project.find(query).sort({ updatedAt: sortOrder });
+
+    
+    if (!project) {
+        return {
+            statusCode: 404,
+            status: 'Failed',
+            message: 'Data not found'
+        };
+    }
+    let items = [];
+    project.forEach((val, index) => {
+        const formattedUpdatedAt = moment(val.updatedAt).format('YYYY-MM-DD HH:mm:ss');
+        items.push(
+            {
+                'folderId': val.catId,
+                folderName: folderDetails?.folderName === 'anonymous' ? `Case Folder ${index + 1}` : folderDetails?.folderName || 'Unknown Folder',
+                'projectId': val.id,
+                'projectName':val.projectName,
+                'curFrameId': val.currentFrameId,
+                'srcFolType': VideoFolderSet,
+                'srcFolPtr': val.videoFolInPtr,
+                'dstFolType': ImageFolderSet,
+                'dstFolPtr': val.imageFolInPtr,
+                'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
+                'updatedAt': formattedUpdatedAt,
+                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
+            }
+        )
+    });
+    return {
+        statusCode: 200,
+        status: 'Success',
+        message: 'Successfully authenticated.',
+        data: items
+    }
+};
+
+const deletedProjectList = async (req, catId,keyword=null,sort) => {
+    
+    let query = { status: 'deleted' };
+    if(catId){
+        query.catId = catId;
+    }
+     
+    const sortOrder = sort === 'asc' ? 1 : -1;
+    // Add the "like" query conditionally
+    if (typeof keyword === 'string' && keyword.trim() !== '') {
+        query.projectName = { $regex: keyword, $options: 'i' };
+    }
     let project = await Project.find(query).sort({ updatedAt: sortOrder });
 
     const folderDetails = await Casefolder.findById(catId).select('folderName');
@@ -207,8 +289,8 @@ const recentprojectList = async (req, userId, keyword, sort) => {
     if (typeof keyword === 'string' && keyword.trim() !== '') {
         query.projectName = { $regex: keyword, $options: 'i' };
     }
-
-
+    query.catName = { $ne: 'Inbox' };
+    query.status='active'
     let project = await Project.find(query).sort({ updatedAt: sortOrder });
     
 
@@ -332,7 +414,7 @@ const projectDetails = async (req, id) => {
             'imagePossibleRedoCount': projectDetails.imagePossibleRedoCount,
             'framePath': `${req.user.id}/${id}/${projectDetails.curDisplayPreviewFolType}/${(projectDetails.curDisplayPreviewFolType && projectDetails.curDisplayPreviewFolPtr > 0) ? projectDetails.curDisplayPreviewFolPtr : 1}`,
             'basePath': `${req.user.id}/${id}/${projectDetails.curDisplayThumbnailFolType}/${(projectDetails.curDisplayThumbnailFolPtr && projectDetails.curDisplayThumbnailFolPtr > 0) ? projectDetails.curDisplayThumbnailFolPtr : 1}`,
-            'projectDetails': JSON.parse(projectDetails.projectDetails),
+            'projectDetails': (projectDetails.projectDetails)?JSON.parse(projectDetails.projectDetails):'',
             'orginalImgPath':`${rootPath}/main`,
             'previousImgPath':`${rootPath}/${projectDetails.curProcessingPreviewSourceFolType}/${projectDetails.curProcessingPreviewSourceFolPtr}`,
             'filesName': (projectDetails.filesName) ? JSON.parse(projectDetails.filesName) : '',
@@ -829,6 +911,84 @@ function createFolder(folderPath) {
 };
 
 
+
+const shareProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
+    const rootPath = `${req.user.id}/${projectId}`;
+    const projectData = await Project.findById(projectId);
+    if(!projectIdTo){
+        const newProjectData = {
+            ...projectData._doc, // Spread the original project's data
+            catId, // Use the new category ID
+            catName: 'Inbox', // Assign 'Inbox' category
+            userId: shareUserId, // Assign to the new user
+        };
+        delete newProjectData._id;
+        const project = new Project(newProjectData);
+        await project.save();
+        projectIdTo= project.id
+    }
+    
+    
+    fsExtra.copy(`public/${rootPath}`, `public/${shareUserId}/${projectIdTo}`, (err) => {
+        if (err) {
+            // console.log('Error copying the file:', err);
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Error copying the file: '+err
+            };
+        } else {
+            console.log('Snap File copied successfully.');
+        }
+    });
+    
+};
+
+const moveProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
+    const rootPath = `${req.user.id}/${projectId}`;
+    const projectData = await Project.findById(projectId);
+    if(!projectIdTo){
+        const project = new Project({
+            projectName:projectData.projectName,
+            catId,
+            catName: 'Inbox',
+            userId: shareUserId,
+        })
+        await project.save();
+        projectIdTo= project.id
+    }
+    
+    
+    // const rootPath = `${req.user.id}/${projectId}`;
+    const sourcePath = `public/${rootPath}`;
+    const destinationPath = `public/${shareUserId}/${projectIdTo}`;
+    
+    try {
+       // Copy the folder
+    await fsExtra.copy(sourcePath, destinationPath, { overwrite: true });
+    console.log('Folder copied successfully.');
+
+    // Remove the original folder
+    await fsExtra.remove(sourcePath);
+    console.log('Original folder deleted successfully.');
+
+        return {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Folder moved successfully.',
+        };
+    } catch (err) {
+        console.error('Error moving the folder:', err);
+        return {
+            statusCode: 500,
+            status: 'Failed',
+            message: `Error moving the folder: ${err.message}`,
+        };
+    }
+    
+};
+
+
 module.exports = {
     createProject,
     updateProject,
@@ -842,5 +1002,8 @@ module.exports = {
     saveImage,
     resetPointer,
     imageCompair,
-    recentprojectList
+    recentprojectList,
+    deletedProjectList,
+    shareProject,
+    moveProject
 };

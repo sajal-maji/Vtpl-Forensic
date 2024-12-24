@@ -7,7 +7,6 @@ const motionDeblur = async (req, res, next) => {
         const { inAngle,inDefocus,inDimention,inSnr } = req.body;
         const requestObj = {
             in_angle: inAngle,
-            in_defocus: inDefocus,
             in_dimention: inDimention,
             in_snr: inSnr
         };
@@ -23,8 +22,6 @@ const OpticalDeblur = async (req, res, next) => {
     try {
         const { inAngle,inDefocus,inDimention,inSnr } = req.body;
         const requestObj = {
-            in_angle: inAngle,
-            in_defocus: inDefocus,
             in_dimention: inDimention,
             in_snr: inSnr
         };

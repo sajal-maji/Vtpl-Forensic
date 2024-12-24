@@ -158,6 +158,11 @@ const projectsSchema = new mongoose.Schema({
         type: Number,
         default: 10,
     },
+    uploadType: {
+        type: String,
+        enum: ['video', 'image'], // Allowed values
+        default: 'video', // Default value
+    },
     isDeleted: {
         type: String
     }

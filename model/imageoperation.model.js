@@ -13,6 +13,14 @@ const imageoperationSchema = new mongoose.Schema({
     processName: {
         type: String,
     },
+    inputImgPath: {
+        type: String,
+        default: null
+    },
+    outImgPath: {
+        type: String,
+        default: null
+    },
     exeDetailsAvailFlag: {
         type: Boolean,
         default:true
