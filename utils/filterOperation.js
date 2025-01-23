@@ -85,12 +85,22 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     const request = Object.assign({}, requestObj, jobObj);
     const rootPath = `${req.user.id}/${id}`;
 
-    if (isApplyToAll) {
+    // if (isApplyToAll) {
+    //     const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
+    //     await removeAndCreateFolder(operationPath);
+    // }
+
+    // if (isApplyToAll) {
+    //     const sourceFolder = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
+    //     const destinationFolder = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`;
+    //     await copyFolderExcluding(sourceFolder, destinationFolder, frame);
+    // }
+
+    let sourceFolderCheck = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
+    if (isApplyToAll && fs.existsSync(`${sourceFolderCheck}/frame_000001.jpg`)) {
         const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
         await removeAndCreateFolder(operationPath);
-    }
-
-    if (isApplyToAll) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
         const sourceFolder = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
         const destinationFolder = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`;
         await copyFolderExcluding(sourceFolder, destinationFolder, frame);

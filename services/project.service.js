@@ -186,7 +186,7 @@ const projectList = async (req, catId,keyword=null,sort) => {
     }
 
     const folderDetails = await Casefolder.findById(catId).select('folderName slag');
-    if(folderDetails.slag=='recyclebin')
+    if(folderDetails && folderDetails.slag=='recyclebin')
     query.status='deleted'
     else
     query.status='active'
@@ -203,14 +203,21 @@ const projectList = async (req, catId,keyword=null,sort) => {
         };
     }
     let items = [];
+    let sizes = [];
+    // const folderSize = getFolderSize(folderPath);
+        // console.log(`Total size of folder and subfolders: ${formatSize(folderSize)}`);
     project.forEach((val, index) => {
         const formattedUpdatedAt = moment(val.updatedAt).format('YYYY-MM-DD HH:mm:ss');
+        let folderPath = `public/${req.user.id}/${val.id}`;
+        let folderSize = getFolderSize(folderPath);
+        sizes.push(folderSize)
         items.push(
             {
                 'folderId': val.catId,
                 folderName: folderDetails?.folderName === 'anonymous' ? `Case Folder ${index + 1}` : folderDetails?.folderName || 'Unknown Folder',
                 'projectId': val.id,
                 'projectName':val.projectName,
+                'projectSize':formatSize(folderSize),
                 'curFrameId': val.currentFrameId,
                 'srcFolType': VideoFolderSet,
                 'srcFolPtr': val.videoFolInPtr,
@@ -226,9 +233,42 @@ const projectList = async (req, catId,keyword=null,sort) => {
         statusCode: 200,
         status: 'Success',
         message: 'Successfully authenticated.',
-        data: items
+        data: {
+            folderId:folderDetails?.id,
+            folderName: folderDetails?.folderName,
+            folderSize: formatSize(sizes.reduce((sum, size) => sum + size, 0)),
+            projectList:items
+        }
     }
 };
+
+function getFolderSize(folderPath) {
+    let totalSize = 0;
+
+    // Read the contents of the directory
+    const files = fs.readdirSync(folderPath);
+
+    for (const file of files) {
+        const filePath = path.join(folderPath, file);
+        const stats = fs.statSync(filePath);
+
+        // If it's a directory, recursively calculate its size
+        if (stats.isDirectory()) {
+            totalSize += getFolderSize(filePath);
+        } else {
+            // Add file size
+            totalSize += stats.size;
+        }
+    }
+
+    return totalSize;
+}
+
+function formatSize(bytes) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const power = bytes > 0 ? Math.floor(Math.log(bytes) / Math.log(1024)) : 0;
+    return (bytes / Math.pow(1024, power)).toFixed(2) + ' ' + units[power];
+}
 
 const deletedProjectList = async (req, catId,keyword=null,sort) => {
     
@@ -289,7 +329,7 @@ const recentprojectList = async (req, userId, keyword, sort) => {
     if (typeof keyword === 'string' && keyword.trim() !== '') {
         query.projectName = { $regex: keyword, $options: 'i' };
     }
-    query.catName = { $ne: 'Inbox' };
+    // query.catName = { $ne: 'Inbox' };
     query.status='active'
     let project = await Project.find(query).sort({ updatedAt: sortOrder });
     
@@ -378,6 +418,10 @@ const projectDetails = async (req, id) => {
     logger.changePointer(req.user.id, id, 'JOB 100', 'pointerDetails');
     const folderDetails = await Casefolder.findById(projectDetails.catId).select('folderName');
     const formattedUpdatedAt = moment(projectDetails.updatedAt).format('YYYY-MM-DD HH:mm:ss');
+
+    let folderPath = `public/${req.user.id}/${id}`;
+    let folderSize = getFolderSize(folderPath);
+
     return {
         statusCode: 200,
         status: 'Success',
@@ -387,6 +431,7 @@ const projectDetails = async (req, id) => {
             'projectId': projectDetails.id,
             'folderName': folderDetails?.folderName === 'anonymous' ? `Case Folder ` : folderDetails?.folderName || 'Unknown Folder',
             'projectName':projectDetails.projectName,
+            'projectSize':formatSize(folderSize),
             'updatedAt': formattedUpdatedAt,
             'curFrameId': (projectDetails.curDisplayPreviewFolType == 'temp') ? projectDetails.currentPreviewFrameId : projectDetails.currentFrameId,
             'isUndoPossible': isUndoPossible,
@@ -944,7 +989,7 @@ const shareProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
     
 };
 
-const moveProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
+const draganddropProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
     const rootPath = `${req.user.id}/${projectId}`;
     const projectData = await Project.findById(projectId);
     if(!projectIdTo){
@@ -988,6 +1033,76 @@ const moveProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
     
 };
 
+const moveProject = async(req,id,catId) =>{
+    try {
+        const project = await Project.findByIdAndUpdate(id, {'catId':catId}, { new: true });
+
+        return {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Folder moved successfully.',
+        };
+    } catch (err) {
+        console.error('Error moving the folder:', err);
+        return {
+            statusCode: 500,
+            status: 'Failed',
+            message: `Error moving the folder: ${err.message}`,
+        };
+    }
+    
+};
+
+const cleanProject = async(req,id) =>{
+    try {
+        const project = await Project.find(id);
+        const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
+        for (let i = 1; i <= project.totalVideoFolderSet; i++) {
+            const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
+            await removeFolder(dynamicFolderName);
+            createFolder(dynamicFolderName);
+        }
+        const projectUpdate = await Project.findByIdAndUpdate(id, {
+            imagePossibleUndoCount:0,
+            imagePossibleRedoCount:0,
+            videoPossibleUndoCount:0,
+            videoPossibleRedoCount:0,
+            imageFolInPtr:1,
+            videoFolInPtr:1,
+            curDisplayPreviewFolType:'video',
+            curDisplayPreviewFolPtr:1,
+            curProcessingPreviewSourceFolType:'video',
+            curProcessingPreviewSourceFolPtr:1,
+            curProcessingPreviewDestinationFolType:'temp',
+            curProcessingPreviewDestinationFolPtr:1,
+            curDisplayThumbnailFolType:'video',
+            curDisplayThumbnailFolPtr:1,
+            refreshThumbnailFlag:true,
+            curProcessingSourceFolType:'video',
+            curProcessingSourceFolPtr:1,
+            curProcessingDestinationFolType:'video',
+            curProcessingDestinationFolPtr:1,
+            operatePossibleOnVideoFlag:true,
+            handoverPossibleImageToVideoFlag:true,
+            processingGoingOnVideoOrFrameFlag:true,
+            processingGoingOnVideoNotFrame:true,
+        }, { new: true });
+       
+        return {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Folder moved successfully.',
+        };
+    } catch (err) {
+        console.error('Error moving the folder:', err);
+        return {
+            statusCode: 500,
+            status: 'Failed',
+            message: `Error moving the folder: ${err.message}`,
+        };
+    }
+    
+};
 
 module.exports = {
     createProject,
@@ -1005,5 +1120,7 @@ module.exports = {
     recentprojectList,
     deletedProjectList,
     shareProject,
-    moveProject
+    draganddropProject,
+    moveProject,
+    cleanProject
 };

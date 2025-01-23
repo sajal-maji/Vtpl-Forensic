@@ -16,9 +16,9 @@ const TempFolder = 'temp'
 const createProject = async (req, res, next) => {
     const { projectName, catId } = req.body;
     try {
-        if(!catId){
+        if (!catId) {
             const casefolderDetails = await Casefolder.findOne({ slag: 'default', userId: req.user.id });
-            catId=casefolderDetails.catId
+            catId = casefolderDetails.catId
         }
         const response = await projectService.createProject(req, catId, projectName);
         res.status(200).json(response);
@@ -130,6 +130,17 @@ const imageComparison = async (req, res, next) => {
     }
 };
 
+// Utility function for converting video to desired frame rate
+const convertVideoToFrameRate = (inputPath, outputPath, frameRate) => {
+    return new Promise((resolve, reject) => {
+        ffmpeg(inputPath)
+            .outputOptions([`-r ${frameRate}`]) // Set frame rate
+            .save(outputPath)
+            .on('end', () => resolve(true))
+            .on('error', (err) => reject(err));
+    });
+};
+
 const uploadFiles = async (req, res, next) => {
     createFolder(`public/logs`);
     createFolder(`public/uploads`);
@@ -148,7 +159,7 @@ const uploadFiles = async (req, res, next) => {
             },
         }),
         fileFilter: (req, file, cb) => {
-            const allowedFileTypes = /jpeg|jpg|png|mp4|mkv|avi|mov|wmv/;
+            const allowedFileTypes = /jpeg|jpg|png|tiff|bmp|mp4|mkv|avi|mov|wmv/;
             const extName = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
             const mimeType = allowedFileTypes.test(file.mimetype);
             if (mimeType && extName) {
@@ -187,6 +198,7 @@ const uploadFiles = async (req, res, next) => {
             });
         }
 
+
         try {
             // Process uploaded files
             const videoDetails = req.files.video ? req.files.video[0] : null;
@@ -214,7 +226,7 @@ const uploadFiles = async (req, res, next) => {
                 }
             } else {
                 var casefolder = await Casefolder.findOne({ slag: 'default', userId: req.user.id });
-                    
+
                 // const totalCount = await Casefolder.countDocuments({ userId: req.user.id });
                 // var casefolder = new Casefolder({
                 //     folderName: `Case Folder ${totalCount + 1}`,
@@ -234,6 +246,53 @@ const uploadFiles = async (req, res, next) => {
             await project.save();
 
 
+            if (req.files.video) {
+                const videoPath = req.files.video[0].path;
+                ffmpeg.ffprobe(videoPath, async (err, metadata) => {
+                    if (err) {
+                        // const fixedVideoPath = `public/uploads/crop/${videoDetails ? videoDetails.filename : null}`;
+                        // await fixVideoHeaders(req.files.video[0].path, fixedVideoPath);
+                        return res.status(400).json({
+                            statusCode: 400,
+                            status: 'Failed',
+                            message: 'Error analyzing video metadata.',
+                            error: err.message,
+                        });
+                    }
+
+
+                    const videoStream = metadata.streams.find((stream) => stream.codec_type === 'video');
+                    const frameRate = videoStream?.r_frame_rate || 'Unknown';
+                    const duration = metadata.format.duration || 'Unknown';
+                    const resolution = `${videoStream?.width || 'Unknown'}x${videoStream?.height || 'Unknown'}`;
+
+                    console.log('Video Metadata:', {
+                        frameRate,
+                        duration,
+                        resolution,
+                    });
+                    const videoDetail = req.files.video[0]
+                    // Check and enforce frame rate
+                    if (!frameRate || frameRate === 'Unknown') {
+                        // const fixedVideoPath = `public/uploads/crop/${videoDetails ? videoDetails.filename : null}`;
+                        // await fixVideoHeaders(req.files.video[0].path, fixedVideoPath);
+                        if (project) {
+                            await Project.findByIdAndDelete(project.id);
+                        }
+
+                        return res.status(400).json({
+                            statusCode: 400,
+                            status: 'Failed',
+                            message: 'Error analyzing video metadata. Please upload proper video',
+                        });
+                        // Process or set default frame rate using ffmpeg
+                        // const processedPath = `public/uploads/${videoDetail.filename}`;
+                        // await convertVideoToFrameRate(videoPath, processedPath, 30); // Convert to 30 fps
+                        // videoDetail.path = processedPath;
+                    }
+
+                });
+            }
 
             const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
             const rootPath = `${req.user.id}/${project.id}`;
@@ -265,6 +324,16 @@ const uploadFiles = async (req, res, next) => {
                 const images = req.files?.images || [];
 
                 const fileMetadata = await getVideoDuration(inputPath);  // Await inside async function
+                // console.log('-----------tapan-----------',fileMetadata);
+                if (!fileMetadata) {
+                    // await Project.findByIdAndDelete(project.id);
+                    await projectService.deleteProject(req, project.id);
+                    return res.status(400).json({
+                        statusCode: 400,
+                        status: 'Failed',
+                        message: 'Error analyzing video metadata. Please upload proper video',
+                    });
+                }
                 const videoDuration = fileMetadata.format.duration;
                 console.log(`Video duration: ${videoDuration} seconds`);
 
@@ -321,7 +390,7 @@ const uploadFiles = async (req, res, next) => {
 
                 fsExtra.remove(inputPath, (err) => {
                     if (err) {
-                        console.error(`Error deleting folder: ${err.message}`);
+                        console.log(`Error deleting folder: ${err.message}`);
                     } else {
                         console.log('Folder deleted successfully');
                     }
@@ -386,7 +455,31 @@ const uploadFiles = async (req, res, next) => {
     });
 };
 
+const fixVideoHeaders = async (inputPath, outputPath) => {
+    return new Promise((resolve, reject) => {
+        if (`${process.env.NODE_ENV}` === 'development') {
+            ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
+        }
 
+        // Use FFmpeg to remux or re-encode the video
+        ffmpeg(inputPath)
+            .output(outputPath)
+            .on('start', (command) => {
+                console.log('FFmpeg process started:', command);
+            })
+            .on('error', (err) => {
+                console.error('Error fixing video headers:', err.message);
+                reject(new Error('Failed to fix video headers. Please upload a valid video file.'));
+            })
+            .on('end', () => {
+                console.log('Video headers fixed successfully.');
+                resolve(outputPath);
+            })
+            .outputOptions(['-c copy']) // Copy codec streams (remux) without re-encoding
+            .outputOptions(['-movflags', 'faststart']) // Ensures headers are at the start of the file
+            .run();
+    });
+};
 
 async function copyImages(imageDetails, imgCopiedBase) {
     try {
@@ -399,226 +492,10 @@ async function copyImages(imageDetails, imgCopiedBase) {
         );
         console.log('All images copied successfully.');
     } catch (err) {
-        console.error('Error copying files:', err);
+        console.log('Error copying files:', err);
     }
 }
 
-
-const uploadFilesOld = async (req, res, next) => {
-    const formKeys = Object.keys(req.body);
-    const storage = multer.diskStorage({
-        destination: function (req, file, cb) {
-            cb(null, 'public/uploads');  // Folder where the videos will be stored
-        },
-        filename: function (req, file, cb) {
-            cb(null, Date.now() + path.extname(file.originalname));  // Append timestamp to the file name
-        }
-    });
-
-    const fileFilter = (req, file, cb) => {
-        const allowedFileTypes = /mp4|mkv|avi|mov|wmv/;
-        const extName = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimeType = allowedFileTypes.test(file.mimetype);
-        if (mimeType && extName) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only videos are allowed'), false);
-        }
-    };
-
-    const upload = multer({
-        storage: storage,
-        limits: { fileSize: 2000000000 },  // 1GB
-        fileFilter: fileFilter
-    });
-
-    // Handle the file upload
-    upload.single('video')(req, res, async (err) => {  // Mark this callback as async
-        if (err) {
-            const errorMessage = err.code === 'LIMIT_FILE_SIZE' ? 'File too large. Max limit is 1GB' : err.message;
-            return res.status(400).json({
-                statusCode: 400,
-                status: 'Failed',
-                message: errorMessage,
-            });
-        }
-
-        if (!req.file) {
-            return res.status(400).json({
-                statusCode: 400,
-                status: 'Failed',
-                message: 'Please upload a video.',
-            });
-        }
-
-        const { catId: id } = req.body;
-        const totalSeconds = (req.body.startTime) ? req.body.startTime : 0;
-
-        // Calculate hours, minutes, and seconds
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        // Format the result as 'hh:mm:ss'
-        const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-        if (id) {
-            var casefolder = await Casefolder.findById(id).select('folderName');
-            if (!casefolder) {
-                return res.status(404).json({
-                    statusCode: 404,
-                    status: 'Failed',
-                    message: 'Data not found'
-                });
-            }
-        } else {
-            const totalCount = await Casefolder.countDocuments({ userId: req.user.id });
-            var casefolder = new Casefolder({
-                folderName: `Case Folder ${totalCount + 1}`,
-                userId: req.user.id,
-            })
-
-            await casefolder.save();
-        }
-
-        const totalCountPro = await Project.countDocuments({ userId: req.user.id });
-        const project = new Project({
-            projectName: `Project ${totalCountPro + 1}`,
-            catId: casefolder.id,
-            catName: casefolder.folderName,
-            userId: req.user.id,
-        })
-        await project.save();
-
-
-        const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
-        const rootPath = `${req.user.id}/${project.id}`;
-        const baseUrl = `${process.env.BASE_URL}:${process.env.PORT}/`;
-
-        // createFolder(`${basePath}/uploads`);
-        createFolder(`${basePath}/main`);
-        createFolder(`${basePath}/snap`);
-        createFolder(`${basePath}/temp/1`);
-        createFolder(`${basePath}/temp/2`);
-
-
-        for (let i = 1; i <= project.totalVideoFolderSet; i++) {
-            const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
-            createFolder(dynamicFolderName);
-        }
-
-
-        for (let i = 1; i <= project.totalImageFolderSet; i++) {
-            const dynamicFolderNameImg = `${basePath}/image/${i}`; // Create a folder with the project limit
-            createFolder(dynamicFolderNameImg);
-        }
-        const rootDir = path.resolve(__dirname, '..', '..');
-        const inputPath = req.file.path; //path.join(rootDir, req.file.path);
-        let outputPath = `public/uploads/crop/${req.file.filename}`;//path.join(rootDir, `public/uploads/videos/crop/${req.file.filename}`);
-
-        try {
-            const fileMetadata = await getVideoDuration(inputPath);  // Await inside async function
-            const videoDuration = fileMetadata.format.duration;
-            console.log(`Video duration: ${videoDuration} seconds`);
-
-            let fps = 10;
-            // const videoStream = fileMetadata.streams.find((stream) => stream.codec_type === 'video');
-            // if (videoStream || videoStream.r_frame_rate) {
-            //  fps = eval(videoStream.r_frame_rate);
-            // }
-
-            console.log(`Video fps: ${fps} seconds`);
-
-            const maxDuration = 120; // 2 minutes in seconds
-            const startTime = formattedTime; // Start 3 seconds into the video
-            const cutDuration = 120; // Cut 10 seconds of the video
-
-            // Cut the video if it's longer than 2 minutes
-            // if (videoDuration > maxDuration) {
-            //     console.log(`Video is longer than 2 minutes, cutting it to ${maxDuration} seconds.`);
-            //     await cutVideo(inputPath, outputPath, startTime, cutDuration);  // Await async function
-            // } else {
-            //     console.log('Video is 2 minutes or less, no cutting needed.');
-            // }
-
-            // Convert the video to frames
-            // if (videoDuration < maxDuration) {
-            fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
-                if (err) { console.log('Error copying the file:', err); }
-                console.log('File copied successfully.');
-            });
-            // outputPath = inputPath;
-            // }
-
-            const frameNumber = 0; // Example frame number
-            // const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
-            console.log('Project Details....', req.file)
-            const frameOutputDir = `${basePath}/main/frame_%06d.jpg`; // %d will be replaced by frame number
-            const videoCon = await convertVideo(outputPath, frameOutputDir, fps);  // Await async function
-
-            const dataFiles = await getTotalFiles(`${basePath}/main`);
-
-
-
-            fsExtra.unlink(inputPath, (unlinkErr) => {
-                console.log('Video file deleted successfully.');
-            });
-            // Success response
-
-            fsExtra.copy(`${basePath}/main`, `${basePath}/video/1`, (err) => {
-                if (err) { console.log('Error copying the file:', err); }
-                // console.log('File copied successfully.');
-            });
-            console.log('File copied successfully.');
-            const projectDetails = {
-                "fileName": req.file.filename,
-                "fileSize": fileMetadata.format.size,
-                "fileResolution": fileMetadata.format.bit_rate,
-                "fileDuration": fileMetadata.format.duration,
-                "fileFrameRate": '',
-                "fileAspectRatio": '',
-                "createOn": ''
-            }
-
-            // dataFiles.filesName.sort((a, b) => {
-            //     // Extract the numbers from the file names
-            //     const numA = parseInt(a.match(/\d+/)[0]);
-            //     const numB = parseInt(b.match(/\d+/)[0]);
-
-            //     // Sort numerically
-            //     return numA - numB;
-            // });
-
-            const updateproject = await Project.findByIdAndUpdate(project.id,
-                {
-                    'filesName': JSON.stringify(dataFiles.filesName),
-                    'currentFrameId': 'frame_000001.jpg',
-                    'projectDetails': JSON.stringify(projectDetails),
-                    fps
-                }, { new: true });
-
-            res.status(200).json({
-                statusCode: 200,
-                status: 'Success',
-                message: 'Video uploaded and processed successfully.',
-                data: {
-                    'totalFiles': dataFiles.totalFiles,
-                    'folderId': updateproject.catId,
-                    'projectId': updateproject.id,
-                    'curFrameId': updateproject.currentFrameId,
-                    'srcFolType': VideoFolderSet,
-                    'srcFolPtr': updateproject.videoFolInPtr,
-                    'videoToFrameWarmPopUp': true,
-                    // 'filesName': dataFiles.filesName,
-                    'projectDetails': projectDetails
-                }
-
-            });
-        } catch (error) {
-            res.status(500).json({ statusCode: 500, message: 'Server error', error });
-        }
-
-    });
-};
 
 const getProjectByCat = async (req, res, next) => {
     const { catId, keyword, sort } = req.query;
@@ -626,7 +503,7 @@ const getProjectByCat = async (req, res, next) => {
         const projectList = await projectService.projectList(req, catId, keyword, sort);
         res.status(200).json(projectList)
     } catch (error) {
-        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error.message });
     }
 };
 
@@ -643,6 +520,9 @@ const getDeletedProjectByCat = async (req, res, next) => {
 
 const getRecentProject = async (req, res, next) => {
     try {
+        // const folderPath = 'public/676553436b6e9bcd9eadd489';
+        // const folderSize = getFolderSize(folderPath);
+        // console.log(`Total size of folder and subfolders: ${formatSize(folderSize)}`);
         const { keyword, sort } = req.query;
         const projectList = await projectService.recentprojectList(req, req.user.id, keyword, sort);
         res.status(200).json(projectList)
@@ -799,6 +679,7 @@ function imagesToMp4(imageDir, outputPath, frameRate = 10) {
                 '-pix_fmt yuv420p', // Pixel format
                 '-preset veryfast', // Encoding speed/efficiency trade-off
                 '-r 30',           // Fixed frame rate
+
             ])
             .output(outputPath)
             .on('end', () => {
@@ -819,7 +700,7 @@ async function getVideoDuration(inputPath) {
             ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
         ffmpeg.ffprobe(inputPath, (err, metadata) => {
             if (err) {
-                reject(err);
+                resolve(false);
             } else {
                 console.log(metadata);
                 resolve(metadata); // returns duration in seconds
@@ -913,11 +794,11 @@ const filesList = async (req, res, next) => {
 
 const shareProjectToUser = async (req, res, next) => {
     try {
-        const { shareUserId,projectId } = req.body;
-        const casefolderInbox = await Casefolder.findOne({ 'userId': shareUserId,'status':'active',slag: 'inbox' });
-        const catId=casefolderInbox.id
-        const response = await projectService.shareProject(req, shareUserId,projectId,catId);
-        res.status(200).json( {
+        const { shareUserId, projectId } = req.body;
+        const casefolderInbox = await Casefolder.findOne({ 'userId': shareUserId, 'status': 'active', slag: 'inbox' });
+        const catId = casefolderInbox.id
+        const response = await projectService.shareProject(req, shareUserId, projectId, catId);
+        res.status(200).json({
             statusCode: 200,
             status: 'Success',
             message: 'Shared Successfully.'
@@ -934,12 +815,15 @@ const shareProjectToUser = async (req, res, next) => {
 };
 const draganddropProject = async (req, res, next) => {
     try {
-        const { projectId } = req.body;
-        const shareUserId=req.user.id
-        const casefolderInbox = await Casefolder.findOne({ 'userId': shareUserId,'status':'active',slag: 'inbox' });
-        const catId=casefolderInbox.id
-        const response = await projectService.moveProject(req, shareUserId,projectId,catId);
-        res.status(200).json( {
+        const { projectId, catId } = req.body;
+        const shareUserId = req.user.id
+        if (!catId) {
+            const casefolderInbox = await Casefolder.findOne({ 'userId': shareUserId, 'status': 'active', slag: 'inbox' });
+            catId = casefolderInbox.id
+        }
+
+        const response = await projectService.draganddropProject(req, shareUserId, projectId, catId);
+        res.status(200).json({
             statusCode: 200,
             status: 'Success',
             message: 'Shared Successfully.'
@@ -954,6 +838,78 @@ const draganddropProject = async (req, res, next) => {
         });
     }
 };
+
+const moveProject = async (req, res, next) => {
+    try {
+        const { projectId, catId } = req.body;
+
+
+        const response = await projectService.moveProject(req, projectId, catId);
+        res.status(200).json({
+            statusCode: 200,
+            status: 'Success',
+            message: 'Moved Successfully.'
+        });
+
+
+    } catch (error) {
+        return res.status(500).json({
+            statusCode: 500,
+            error: 'Internal server error',
+            details: error.message
+        });
+    }
+};
+
+const cleanProject = async (req, res, next) => {
+    try {
+        const { projectId } = req.body;
+
+
+        const response = await projectService.cleanProject(req, projectId);
+        res.status(200).json({
+            statusCode: 200,
+            status: 'Success',
+            message: 'Cleaned Successfully.'
+        });
+
+
+    } catch (error) {
+        return res.status(500).json({
+            statusCode: 500,
+            error: 'Internal server error',
+            details: error.message
+        });
+    }
+};
+
+function getFolderSize(folderPath) {
+    let totalSize = 0;
+
+    // Read the contents of the directory
+    const files = fs.readdirSync(folderPath);
+
+    for (const file of files) {
+        const filePath = path.join(folderPath, file);
+        const stats = fs.statSync(filePath);
+
+        // If it's a directory, recursively calculate its size
+        if (stats.isDirectory()) {
+            totalSize += getFolderSize(filePath);
+        } else {
+            // Add file size
+            totalSize += stats.size;
+        }
+    }
+
+    return totalSize;
+}
+
+function formatSize(bytes) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const power = bytes > 0 ? Math.floor(Math.log(bytes) / Math.log(1024)) : 0;
+    return (bytes / Math.pow(1024, power)).toFixed(2) + ' ' + units[power];
+}
 
 
 module.exports = {
@@ -977,5 +933,7 @@ module.exports = {
     exportProject,
     getDeletedProjectByCat,
     shareProjectToUser,
-    draganddropProject
+    draganddropProject,
+    moveProject,
+    cleanProject
 };
