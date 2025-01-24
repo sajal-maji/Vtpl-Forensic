@@ -342,12 +342,23 @@ const uploadFiles = async (req, res, next) => {
                 // if (videoStream || videoStream.r_frame_rate) {
                 //  fps = eval(videoStream.r_frame_rate);
                 // }
+                
 
                 console.log(`Video fps: ${fps} seconds`);
 
                 const maxDuration = 120; // 2 minutes in seconds
                 const startTime = formattedTime; // Start 3 seconds into the video
                 const cutDuration = 120; // Cut 10 seconds of the video
+
+                // Cut the video if it's longer than 2 minutes
+                // if (videoDuration > maxDuration) {
+                //     console.log(`Video is longer than 2 minutes, cutting it to ${maxDuration} seconds.`);
+                //     await cutVideo(inputPath, outputPath, startTime, cutDuration);  // Await async function
+                // } else {
+                //     console.log('Video is 2 minutes or less, no cutting needed.');
+                // }
+
+
                 fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
                     if (err) { console.log('Error copying the file:', err); }
                     console.log('File copied successfully.');

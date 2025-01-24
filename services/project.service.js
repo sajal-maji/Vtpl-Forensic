@@ -788,7 +788,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
     };
 };
 
-const selectThumbnailFrame = async (req, id, frameId) => {
+const selectThumbnailFrame = async (req, id, frameId) => {          //Select a Frame from Thumbnail
     const project = await Project.findById(id);
     const rootPath = `${req.user.id}/${id}`;
     if (!project) {
@@ -849,7 +849,7 @@ const selectThumbnailFrame = async (req, id, frameId) => {
     };
 };
 
-const discardImage = async (id) => {
+const discardImage = async (id) => {                    // Discard Frame operation
     const project = await Project.findById(id);
     if (!project) {
         return {
@@ -905,7 +905,7 @@ const discardImage = async (id) => {
     }
 };
 
-const saveImage = async (req, id,image,exeName='jpg') => {
+const saveImage = async (req, id,image,exeName='jpg') => {              // Save the Frame
     const project = await Project.findById(id);
     if (!project) {
         return {
@@ -1057,7 +1057,16 @@ const cleanProject = async(req,id) =>{
     try {
         const project = await Project.find(id);
         const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
-        for (let i = 1; i <= project.totalVideoFolderSet; i++) {
+
+        await removeFolder(`${basePath}/video/1`);
+        createFolder(`${basePath}/video/1`);
+
+        const sourcePath = `${basePath}/video/${project.curDisplayPreviewFolPtr}`;
+        const destinationPath = `${basePath}/video/1`;
+        await fsExtra.copy(sourcePath, destinationPath, { overwrite: true });
+
+        
+        for (let i = 2; i <= project.totalVideoFolderSet; i++) {
             const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
             await removeFolder(dynamicFolderName);
             createFolder(dynamicFolderName);
