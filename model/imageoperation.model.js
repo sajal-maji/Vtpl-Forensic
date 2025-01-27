@@ -7,6 +7,9 @@ const imageoperationSchema = new mongoose.Schema({
     processIndex: {
         type: Number, default: 1 
     },
+    sequenceNum: {
+        type: Number, default: 1 
+    },
     processType: {
         type: String,
     },

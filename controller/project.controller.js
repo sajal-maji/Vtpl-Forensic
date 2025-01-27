@@ -11,7 +11,7 @@ const fsExtra = require('fs-extra');
 const { errorLogger } = require("../config/log.config");
 const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
-const TempFolder = 'temp'
+const TempFolderSet = 'temp'
 
 const createProject = async (req, res, next) => {
     const { projectName, catId } = req.body;
@@ -440,7 +440,7 @@ const uploadFiles = async (req, res, next) => {
                     'curFrameId': updateproject.currentFrameId,
                     'srcFolType': VideoFolderSet,
                     'srcFolPtr': updateproject.videoFolInPtr,
-                    'videoToFrameWarmPopUp': true,
+                    'videoToFrameWarningPopUpFlag': true,
                     'filesName': dataFiles.filesName,
                     'projectDetails': projectDetails
                 }

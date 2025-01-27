@@ -6,7 +6,7 @@ const fsExtra = require('fs-extra');
 const fs = require('fs');
 const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
-const TempFolder = 'temp'
+const TempFolderSet = 'temp'
 const logger = require("../helpers/logEvents");
 const operationHistoryService = require("../services/operationhistory.service");
 
@@ -143,9 +143,9 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         curProcessingDestinationFolPtr: proDetails.curProcessingDestinationFolPtr,
         videoPossibleUndoCount: proDetails.videoPossibleUndoCount,
 
-        videoToFrameWarningPopUp: proDetails.videoToFrameWarningPopUp,
+        videoToFrameWarningPopUpFlag: proDetails.videoToFrameWarningPopUpFlag,
         processingGoingOnVideoOrFrameFlag: proDetails.processingGoingOnVideoOrFrameFlag,
-        processingGoingOnVideoNotFrame: proDetails.processingGoingOnVideoNotFrame,
+        processingGoingOnVideoNotFrameFlag: proDetails.processingGoingOnVideoNotFrameFlag,
 
         curDisplayPreviewFolType: proDetails.curDisplayPreviewFolType,
         curDisplayPreviewFolPtr: proDetails.curDisplayPreviewFolPtr,
@@ -185,7 +185,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
     //     const project = await Project.findByIdAndUpdate(id, {
     //         'currentFrameId':frameName,
     //         'imageFolInPtr':proDetails.dstFolPtr,
-    //         'videoToFrameWarmPopUp':proDetails.videoToFrameWarmPopUp,
+    //         'videoToFrameWarningPopUpFlag':proDetails.videoToFrameWarningPopUpFlag,
     //         'handoverPossibleImageToVideoFlag':proDetails.handoverPossibleImageToVideoFlag,
     //         'operatePossibleOnVideoFlag':proDetails.operatePossibleOnVideoFlag,
     //         'videoPossibleUndoCount':proDetails.videoPossibleUndoCount,
@@ -415,7 +415,7 @@ const preview = async (project, id, req, defaultImg) => {
     const rootPath = `${req.user.id}/${id}`;
     const imagePath = `public/${rootPath}/temp/`;
     // await new Promise((resolve) => setTimeout(resolve, 50));
-    const curDisplayPreviewFolType = TempFolder
+    const curDisplayPreviewFolType = TempFolderSet
     let curDisplayPreviewFolPtr = 1;
     if (project.processingGoingOnVideoOrFrameFlag == true) {
         curDisplayPreviewFolPtr = 2
@@ -440,9 +440,9 @@ const preview = async (project, id, req, defaultImg) => {
             videoPossibleRedoCount: project.videoPossibleRedoCount,
             imagePossibleRedoCount: project.imagePossibleRedoCount,
 
-            videoToFrameWarningPopUp: project.videoToFrameWarningPopUp,
+            videoToFrameWarningPopUpFlag: project.videoToFrameWarningPopUpFlag,
             processingGoingOnVideoOrFrameFlag: project.processingGoingOnVideoOrFrameFlag,
-            processingGoingOnVideoNotFrame: project.processingGoingOnVideoNotFrame,
+            processingGoingOnVideoNotFrameFlag: project.processingGoingOnVideoNotFrameFlag,
 
             imageFolInPtr: project.imageFolInPtr,
             videoFolInPtr: project.videoFolInPtr,
@@ -482,15 +482,15 @@ const applyToAll = async (project, defaultImg) => {
         curProcessingDestinationFolPtr = videoFolInPtr
 
         processingGoingOnVideoOrFrameFlag = true
-        processingGoingOnVideoNotFrame = true
-        videoToFrameWarningPopUp = false
+        processingGoingOnVideoNotFrameFlag = true
+        videoToFrameWarningPopUpFlag = false
 
-        curDisplayPreviewFolType = TempFolder
+        curDisplayPreviewFolType = TempFolderSet
         curDisplayPreviewFolPtr = 1
 
-        curProcessingPreviewSourceFolType = TempFolder
+        curProcessingPreviewSourceFolType = TempFolderSet
         curProcessingPreviewSourceFolPtr = 1
-        curProcessingPreviewDestinationFolType = TempFolder
+        curProcessingPreviewDestinationFolType = TempFolderSet
         curProcessingPreviewDestinationFolPtr = 2
 
 
@@ -516,9 +516,9 @@ const applyToAll = async (project, defaultImg) => {
                 curProcessingDestinationFolPtr,
 
 
-                videoToFrameWarningPopUp,
+                videoToFrameWarningPopUpFlag,
                 processingGoingOnVideoOrFrameFlag,
-                processingGoingOnVideoNotFrame,
+                processingGoingOnVideoNotFrameFlag,
 
                 curDisplayPreviewFolType,
                 curDisplayPreviewFolPtr,
@@ -546,15 +546,15 @@ const applyToFrame = async (project, defaultImg) => {
     imagePossibleRedoCount = 0
 
     processingGoingOnVideoOrFrameFlag = true
-    processingGoingOnVideoNotFrame = false
+    processingGoingOnVideoNotFrameFlag = false
     refreshThumbnailFlag = false
 
-    curDisplayPreviewFolType = TempFolder
+    curDisplayPreviewFolType = TempFolderSet
     curDisplayPreviewFolPtr = 1
 
-    curProcessingPreviewSourceFolType = TempFolder
+    curProcessingPreviewSourceFolType = TempFolderSet
     curProcessingPreviewSourceFolPtr = 1
-    curProcessingPreviewDestinationFolType = TempFolder
+    curProcessingPreviewDestinationFolType = TempFolderSet
     curProcessingPreviewDestinationFolPtr = 2
 
     if (project.operatePossibleOnVideoFlag) {
@@ -567,7 +567,7 @@ const applyToFrame = async (project, defaultImg) => {
         curProcessingDestinationFolType = ImageFolderSet
         curProcessingDestinationFolPtr = imageFolInPtr
 
-        videoToFrameWarningPopUp = true
+        videoToFrameWarningPopUpFlag = true
 
         handoverPossibleImageToVideoFlag = project.handoverPossibleImageToVideoFlag
         videoPossibleUndoCount = project.videoPossibleUndoCount
@@ -589,10 +589,10 @@ const applyToFrame = async (project, defaultImg) => {
                 imagePossibleUndoCount,
                 imagePossibleRedoCount,
 
-                videoToFrameWarningPopUp,
+                videoToFrameWarningPopUpFlag,
 
                 processingGoingOnVideoOrFrameFlag,
-                processingGoingOnVideoNotFrame,
+                processingGoingOnVideoNotFrameFlag,
 
                 imageFolInPtr,
                 videoFolInPtr: project.videoFolInPtr,
@@ -624,7 +624,7 @@ const applyToFrame = async (project, defaultImg) => {
         curProcessingDestinationFolType = ImageFolderSet
         curProcessingDestinationFolPtr = imageFolInPtr
 
-        videoToFrameWarningPopUp = false
+        videoToFrameWarningPopUpFlag = false
         videoPossibleUndoCount = project.videoPossibleUndoCount
 
         return ({
@@ -645,9 +645,9 @@ const applyToFrame = async (project, defaultImg) => {
                 imagePossibleUndoCount,
                 imagePossibleRedoCount,
 
-                videoToFrameWarningPopUp,
+                videoToFrameWarningPopUpFlag,
                 processingGoingOnVideoOrFrameFlag,
-                processingGoingOnVideoNotFrame,
+                processingGoingOnVideoNotFrameFlag,
 
                 imageFolInPtr,
                 videoFolInPtr: project.videoFolInPtr,

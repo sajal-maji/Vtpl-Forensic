@@ -9,7 +9,7 @@ const fsExtra = require('fs-extra');
 const { errorLogger } = require("../config/log.config");
 const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
-const TempFolder = 'temp'
+const TempFolderSet = 'temp'
 const logger = require("../helpers/logEvents");
 const Imageoperation = require('../services/imageoperation.service');
 const moment = require('moment');
@@ -223,7 +223,7 @@ const projectList = async (req, catId,keyword=null,sort) => {
                 'srcFolPtr': val.videoFolInPtr,
                 'dstFolType': ImageFolderSet,
                 'dstFolPtr': val.imageFolInPtr,
-                'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
+                'videoToFrameWarningPopUpFlag': val.videoToFrameWarningPopUpFlag,
                 'updatedAt': formattedUpdatedAt,
                 'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
             }
@@ -306,7 +306,7 @@ const deletedProjectList = async (req, catId,keyword=null,sort) => {
                 'srcFolPtr': val.videoFolInPtr,
                 'dstFolType': ImageFolderSet,
                 'dstFolPtr': val.imageFolInPtr,
-                'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
+                'videoToFrameWarningPopUpFlag': val.videoToFrameWarningPopUpFlag,
                 'updatedAt': formattedUpdatedAt,
                 'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
             }
@@ -356,7 +356,7 @@ const recentprojectList = async (req, userId, keyword, sort) => {
                     srcFolPtr: val.videoFolInPtr,
                     dstFolType: ImageFolderSet,
                     dstFolPtr: val.imageFolInPtr,
-                    videoToFrameWarmPopUp: val.videoToFrameWarningPopUp,
+                    videoToFrameWarningPopUpFlag: val.videoToFrameWarningPopUpFlag,
                     updatedAt: formattedUpdatedAt,
                     basePath: `${req.user.id}/${val.id}/${VideoFolderSet}/${val.curDisplayThumbnailFolPtr > 0 ? val.curDisplayThumbnailFolPtr : 1}/${val.currentFrameId || 'frame_000001.jpg'}`
                 };
@@ -451,7 +451,7 @@ const projectDetails = async (req, id) => {
             'curDisplayThumbnailFolPtr': projectDetails.curDisplayThumbnailFolPtr,
             'curDisplayPreviewFolType': projectDetails.curDisplayPreviewFolType,
             'curDisplayPreviewFolPtr': projectDetails.curDisplayPreviewFolPtr,
-            'videoToFrameWarningPopUp': projectDetails.videoToFrameWarningPopUp,
+            'videoToFrameWarningPopUpFlag': projectDetails.videoToFrameWarningPopUpFlag,
             'handoverPossibleImageToVideoFlag': projectDetails.handoverPossibleImageToVideoFlag,
             'videoPossibleRedoCount': projectDetails.videoPossibleRedoCount,
             'videoPossibleUndoCount': projectDetails.videoPossibleUndoCount,
@@ -504,7 +504,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
         curProcessingPreviewSourceFolType = ImageFolderSet;
         curProcessingPreviewSourceFolPtr = imageFolInPtr;
 
-        curProcessingPreviewDestinationFolType = TempFolder;
+        curProcessingPreviewDestinationFolType = TempFolderSet;
         curProcessingPreviewDestinationFolPtr = 1;
 
         refreshThumbnailFlag = false;
@@ -541,7 +541,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewSourceFolType = VideoFolderSet;
             curProcessingPreviewSourceFolPtr = project.videoFolInPtr;
 
-            curProcessingPreviewDestinationFolType = TempFolder;
+            curProcessingPreviewDestinationFolType = TempFolderSet;
             curProcessingPreviewDestinationFolPtr = 1;
 
             operatePossibleOnVideoFlag = true
@@ -558,7 +558,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewSourceFolType = ImageFolderSet;
             curProcessingPreviewSourceFolPtr = imageFolInPtr;
 
-            curProcessingPreviewDestinationFolType = TempFolder;
+            curProcessingPreviewDestinationFolType = TempFolderSet;
             curProcessingPreviewDestinationFolPtr = 1;
             operatePossibleOnVideoFlag = project.operatePossibleOnVideoFlag
             refreshThumbnailFlag = false
@@ -596,7 +596,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewSourceFolType = VideoFolderSet;
             curProcessingPreviewSourceFolPtr = videoFolInPtr;
 
-            curProcessingPreviewDestinationFolType = TempFolder;
+            curProcessingPreviewDestinationFolType = TempFolderSet;
             curProcessingPreviewDestinationFolPtr = 1;
 
             operatePossibleOnVideoFlag = true
@@ -677,7 +677,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
 
         curProcessingPreviewSourceFolType = VideoFolderSet
         curProcessingPreviewSourceFolPtr = videoFolInPtr
-        curProcessingPreviewDestinationFolType = TempFolder
+        curProcessingPreviewDestinationFolType = TempFolderSet
         curProcessingPreviewDestinationFolPtr = 1
 
         operatePossibleOnVideoFlag = true
@@ -712,7 +712,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
 
             curProcessingPreviewSourceFolType = ImageFolderSet
             curProcessingPreviewSourceFolPtr = imageFolInPtr
-            curProcessingPreviewDestinationFolType = TempFolder
+            curProcessingPreviewDestinationFolType = TempFolderSet
             curProcessingPreviewDestinationFolPtr = 1
 
             operatePossibleOnVideoFlag = false
@@ -746,7 +746,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
 
             curProcessingPreviewSourceFolType = ImageFolderSet
             curProcessingPreviewSourceFolPtr = imageFolInPtr
-            curProcessingPreviewDestinationFolType = TempFolder
+            curProcessingPreviewDestinationFolType = TempFolderSet
             curProcessingPreviewDestinationFolPtr = 1
 
             operatePossibleOnVideoFlag = false
@@ -808,7 +808,7 @@ const selectThumbnailFrame = async (req, id, frameId) => {          //Select a F
     let curDisplayPreviewFolPtr = project.videoFolInPtr;
     let curProcessingPreviewSourceFolType = VideoFolderSet;
     let curProcessingPreviewSourceFolPtr = project.videoFolInPtr;
-    let curProcessingPreviewDestinationFolType = TempFolder;
+    let curProcessingPreviewDestinationFolType = TempFolderSet;
     let curProcessingPreviewDestinationFolPtr = 1;
     let operatePossibleOnVideoFlag = true;
     let handoverPossibleImageToVideoFlag = true;
@@ -844,7 +844,7 @@ const selectThumbnailFrame = async (req, id, frameId) => {          //Select a F
             'curFrameId': projectUpdate.currentFrameId,
             'srcFolType': ImageFolderSet,
             'srcFolPtr': projectUpdate.imageFolInPtr,
-            'videoToFrameWarmPopUp': true,
+            'videoToFrameWarningPopUpFlag': true,
         }
     };
 };
@@ -868,7 +868,7 @@ const discardImage = async (id) => {                    // Discard Frame operati
         let curDisplayPreviewFolPtr = project.videoFolInPtr
         let curProcessingPreviewSourceFolType = VideoFolderSet
         let curProcessingPreviewSourceFolPtr = project.videoFolInPtr
-        let curProcessingPreviewDestinationFolType = TempFolder
+        let curProcessingPreviewDestinationFolType = TempFolderSet
         let curProcessingPreviewDestinationFolPtr = 1
         let operatePossibleOnVideoFlag = true
         let handoverPossibleImageToVideoFlag = true
@@ -1094,7 +1094,7 @@ const cleanProject = async(req,id) =>{
             operatePossibleOnVideoFlag:true,
             handoverPossibleImageToVideoFlag:true,
             processingGoingOnVideoOrFrameFlag:true,
-            processingGoingOnVideoNotFrame:true,
+            processingGoingOnVideoNotFrameFlag:true,
         }, { new: true });
        
         return {

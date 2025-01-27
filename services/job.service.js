@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
-const TempFolder = 'temp'
+const TempFolderSet = 'temp'
 
 const getStatus = async (job_id, userId) => {
     const request = { job_id };
@@ -59,22 +59,22 @@ async function updateProjectDetails(jobId, userId) {
     let curDisplayThumbnailFolPtr = projectDetails.videoFolInPtr;
     let refreshThumbnailFlag = projectDetails.refreshThumbnailFlag;
 
-    if (projectDetails.processingGoingOnVideoNotFrame) {
+    if (projectDetails.processingGoingOnVideoNotFrameFlag) {
         refreshThumbnailFlag = true;
     }
 
     if (projectDetails.curDisplayPreviewFolPtr == 2) {
         copyImage(projectDetails.currentFrameId, id, userId, {
-            folderType: TempFolder,
+            folderType: TempFolderSet,
             folderPtr: 2
         }, {
-            folderType: TempFolder,
+            folderType: TempFolderSet,
             folderPtr: 1
         });
-        curDisplayPreviewFolType = TempFolder;
+        curDisplayPreviewFolType = TempFolderSet;
         curDisplayPreviewFolPtr = 1;
     } else {
-        if (projectDetails.processingGoingOnVideoNotFrame == true) {
+        if (projectDetails.processingGoingOnVideoNotFrameFlag == true) {
             curDisplayPreviewFolType = VideoFolderSet;
             curDisplayPreviewFolPtr = projectDetails.videoFolInPtr;
         } else {

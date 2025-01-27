@@ -28,9 +28,9 @@ const addOrUpdateOperation = async (projectId) => {
         curProcessingDestinationFolPtr: projectDetails.curProcessingDestinationFolPtr,
         videoPossibleUndoCount: projectDetails.videoPossibleUndoCount,
 
-        videoToFrameWarningPopUp: projectDetails.videoToFrameWarningPopUp,
+        videoToFrameWarningPopUpFlag: projectDetails.videoToFrameWarningPopUpFlag,
         processingGoingOnVideoOrFrameFlag: projectDetails.processingGoingOnVideoOrFrameFlag,
-        processingGoingOnVideoNotFrame: projectDetails.processingGoingOnVideoNotFrame,
+        processingGoingOnVideoNotFrameFlag: projectDetails.processingGoingOnVideoNotFrameFlag,
 
         curDisplayPreviewFolType: projectDetails.curDisplayPreviewFolType,
         curDisplayPreviewFolPtr: projectDetails.curDisplayPreviewFolPtr,
@@ -114,9 +114,9 @@ async function updateProjectDetails(projectId) {
         curProcessingDestinationFolPtr: operationDetails.curProcessingDestinationFolPtr,
         videoPossibleUndoCount: operationDetails.videoPossibleUndoCount,
 
-        videoToFrameWarningPopUp: operationDetails.videoToFrameWarningPopUp,
+        videoToFrameWarningPopUpFlag: operationDetails.videoToFrameWarningPopUpFlag,
         processingGoingOnVideoOrFrameFlag: operationDetails.processingGoingOnVideoOrFrameFlag,
-        processingGoingOnVideoNotFrame: operationDetails.processingGoingOnVideoNotFrame,
+        processingGoingOnVideoNotFrameFlag: operationDetails.processingGoingOnVideoNotFrameFlag,
 
         curDisplayPreviewFolType: operationDetails.curDisplayPreviewFolType,
         curDisplayPreviewFolPtr: operationDetails.curDisplayPreviewFolPtr,

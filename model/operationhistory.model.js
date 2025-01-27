@@ -91,7 +91,7 @@ const operationhistorySchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    processingGoingOnVideoNotFrame: {
+    processingGoingOnVideoNotFrameFlag: {
         type: Boolean,
         default: true
     },
@@ -99,7 +99,7 @@ const operationhistorySchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    videoToFrameWarningPopUp: {
+    videoToFrameWarningPopUpFlag: {
         type: Boolean,
         default: false
     },
