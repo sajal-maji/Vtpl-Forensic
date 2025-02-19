@@ -1,6 +1,7 @@
 // const Imagefilter = require('../model/imagefilter.model');
 const Project = require('../model/projects.model');
 const JobProject = require('../model/jobprojects.model');
+const Imageoperation = require('../model/imageoperation.model');
 const path = require('path');
 const fsExtra = require('fs-extra');
 const fs = require('fs');
@@ -23,8 +24,8 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
                 }
             });
         }
-
-        const defaultImg = (frame) ? frame[0] : project.currentFrameId;
+        const { currentFrameId } = req.body;
+        const defaultImg = (currentFrameId) ? currentFrameId : project.currentFrameId;
         if (isPreview) {
             const preViewData = await preview(project, id, req, defaultImg);
             logger.logCreate(`managePointer: with priview data ${JSON.stringify(preViewData)}`, 'systemlog');
@@ -40,6 +41,45 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
             logger.logCreate(`managePointer: with apply to frame data ${JSON.stringify(applyToFrameData)}`, 'systemlog');
             return applyToFrameData
         }
+    } catch (error) {
+        return ({ 'proDetails': { 'statusCode': 500, error: 'Internal server error', details: error } });
+    }
+
+};
+
+const verifyStabilization = async (proDetails,req, res) => {
+    try {
+        const { projectId: id, frame } = req.body;
+
+        const rootPath = `${req.user.id}/${id}`;
+        let filesArr = []
+        let checkStabiliz = true;
+         frame.forEach((val, index) => {
+            const file = val;
+            
+            let folderPath = `${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${file}`
+            if (fs.existsSync(folderPath)) {
+                    const stats = fs.statSync(folderPath);
+                if (stats.isFile()) {
+                    filesArr.push(stats.size)
+                }
+
+                if (filesArr.includes(stats.size)) {
+                    console.log("Size exists in the array!");
+                    checkStabiliz = false;
+                }
+            }   
+        });
+
+        if (!checkStabiliz) {
+            return ({
+                'proDetails': {
+                    statusCode: 404,
+                    status: 'Failed',
+                    message: 'Sorry! You not able to apply Stabilization Filter.',
+                }
+            });
+    }
     } catch (error) {
         return ({ 'proDetails': { 'statusCode': 500, error: 'Internal server error', details: error } });
     }
@@ -124,7 +164,9 @@ const copyFolderExcluding = async (sourceDir, destDir, exclude = []) => {
 
 const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response) => {
     const rootPath = `${req.user.id}/${id}`;
-    let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_000001.jpg';
+    const { currentFrameId } = req.body;
+    let frameName = (currentFrameId) ? currentFrameId : 'frame_000001.jpg';
+    // let frameName = (frame && frame.length > 0) ? frame[0] : 'frame_000001.jpg';
     // Determine the filter type based on the `isApplyToAll` flag
     // if(!isPreview){
 
@@ -248,10 +290,22 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
                 });
             }
         });
+    } else {
+        const totalCountPro = await Imageoperation.countDocuments({ projectId: id });
+        const formattedValue = String(totalCountPro).padStart(6, "0");
+    
+        const saveInFileName = `pro_${formattedValue}_in.jpg`;
+        const toInFilePath = path.join(`public/${rootPath}/report_image/`, saveInFileName);
+        const fromInFilePath = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${frameName}`;
+        fsExtra.copy(fromInFilePath, toInFilePath, (err) => { });
+    
+        const saveOutFileName =  `pro_${formattedValue}_out.jpg`;
+        const toOutFilePath = path.join(`public/${rootPath}/report_image/`, saveOutFileName);
+        const fromOutFilePath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}/${frameName}`;
+        fsExtra.copy(fromOutFilePath, toOutFilePath, (err) => { });
     }
 
-
-
+   
 
     // for (var i = 1; i <= project.totalImageFolderSet; i++) {
     //     const sourcePath = `public/${rootPath}/${proDetails.srcFolType}/${i}/${frame[0]}`;
@@ -278,7 +332,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         'colData': {
             job_id: response.job_id,
             percentage: response.percentage,
-            'curFrameId': (proDetails.currentFrameId) ? proDetails.currentFrameId : '',
+            'currentFrameId': (proDetails.currentFrameId) ? proDetails.currentFrameId : '',
             total_input_images: response.total_input_images,
             processed_image_count: response.processed_image_count,
             status_message: response.status_message,
@@ -385,7 +439,7 @@ const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
         const srcType = (isPreview) ? proDetails.curProcessingPreviewSourceFolType : proDetails.curProcessingSourceFolType
         const srcPtr = (isPreview) ? proDetails.curProcessingPreviewSourceFolPtr : proDetails.curProcessingSourceFolPtr
         const rootPath = `${req.user.id}/${id}`;
-        const frameId = proDetails.curFrameId
+        const frameId = proDetails.currentFrameId
         if (!fs.existsSync(`public/${rootPath}/${srcType}/${srcPtr}/${frameId}`)) {
 
             // const project = await Project.findByIdAndUpdate(id, {
@@ -426,7 +480,7 @@ const preview = async (project, id, req, defaultImg) => {
     return ({
         'proDetails': {
             'statusCode': 200,
-            'curFrameId': defaultImg,
+            'currentFrameId': defaultImg,
             operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
             handoverPossibleImageToVideoFlag: project.handoverPossibleImageToVideoFlag,
 
@@ -497,7 +551,7 @@ const applyToAll = async (project, defaultImg) => {
         return ({
             'proDetails': {
                 'statusCode': 200,
-                'curFrameId': defaultImg,
+                'currentFrameId': defaultImg,
 
                 imageFolInPtr,
                 videoFolInPtr,
@@ -574,7 +628,7 @@ const applyToFrame = async (project, defaultImg) => {
         return ({
             'proDetails': {
                 'statusCode': 200,
-                'curFrameId': defaultImg,
+                'currentFrameId': defaultImg,
 
                 operatePossibleOnVideoFlag,
                 handoverPossibleImageToVideoFlag,
@@ -630,7 +684,7 @@ const applyToFrame = async (project, defaultImg) => {
         return ({
             'proDetails': {
                 'statusCode': 200,
-                'curFrameId': defaultImg,
+                'currentFrameId': defaultImg,
 
                 handoverPossibleImageToVideoFlag,
                 operatePossibleOnVideoFlag: project.operatePossibleOnVideoFlag,
@@ -675,6 +729,7 @@ const applyToFrame = async (project, defaultImg) => {
 
 module.exports = {
     managePointer,
+    verifyStabilization,
     folderPath,
     savePointer,
     cloneImage,

@@ -3,15 +3,18 @@ const operationHistoryService = require("../services/operationhistory.service");
 const Project = require('../model/projects.model');
 const Casefolder = require('../model/casefolder.model');
 const Imageoperation = require('../model/imageoperation.model');
+const Savemedia = require('../model/savemedia.model');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const ffmpeg = require('fluent-ffmpeg');
 const fsExtra = require('fs-extra');
 const { errorLogger } = require("../config/log.config");
+const { now } = require("mongoose");
 const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
 const TempFolderSet = 'temp'
+const moment = require('moment');
 
 const createProject = async (req, res, next) => {
     const { projectName, catId } = req.body;
@@ -79,44 +82,50 @@ const exportProject = async (req, res, next) => {
 };
 
 const deleteImage = async (req, res, next) => {
-    const { url } = req.body;
+    const { url,id } = req.body;
     try {
-        const imagePath = `public/${url}`;
+        // const imagePath = `public/${url}`;
+        const mediaData = await Savemedia.findById(id);
+        if(mediaData){
+            let imagePath = `public/${req.user.id}/${mediaData.projectId}/snap/${mediaData.fileName}`;
+            await Savemedia.findByIdAndDelete(id);
 
-        // Check if the image file exists before attempting to delete
-        fs.stat(imagePath, (err, stats) => {
-            if (err) {
-                // console.error('Error checking file or directory:', err);
-                // res.status(200).json({
-                //     statusCode: 404,
-                //     status: 'Failed',
-                //     message: 'Image not found : '+err
-                // });
-            } else if (stats.isFile()) {
-                fsExtra.remove(imagePath, (err) => {
-                    if (err) {
-                        //console.error('Error removing file:', err);
-                        // res.status(200).json({
-                        //     statusCode: 404,
-                        //     status: 'Failed',
-                        //     message: 'Image not found '+err
-                        // });
-                    } else {
-                        console.log('File removed successfully.');
-                    }
-                });
-            } else {
-                console.log('Path is a directory; not removing.');
-            }
-        });
-        res.status(200).json({
-            statusCode: 200,
-            status: 'Success',
-            message: 'Image deleted successfully.',
-            data: items
-        });
+            // Check if the image file exists before attempting to delete
+            fs.stat(imagePath, (err, stats) => {
+                if (err) {
+                    // console.error('Error checking file or directory:', err);
+                    // res.status(200).json({
+                    //     statusCode: 404,
+                    //     status: 'Failed',
+                    //     message: 'Image not found : '+err
+                    // });
+                } else if (stats.isFile()) {
+                    fsExtra.remove(imagePath, (err) => {
+                        if (err) {
+                            //console.error('Error removing file:', err);
+                            // res.status(200).json({
+                            //     statusCode: 404,
+                            //     status: 'Failed',
+                            //     message: 'Image not found '+err
+                            // });
+                        } else {
+                            console.log('File removed successfully.');
+                        }
+                    });
+                } else {
+                    console.log('Path is a directory; not removing.');
+                }
+            });
+            
+        }
+    res.status(200).json({
+        statusCode: 200,
+        status: 'Success',
+        message: 'Image deleted successfully.',
+        // data: items
+    });
     } catch (error) {
-        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error.message });
     }
 };
 
@@ -303,6 +312,7 @@ const uploadFiles = async (req, res, next) => {
             createFolder(`${basePath}/snap`);
             createFolder(`${basePath}/temp/1`);
             createFolder(`${basePath}/temp/2`);
+            createFolder(`${basePath}/report_image`);
 
 
             for (let i = 1; i <= project.totalVideoFolderSet; i++) {
@@ -437,7 +447,7 @@ const uploadFiles = async (req, res, next) => {
                     'totalFiles': dataFiles.totalFiles,
                     'folderId': updateproject.catId,
                     'projectId': updateproject.id,
-                    'curFrameId': updateproject.currentFrameId,
+                    'currentFrameId': updateproject.currentFrameId,
                     'srcFolType': VideoFolderSet,
                     'srcFolPtr': updateproject.videoFolInPtr,
                     'videoToFrameWarningPopUpFlag': true,
@@ -553,13 +563,13 @@ const getProjectDetails = async (req, res, next) => {
 };
 
 const getAction = async (req, res, next) => {
-    const { projectId: id, actionType } = req.body;
+    const { projectId: id, actionType,currentFrameId } = req.body;
     try {
         let applyChanges = '';
         if (actionType === 'undo') {
-            applyChanges = await projectService.applyUndoAction(id, req.user.id);
+            applyChanges = await projectService.applyUndoAction(id, req.user.id,currentFrameId);
         } else if (actionType === 'redo') {
-            applyChanges = await projectService.applyRedoAction(id, req.user.id);
+            applyChanges = await projectService.applyRedoAction(id, req.user.id,currentFrameId);
         }
         res.status(200).json(applyChanges)
     } catch (error) {
@@ -772,20 +782,46 @@ const filesList = async (req, res, next) => {
         // console.log(directoryPath);
 
         let filesArr = []
+        const mideaList =  await Savemedia.find({ projectId: projectId}).sort({ createdAt: -1 });
         fs.readdir(directoryPath, (err, files) => {
             if (err) {
                 return res.status(404).json({ message: 'Unable to scan directory ' + directoryPath });
             }
             // Listing all files in the directory
-            files.forEach(file => {
+            let folderAllPath = `public/${req.user.id}/${projectId}/snap`;
+
+            mideaList.forEach((val, index) => {
+                const file = val.fileName;
+                
                 let fPath = `${rootPath}/snap/${file}`
-                filesArr.push({ 'basePath': fPath, 'imageName': file })
-                console.log(file);
+                let folderPath = `public/${req.user.id}/${projectId}/snap/${file}`;
+                if (fs.existsSync(folderPath)) {
+                        console.log(file);
+                        const stats = fs.statSync(folderPath);
+                    if (stats.isFile()) {
+                        const stats = fs.statSync(folderPath);
+                        const formattedcreatedAt = moment(val.updatedAt).format('YYYY-MM-DD HH:mm:ss');
+                        filesArr.push({ 'id':val.id, 'basePath': fPath, 'imageName': file,'size':formatSize(stats.size),'createdAt':formattedcreatedAt })
+                    }
+                }   
             });
+
+            // files.forEach(file => {
+            //     let fPath = `${rootPath}/snap/${file}`
+                
+            //     let folderPath = `public/${req.user.id}/${projectId}/snap/${file}`;
+            //     const stats = fs.statSync(folderPath);
+            //     const formattedcreatedAt = moment().format('YYYY-MM-DD HH:mm:ss');
+            //     filesArr.push({ 'basePath': fPath, 'imageName': file,'size':formatSize(stats.size),'createdAt':formattedcreatedAt })
+                
+            // });
             if (filesArr && filesArr.length > 0) {
                 return res.status(200).json({
                     message: 'Successfully Done',
-                    data: filesArr
+                    data: {
+                        'savedMediaSize': formatSize(getFolderSize(folderAllPath)),
+                        'projectList' : filesArr
+                    }
                 });
             } else {
                 return res.status(200).json({ message: 'No Files are found', data: filesArr });
@@ -878,10 +914,10 @@ const cleanProject = async (req, res, next) => {
 
 
         const response = await projectService.cleanProject(req, projectId);
-        res.status(200).json({
-            statusCode: 200,
-            status: 'Success',
-            message: 'Cleaned Successfully.'
+        res.status(response.statusCode).json({
+            statusCode: response.statusCode,
+            status: response.status,
+            message: response.message
         });
 
 
@@ -919,7 +955,11 @@ function getFolderSize(folderPath) {
 function formatSize(bytes) {
     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     const power = bytes > 0 ? Math.floor(Math.log(bytes) / Math.log(1024)) : 0;
-    return (bytes / Math.pow(1024, power)).toFixed(2) + ' ' + units[power];
+    const bytesData = (bytes / Math.pow(1024, power)).toFixed(1);
+    if(bytesData > 1 && bytesData < 10 && units[power]=='GB'){
+        return bytesData + ' ' + units[power];
+    }
+    return Math.round((bytes / Math.pow(1024, power)).toFixed(1)) + ' ' + units[power];
 }
 
 

@@ -11,6 +11,12 @@ const createOperation = async (dataObj) => {
     }
 };
 
+const countOperation = async (id) => {
+    const totalCountPro = await Imageoperation.countDocuments({ projectId: id });
+    return totalCountPro
+};
+
 module.exports = {
-    createOperation
+    createOperation,
+    countOperation
 }

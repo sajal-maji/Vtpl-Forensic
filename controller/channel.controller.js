@@ -118,10 +118,11 @@ const generatePdf = async (req, res, next) => {
             return res.status(400).json({ statusCode: 404,message: 'Project ID is required' });
         }
 
-        const operationDetails = await pdfService.getOperationDetails(projectId);
+        const operationDetails = await pdfService.getOperationDetails(projectId,req);
 
         if (operationDetails && operationDetails.length > 0) {
             const rootPath = `${req.user.id}/${projectId}`;
+           
             let pdfDir = `public/${rootPath}/pdf`;
             if (!fs.existsSync(pdfDir)) {
                 fs.mkdirSync(pdfDir, { recursive: true });
@@ -152,7 +153,8 @@ const generatePdf = async (req, res, next) => {
                     data:{
                             pdfUrl:`${rootPath}/pdf/report.pdf`,
                             docUrl:`${rootPath}/pdf/report.docx`
-                        }
+                        },
+                        requestObj
                     // response
                 });
             });

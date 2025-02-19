@@ -6,11 +6,12 @@ const Imageoperation = require('../services/imageoperation.service');
 const fs = require('fs');
 const fsExtra = require('fs-extra');
 
-const { managePointer, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
+const { managePointer,verifyStabilization, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
 
 const filterOperation = async (req, res, next, requestObj, grpcServiceName, processName, operationName = null) => {
+   
     logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
-    const { projectId: id, isApplyToAll, frame, isPreview,parStRow,parEnRow,parStCol,parEnCol,parProcessFlag } = req.body;
+    const { projectId: id, isApplyToAll, frame, isPreview,parStRow,parEnRow,parStCol,parEnCol,parProcessFlag,currentFrameId } = req.body;
 
     const project = await Project.findById(id);
     if (!project) {
@@ -20,10 +21,14 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
             message: 'Data not found'
         };
     }
-    if (project.currentFrameId != frame[0]) {
-        logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
-        const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
-    }
+
+    
+
+    
+    // if (currentFrameId && project.currentFrameId != currentFrameId) {
+    //     logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${currentFrameId}`, 'systemlog');
+    //     // const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, currentFrameId);
+    // }
     const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
 
     logger.logCreate(`managePointer: response ${JSON.stringify(proDetails)}`, 'systemlog');
@@ -46,8 +51,10 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         };
     }
     if (operationName && !isPreview) {
+        const totalCountPro = await Imageoperation.countOperation(id);
         const oppData = {
             projectId: id,
+            sequenceNum: totalCountPro ? (totalCountPro + 1):1,
             processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
             processName: operationName,
             exeDetailsAvailFlag: (requestObj) ? true : false,
@@ -59,6 +66,16 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`folderPath: imgBasePathFrom - ${imgBasePathFrom}, imgBasePathTo - ${imgBasePathTo}`, 'systemlog');
     const srcTypeLoc = (isPreview) ? proDetails.curProcessingPreviewSourceFolType : proDetails.curProcessingSourceFolType
+
+
+    const { verifyStabiliz } = await verifyStabilization(proDetails,req, res);
+    if (verifyStabiliz.statusCode != 200) {
+        return {
+            statusCode: verifyStabiliz.statusCode,
+            status: 'Failed',
+            message: verifyStabiliz.message
+        };
+    }
 
     let frameLoc = [];
 
