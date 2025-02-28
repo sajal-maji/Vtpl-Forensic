@@ -2,6 +2,48 @@ const fs = require("fs");
 const moment = require('moment');
 const Project = require('../model/projects.model');
 
+const createGlobalLogs = async function (logLevel = 'INFO', logMessage) {
+    const http = require("http");
+
+const data = JSON.stringify({
+    userName : process.env.LOG_USER_NAME,
+    password :process.env.LOG_PASSWORD,
+    "moduleName":process.env.LOG_MODULE_NAME,
+    "moduleVersion":process.env.LOG_MODULE_VERSION,
+    "logLevel":logLevel,
+    "logMessage":logMessage
+});
+
+const options = {
+    hostname: process.env.LOG_HOST_NAME,
+    port: process.env.LOG_PORT,
+    path: "/createlog",
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "Content-Length": data.length
+    }
+};
+
+const req = http.request(options, res => {
+    let responseData = "";
+    res.on("data", chunk => {
+        responseData += chunk;
+    });
+    res.on("end", () => {
+        console.log("Response:", responseData);
+    });
+});
+
+req.on("error", error => {
+    console.error("Error:", error.message);
+});
+
+req.write(data);
+req.end();
+
+};
+
 const logCreate = async function (msg, logfile = 'systemlog.text') {
     const currentDate = new Date();
     const year = currentDate.getFullYear();
@@ -53,5 +95,6 @@ const changePointer = async function (userId, id, msg, logfile = 'systemlog.text
 
 module.exports = {
     logCreate,
+    createGlobalLogs,
     changePointer
 }

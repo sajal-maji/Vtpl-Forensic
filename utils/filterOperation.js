@@ -6,7 +6,7 @@ const Imageoperation = require('../services/imageoperation.service');
 const fs = require('fs');
 const fsExtra = require('fs-extra');
 
-const { managePointer,verifyStabilization, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
+const { managePointer,verifySameImageSize, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
 
 const filterOperation = async (req, res, next, requestObj, grpcServiceName, processName, operationName = null) => {
    
@@ -68,14 +68,17 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     const srcTypeLoc = (isPreview) ? proDetails.curProcessingPreviewSourceFolType : proDetails.curProcessingSourceFolType
 
 
-    const { verifyStabiliz } = await verifyStabilization(proDetails,req, res);
-    if (verifyStabiliz.statusCode != 200) {
-        return {
-            statusCode: verifyStabiliz.statusCode,
-            status: 'Failed',
-            message: verifyStabiliz.message
-        };
-    }
+    // if(processName == 'LocalStablizationFilter'){
+    //     const { verifyFileSize } = await verifySameImageSize(proDetails,req, res);
+    //     if (verifyFileSize.statusCode != 200) {
+    //         return {
+    //             statusCode: verifyFileSize.statusCode,
+    //             status: 'Failed',
+    //             message: verifyFileSize.message
+    //         };
+    //     }
+    // }
+    
 
     let frameLoc = [];
 
@@ -159,6 +162,14 @@ async function callGrpcService(grpcServiceName, processName, request, req, res, 
                     });
                 }
 
+                if (response && response.status_code==500 || response.status_code==404) {
+                    return resolve({
+                        statusCode: 404,
+                        status: 'Failed',
+                        message: response.error
+                    });
+                }
+
                 const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
 
                 logger.logCreate(`gRPC response: ${JSON.stringify(response)}`, 'systemlog');
@@ -167,6 +178,7 @@ async function callGrpcService(grpcServiceName, processName, request, req, res, 
                 resolve({
                     message: 'Processing successfully done',
                     data: colData,
+                    statusCode: 200,
                     response
                 });
             } catch (saveError) {

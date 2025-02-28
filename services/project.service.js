@@ -952,7 +952,7 @@ const saveImage = async (req, id,image,exeName='jpg') => {              // Save 
             })
              savemedia.save();
 
-            fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${val}`, `public/${rootPath}/snap/${newFileName}`, (err) => {
+            fsExtra.copy(`public/${rootPath}/${project.curProcessingSourceFolType}/${project.curProcessingSourceFolPtr}/${val}`, `public/${rootPath}/snap/${newFileName}`, (err) => {
                 if (err) {
                     // console.log('Error copying the file:', err);
                     return {

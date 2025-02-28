@@ -47,39 +47,48 @@ const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
 
 };
 
-const verifyStabilization = async (proDetails,req, res) => {
+const verifySameImageSize = async (proDetails,req, res) => {
     try {
         const { projectId: id, frame } = req.body;
 
         const rootPath = `${req.user.id}/${id}`;
         let filesArr = []
         let checkStabiliz = true;
+       
          frame.forEach((val, index) => {
             const file = val;
             
-            let folderPath = `${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${file}`
+            let folderPath = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${file}`
             if (fs.existsSync(folderPath)) {
                     const stats = fs.statSync(folderPath);
                 if (stats.isFile()) {
                     filesArr.push(stats.size)
                 }
-
-                if (filesArr.includes(stats.size)) {
-                    console.log("Size exists in the array!");
-                    checkStabiliz = false;
-                }
             }   
         });
-
+        // Check if all file sizes are the same
+        if (filesArr.length > 1) {
+            const firstFileSize = filesArr[0];
+            if (!filesArr.every(size => size === firstFileSize)) {
+                checkStabiliz = false;
+            }
+        }
         if (!checkStabiliz) {
             return ({
-                'proDetails': {
+                'verifyFileSize': {
                     statusCode: 404,
                     status: 'Failed',
                     message: 'Sorry! You not able to apply Stabilization Filter.',
                 }
             });
-    }
+        }
+        return ({
+            'verifyFileSize': {
+                statusCode: 200,
+                status: 'Success',
+                message: 'Stabilization Filter.',
+            }
+        });
     } catch (error) {
         return ({ 'proDetails': { 'statusCode': 500, error: 'Internal server error', details: error } });
     }
@@ -729,7 +738,7 @@ const applyToFrame = async (project, defaultImg) => {
 
 module.exports = {
     managePointer,
-    verifyStabilization,
+    verifySameImageSize,
     folderPath,
     savePointer,
     cloneImage,

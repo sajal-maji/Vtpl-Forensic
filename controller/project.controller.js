@@ -15,6 +15,7 @@ const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
 const TempFolderSet = 'temp'
 const moment = require('moment');
+const logger = require("../helpers/logEvents");
 
 const createProject = async (req, res, next) => {
     const { projectName, catId } = req.body;
@@ -116,14 +117,22 @@ const deleteImage = async (req, res, next) => {
                     console.log('Path is a directory; not removing.');
                 }
             });
+            res.status(200).json({
+                statusCode: 200,
+                status: 'Success',
+                message: 'Image deleted successfully.',
+                // data: items
+            });
             
+        }else{
+            res.status(404).json({
+                statusCode: 404,
+                status: 'Success',
+                message: 'Image data not found.',
+                // data: items
+            });
         }
-    res.status(200).json({
-        statusCode: 200,
-        status: 'Success',
-        message: 'Image deleted successfully.',
-        // data: items
-    });
+   
     } catch (error) {
         return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error.message });
     }
@@ -774,6 +783,7 @@ const operationHistory = async (req, res, next) => {
 
 const filesList = async (req, res, next) => {
     try {
+        logger.createGlobalLogs('DEBUG','Testing logs');
         const { projectId } = req.query;
         const rootPath = `${req.user.id}/${projectId}`;
         const fs = require('fs');

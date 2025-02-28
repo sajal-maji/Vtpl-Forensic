@@ -13,7 +13,7 @@ const localStablization = async (req, res, next) => {
             in_video_fps : inVideoFps
         };
         const response = await filterOperation(req,res,next, requestObj,StablizationServiceClient,'LocalStablizationFilter','local_stabilization');
-        res.status(200).json(response);
+        res.status(response.statusCode).json(response);
 
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
