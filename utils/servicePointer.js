@@ -171,7 +171,7 @@ const copyFolderExcluding = async (sourceDir, destDir, exclude = []) => {
     }
 };
 
-const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response) => {
+const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDetails, response,operationName,requestObj) => {
     const rootPath = `${req.user.id}/${id}`;
     const { currentFrameId } = req.body;
     let frameName = (currentFrameId) ? currentFrameId : 'frame_000001.jpg';
@@ -300,18 +300,46 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             }
         });
     } else {
+
+        
+
         const totalCountPro = await Imageoperation.countDocuments({ projectId: id });
-        const formattedValue = String(totalCountPro).padStart(6, "0");
+        const formattedValue = String(totalCountPro+1).padStart(6, "0");
     
         const saveInFileName = `pro_${formattedValue}_in.jpg`;
         const toInFilePath = path.join(`public/${rootPath}/report_image/`, saveInFileName);
-        const fromInFilePath = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${frameName}`;
+
+        const firstFrame = parseInt(frame[0].match(/\d+/)[0], 10);
+        const endFrame = parseInt(frame[frame.length - 1].match(/\d+/)[0], 10);
+        const middleFrame = `frame_${String(Math.floor((firstFrame + endFrame) / 2)).padStart(6, "0")}.jpg`;
+
+        const fromInFilePath = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${middleFrame}`;
         fsExtra.copy(fromInFilePath, toInFilePath, (err) => { });
     
         const saveOutFileName =  `pro_${formattedValue}_out.jpg`;
         const toOutFilePath = path.join(`public/${rootPath}/report_image/`, saveOutFileName);
-        const fromOutFilePath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}/${frameName}`;
+        const fromOutFilePath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}/${middleFrame}`;
         fsExtra.copy(fromOutFilePath, toOutFilePath, (err) => { });
+
+        if (operationName && !isPreview) {
+            // const totalCountPro = await Imageoperation.countOperation(id);
+            const oppData = {
+                projectId: id,
+                jobId:response.job_id,
+                sequenceNum: totalCountPro ? (totalCountPro + 1):1,
+                processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
+                processName: operationName,
+                inputImgPath: toInFilePath,
+                outImgPath: toOutFilePath,
+                exeDetailsAvailFlag: (requestObj) ? true : false,
+                startFrameNumber : parseInt(frame[0].match(/\d+/)[0], 10),
+                endFrameNumber : parseInt(frame[frame.length - 1].match(/\d+/)[0], 10),
+                exeDetails: JSON.stringify(requestObj)
+            }
+            const imageope = new Imageoperation(oppData);
+            await imageope.save();
+            // await Imageoperation.createOperation(oppData)
+        }
     }
 
    

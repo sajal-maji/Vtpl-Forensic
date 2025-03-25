@@ -50,18 +50,7 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
             message
         };
     }
-    if (operationName && !isPreview) {
-        const totalCountPro = await Imageoperation.countOperation(id);
-        const oppData = {
-            projectId: id,
-            sequenceNum: totalCountPro ? (totalCountPro + 1):1,
-            processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
-            processName: operationName,
-            exeDetailsAvailFlag: (requestObj) ? true : false,
-            exeDetails: JSON.stringify(requestObj)
-        }
-        await Imageoperation.createOperation(oppData)
-    }
+    
 
     const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`folderPath: imgBasePathFrom - ${imgBasePathFrom}, imgBasePathTo - ${imgBasePathTo}`, 'systemlog');
@@ -129,7 +118,23 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     // Make the gRPC request to the grayscale method (modify according to your method name)
     logger.logCreate(`grpc: request - ${JSON.stringify(request)}`, 'systemlog');
 
-    const responseData = await callGrpcService(grpcServiceName, processName, request, req, res, proDetails);
+    const responseData = await callGrpcService(grpcServiceName, processName, request, req, res, proDetails,operationName,requestObj);
+
+    // if (statusCode.statusCode == 200 && operationName && !isPreview) {
+    //     const totalCountPro = await Imageoperation.countOperation(id);
+    //     const oppData = {
+    //         projectId: id,
+    //         sequenceNum: totalCountPro ? (totalCountPro + 1):1,
+    //         processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
+    //         processName: operationName,
+    //         exeDetailsAvailFlag: (requestObj) ? true : false,
+    //         startFrameNumber : parseInt(frame[0].match(/\d+/)[0], 10),
+    //         endFrameNumber : parseInt(frame[frame.length - 1].match(/\d+/)[0], 10),
+    //         exeDetails: JSON.stringify(requestObj)
+    //     }
+    //     await Imageoperation.createOperation(oppData)
+    // }
+    
     return responseData
 };
 async function removeAndCreateFolder(operationPath) {
@@ -144,7 +149,7 @@ async function removeAndCreateFolder(operationPath) {
     });
 }
 
-async function callGrpcService(grpcServiceName, processName, request, req, res, proDetails) {
+async function callGrpcService(grpcServiceName, processName, request, req, res, proDetails,operationName,requestObj) {
     return new Promise((resolve, reject) => {
         if (typeof grpcServiceName[processName] !== 'function') {
             return reject(new Error(`Method ${processName} is not available on the provided gRPC service.`));
@@ -170,7 +175,7 @@ async function callGrpcService(grpcServiceName, processName, request, req, res, 
                     });
                 }
 
-                const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
+                const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response,operationName,requestObj);
 
                 logger.logCreate(`gRPC response: ${JSON.stringify(response)}`, 'systemlog');
                 logger.logCreate(`savePointer response: ${JSON.stringify(colData)}`, 'systemlog');

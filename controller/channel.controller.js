@@ -113,12 +113,14 @@ const displaySelectedChannels = async (req, res, next) => {
 
 const generatePdf = async (req, res, next) => {
     try {
-        const { projectId } = req.body;
+        const { projectId,frameName } = req.body;
         if (!projectId) {
             return res.status(400).json({ statusCode: 404,message: 'Project ID is required' });
         }
 
-        const operationDetails = await pdfService.getOperationDetails(projectId,req);
+        const operationDetails = await pdfService.getOperationDetails(projectId,frameName,req);
+        // return res.status(200).json({operationDetails
+        // });
 
         if (operationDetails && operationDetails.length > 0) {
             const rootPath = `${req.user.id}/${projectId}`;

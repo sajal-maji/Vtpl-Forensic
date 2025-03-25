@@ -4,6 +4,9 @@ const imageoperationSchema = new mongoose.Schema({
     projectId: {
         type: String
     },
+    jobId: {
+        type: String
+    },
     processIndex: {
         type: Number, default: 1 
     },
@@ -15,6 +18,12 @@ const imageoperationSchema = new mongoose.Schema({
     },
     processName: {
         type: String,
+    },
+    startFrameNumber : {
+        type: Number,
+    },
+    endFrameNumber: {
+        type: Number,
     },
     inputImgPath: {
         type: String,

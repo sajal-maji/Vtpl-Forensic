@@ -783,7 +783,7 @@ const operationHistory = async (req, res, next) => {
 
 const filesList = async (req, res, next) => {
     try {
-        logger.createGlobalLogs('DEBUG','Testing logs');
+        // logger.createGlobalLogs('DEBUG','Testing logs');
         const { projectId } = req.query;
         const rootPath = `${req.user.id}/${projectId}`;
         const fs = require('fs');
@@ -793,6 +793,9 @@ const filesList = async (req, res, next) => {
 
         let filesArr = []
         const mideaList =  await Savemedia.find({ projectId: projectId}).sort({ createdAt: -1 });
+        if(!mideaList && mideaList.length==0){
+            return res.status(200).json({ message: 'No Files are found', data: filesArr });
+        }
         fs.readdir(directoryPath, (err, files) => {
             if (err) {
                 return res.status(404).json({ message: 'Unable to scan directory ' + directoryPath });
@@ -844,7 +847,7 @@ const filesList = async (req, res, next) => {
         return res.status(500).json({
             statusCode: 500,
             error: 'Internal server error',
-            details: error
+            details: error.message
         });
     }
 };

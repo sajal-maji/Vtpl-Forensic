@@ -952,7 +952,7 @@ const saveImage = async (req, id,image,exeName='jpg') => {              // Save 
             })
              savemedia.save();
 
-            fsExtra.copy(`public/${rootPath}/${project.curProcessingSourceFolType}/${project.curProcessingSourceFolPtr}/${val}`, `public/${rootPath}/snap/${newFileName}`, (err) => {
+            fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${val}`, `public/${rootPath}/snap/${newFileName}`, (err) => {
                 if (err) {
                     // console.log('Error copying the file:', err);
                     return {
@@ -1114,7 +1114,7 @@ const cleanProject = async(req,id) =>{
         for (let i = 1; i <= project.totalImageFolderSet; i++) {
             const folder = project.curDisplayThumbnailFolType + i;
             if(folder != folderPtr1 && folder != folderPtr2 && folder != folderPtr3){
-                const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
+                const dynamicFolderName = `${basePath}/image/${i}`; // Create a folder with the project limit
                 await removeFolder(dynamicFolderName);
                 createFolder(dynamicFolderName);
             }
