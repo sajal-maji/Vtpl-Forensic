@@ -243,6 +243,15 @@ const uploadFiles = async (req, res, next) => {
                     });
                 }
             } else {
+
+                if (!req.user || !req.user.id) {
+                    return res.status(401).json({ 
+                        statusCode: 401, 
+                        status: 'Failed', 
+                        message: 'Unauthorized: User ID missing' 
+                    });
+                }
+            
                 var casefolder = await Casefolder.findOne({ slag: 'default', userId: req.user.id });
 
                 // const totalCount = await Casefolder.countDocuments({ userId: req.user.id });
