@@ -129,9 +129,9 @@ const generatePdf = async (req, res, next) => {
             if (!fs.existsSync(pdfDir)) {
                 fs.mkdirSync(pdfDir, { recursive: true });
             }
-
+            let folderPath = process.env.PROJECT_FOLDER
             const rootDir = path.resolve(__dirname, '..', '..');
-            const uploadPdfPath = path.join(rootDir, `forensic_be/${pdfDir}`);
+            const uploadPdfPath = path.join(rootDir, `${folderPath}/${pdfDir}`);
 
 
             const requestObj = {
