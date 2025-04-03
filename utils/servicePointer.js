@@ -125,13 +125,14 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
         const rootDir = path.resolve(__dirname, '..', '..');
         let imgBasePathFrom = ''
         let imgBasePathTo = ''
-        imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
-        imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
+        let folderPath = process.env.PROJECT_FOLDER
+        imgBasePathFrom = path.join(rootDir, `${folderPath}/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
+        imgBasePathTo = path.join(rootDir, `${folderPath}/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
 
         if (isPreview) {
             // imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/video/1`);
-            imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
-            imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
+            imgBasePathFrom = path.join(rootDir, `${folderPath}/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
+            imgBasePathTo = path.join(rootDir, `${folderPath}/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
         }
 
         return ({ imgBasePathFrom, imgBasePathTo })
