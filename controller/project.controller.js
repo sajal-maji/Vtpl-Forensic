@@ -480,7 +480,8 @@ const uploadFiles = async (req, res, next) => {
             //     },
             // });
         } catch (error) {
-            res.status(500).json({ statusCode: 500, message: 'Server error', error });
+             logger.logCreate(`deleteimage: response ${error}`, 'systemlog');
+            res.status(500).json({ statusCode: 500, message: 'Server error', error:error.message });
         }
     });
 };
