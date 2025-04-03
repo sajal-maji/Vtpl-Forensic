@@ -2,6 +2,7 @@ const User = require('../model/user.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const logger = require("../helpers/logEvents");
+const Casefolder = require('../model/casefolder.model');
 
 const jwtSecret = process.env.JWT_SECRET;
 const jwtExpiryMin = process.env.JWT_EXPIRY_MIN;
@@ -42,7 +43,7 @@ const createUser = async (name, email, password, userName) => {
     const basePath = process.env.MEDIA_BASE_PATH;
     fs.mkdir(`${basePath}/${userData.id}`, { recursive: true }, (err) => {
         if (err) {
-            return console.error(err);
+            return console.log(err);
         }
     });
 
@@ -58,6 +59,28 @@ const createUser = async (name, email, password, userName) => {
             expiresIn: `${jwtExpiryMin} min`
         }
     );
+
+    const casefolder = new Casefolder({
+        folderName:'Default',
+        userId: user._id,
+        slag: 'default'
+    });
+    await casefolder.save();
+
+    const casefolderIndox = new Casefolder({
+        folderName:'Inbox',
+        userId: user._id,
+        slag: 'inbox'
+    });
+    await casefolderIndox.save();
+
+    const casefolderBin = new Casefolder({
+        folderName:'Recycle Bin',
+        userId: user._id,
+        slag: 'recyclebin'
+    });
+    await casefolderBin.save();
+
     logger.logCreate(`createUser: User created successfully.`, 'systemlog');
     return {
         statusCode: 201,

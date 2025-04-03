@@ -1,6 +1,6 @@
 const { channelServiceClient,PDFGenerateServiceClient } = require('../grpcClient'); // Import gRPC client
 const projectService = require("../services/project.service");
-const Imagefilter = require('../model/imagefilter.model');
+// const Imagefilter = require('../model/imagefilter.model');
 const Project = require('../model/projects.model');
 const path = require('path');
 const fsExtra = require('fs-extra');
@@ -113,15 +113,18 @@ const displaySelectedChannels = async (req, res, next) => {
 
 const generatePdf = async (req, res, next) => {
     try {
-        const { projectId } = req.body;
+        const { projectId,frameName } = req.body;
         if (!projectId) {
-            return res.status(400).json({ error: 'Project ID is required' });
+            return res.status(400).json({ statusCode: 404,message: 'Project ID is required' });
         }
 
-        const operationDetails = await pdfService.getOperationDetails(projectId);
+        const operationDetails = await pdfService.getOperationDetails(projectId,frameName,req);
+        // return res.status(200).json({operationDetails
+        // });
 
         if (operationDetails && operationDetails.length > 0) {
             const rootPath = `${req.user.id}/${projectId}`;
+           
             let pdfDir = `public/${rootPath}/pdf`;
             if (!fs.existsSync(pdfDir)) {
                 fs.mkdirSync(pdfDir, { recursive: true });
@@ -143,7 +146,7 @@ const generatePdf = async (req, res, next) => {
             PDFGenerateServiceClient.PDFGeneretion(requestObj, (error, response) => {
                 if (error) {
                     // console.error("gRPC error:", error);
-                    return res.status(404).json({ message: 'gRPC call failed', details: error });
+                    return res.status(404).json({ statusCode: 404,message: 'gRPC call failed', details: error });
                 }
     
                 // Respond with the gRPC response
@@ -152,13 +155,14 @@ const generatePdf = async (req, res, next) => {
                     data:{
                             pdfUrl:`${rootPath}/pdf/report.pdf`,
                             docUrl:`${rootPath}/pdf/report.docx`
-                        }
+                        },
+                        requestObj
                     // response
                 });
             });
            
         } else {
-            return res.status(404).json({ message: 'No operation details found for the provided project ID' });
+            return res.status(404).json({ statusCode: 404,message: 'No operation details found for the provided project ID' });
         }
 
     } catch (error) {

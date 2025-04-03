@@ -6,11 +6,12 @@ const Imageoperation = require('../services/imageoperation.service');
 const fs = require('fs');
 const fsExtra = require('fs-extra');
 
-const { managePointer, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
+const { managePointer,verifySameImageSize, folderPath, savePointer, cloneImage, checkFile, copyFolderExcluding } = require('../utils/servicePointer');
 
 const filterOperation = async (req, res, next, requestObj, grpcServiceName, processName, operationName = null) => {
+   
     logger.logCreate(`colorConversion: ${JSON.stringify(req.body)}`, 'systemlog');
-    const { projectId: id, isApplyToAll, frame, isPreview } = req.body;
+    const { projectId: id, isApplyToAll, frame, isPreview,parStRow,parEnRow,parStCol,parEnCol,parProcessFlag,currentFrameId } = req.body;
 
     const project = await Project.findById(id);
     if (!project) {
@@ -20,10 +21,14 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
             message: 'Data not found'
         };
     }
-    if (project.currentFrameId != frame[0]) {
-        logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${frame[0]}`, 'systemlog');
-        const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, frame[0]);
-    }
+
+    
+
+    
+    // if (currentFrameId && project.currentFrameId != currentFrameId) {
+    //     logger.logCreate(`selectThumbnailFrame: chnage frame from ${project.currentFrameId}to ${currentFrameId}`, 'systemlog');
+    //     // const selectThumbnailFrame = await projectService.selectThumbnailFrame(req, id, currentFrameId);
+    // }
     const { proDetails } = await managePointer(id, isApplyToAll, isPreview, frame, req, res);
 
     logger.logCreate(`managePointer: response ${JSON.stringify(proDetails)}`, 'systemlog');
@@ -45,20 +50,24 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
             message
         };
     }
-    if (operationName && !isPreview) {
-        const oppData = {
-            projectId: id,
-            processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
-            processName: operationName,
-            exeDetailsAvailFlag: (requestObj) ? true : false,
-            exeDetails: JSON.stringify(requestObj)
-        }
-        await Imageoperation.createOperation(oppData)
-    }
+    
 
     const { imgBasePathFrom, imgBasePathTo } = await folderPath(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`folderPath: imgBasePathFrom - ${imgBasePathFrom}, imgBasePathTo - ${imgBasePathTo}`, 'systemlog');
     const srcTypeLoc = (isPreview) ? proDetails.curProcessingPreviewSourceFolType : proDetails.curProcessingSourceFolType
+
+
+    // if(processName == 'LocalStablizationFilter'){
+    //     const { verifyFileSize } = await verifySameImageSize(proDetails,req, res);
+    //     if (verifyFileSize.statusCode != 200) {
+    //         return {
+    //             statusCode: verifyFileSize.statusCode,
+    //             status: 'Failed',
+    //             message: verifyFileSize.message
+    //         };
+    //     }
+    // }
+    
 
     let frameLoc = [];
 
@@ -74,18 +83,33 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         // in_img_list: isPreview && srcTypeLoc == 'temp' ? frameLoc : frame,  
         in_img_list: frame,                 // Input image list
         in_img_path: imgBasePathFrom,
-        out_img_path: imgBasePathTo
+        out_img_path: imgBasePathTo,
+        par_st_row: parStRow,
+        par_en_row: parEnRow,
+        par_st_col: parStCol,
+        par_en_col: parEnCol,
+        par_process_flag: (parProcessFlag)?parProcessFlag:false
     };
 
     const request = Object.assign({}, requestObj, jobObj);
     const rootPath = `${req.user.id}/${id}`;
 
-    if (!isPreview) {
+    // if (isApplyToAll) {
+    //     const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
+    //     await removeAndCreateFolder(operationPath);
+    // }
+
+    // if (isApplyToAll) {
+    //     const sourceFolder = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
+    //     const destinationFolder = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`;
+    //     await copyFolderExcluding(sourceFolder, destinationFolder, frame);
+    // }
+
+    let sourceFolderCheck = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
+    if (isApplyToAll && fs.existsSync(`${sourceFolderCheck}/frame_000001.jpg`)) {
         const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
         await removeAndCreateFolder(operationPath);
-    }
-
-    if (isApplyToAll) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
         const sourceFolder = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
         const destinationFolder = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`;
         await copyFolderExcluding(sourceFolder, destinationFolder, frame);
@@ -94,7 +118,23 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
     // Make the gRPC request to the grayscale method (modify according to your method name)
     logger.logCreate(`grpc: request - ${JSON.stringify(request)}`, 'systemlog');
 
-    const responseData = await callGrpcService(grpcServiceName, processName, request, req, res, proDetails);
+    const responseData = await callGrpcService(grpcServiceName, processName, request, req, res, proDetails,operationName,requestObj);
+
+    // if (statusCode.statusCode == 200 && operationName && !isPreview) {
+    //     const totalCountPro = await Imageoperation.countOperation(id);
+    //     const oppData = {
+    //         projectId: id,
+    //         sequenceNum: totalCountPro ? (totalCountPro + 1):1,
+    //         processType: (isPreview) ? 'preview' : (isApplyToAll) ? 'apply_to_all' : 'apply_to_frame',
+    //         processName: operationName,
+    //         exeDetailsAvailFlag: (requestObj) ? true : false,
+    //         startFrameNumber : parseInt(frame[0].match(/\d+/)[0], 10),
+    //         endFrameNumber : parseInt(frame[frame.length - 1].match(/\d+/)[0], 10),
+    //         exeDetails: JSON.stringify(requestObj)
+    //     }
+    //     await Imageoperation.createOperation(oppData)
+    // }
+    
     return responseData
 };
 async function removeAndCreateFolder(operationPath) {
@@ -109,7 +149,7 @@ async function removeAndCreateFolder(operationPath) {
     });
 }
 
-async function callGrpcService(grpcServiceName, processName, request, req, res, proDetails) {
+async function callGrpcService(grpcServiceName, processName, request, req, res, proDetails,operationName,requestObj) {
     return new Promise((resolve, reject) => {
         if (typeof grpcServiceName[processName] !== 'function') {
             return reject(new Error(`Method ${processName} is not available on the provided gRPC service.`));
@@ -127,7 +167,15 @@ async function callGrpcService(grpcServiceName, processName, request, req, res, 
                     });
                 }
 
-                const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response);
+                if (response && response.status_code==500 || response.status_code==404) {
+                    return resolve({
+                        statusCode: 404,
+                        status: 'Failed',
+                        message: response.error
+                    });
+                }
+
+                const { colData } = await savePointer(id, isApplyToAll, isPreview, frame, req, res, proDetails, response,operationName,requestObj);
 
                 logger.logCreate(`gRPC response: ${JSON.stringify(response)}`, 'systemlog');
                 logger.logCreate(`savePointer response: ${JSON.stringify(colData)}`, 'systemlog');
@@ -135,10 +183,12 @@ async function callGrpcService(grpcServiceName, processName, request, req, res, 
                 resolve({
                     message: 'Processing successfully done',
                     data: colData,
+                    statusCode: 200,
                     response
                 });
             } catch (saveError) {
                 reject({
+                    statusCode: 500,
                     error: 'Failed to save image filter',
                     details: saveError.message
                 });

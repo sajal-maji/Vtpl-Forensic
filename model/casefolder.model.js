@@ -7,8 +7,14 @@ const casefolderSchema = new mongoose.Schema({
     userId:{
         type: String
     },
-    isDeleted: {
-        type: String
+    slag:{
+        type: String,
+        default: 'others' 
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'deleted'], // Allowed values
+        default: 'active', // Default value
     }
 }, { timestamps: true })
 

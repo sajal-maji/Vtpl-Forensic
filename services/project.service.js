@@ -1,6 +1,7 @@
 const Project = require('../model/projects.model');
 const User = require('../model/user.model');
 const Casefolder = require('../model/casefolder.model');
+const Savemedia = require('../model/savemedia.model');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
@@ -9,15 +10,17 @@ const fsExtra = require('fs-extra');
 const { errorLogger } = require("../config/log.config");
 const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
-const TempFolder = 'temp'
+const TempFolderSet = 'temp'
 const logger = require("../helpers/logEvents");
 const Imageoperation = require('../services/imageoperation.service');
+const moment = require('moment');
 
 const createProject = async (req, catId, projectName) => {
     let casefolder = await Casefolder.findById(catId);
     if (!casefolder) {
+        const totalCount = await Casefolder.countDocuments({ userId: req.user.id });
         casefolder = new Casefolder({
-            folderName: 'anonymous',
+            folderName: `Case Folder ${totalCount + 1}`,
             userId: req.user.id
         })
         await casefolder.save();
@@ -90,22 +93,59 @@ const updateProject = async (id, projectName) => {
 };
 
 
-const deleteProject = async (id) => {
-    const project = await Project.findByIdAndDelete(id);
-    if (!project) {
-        return {
-            statusCode: 404,
-            status: 'Failed',
-            message: 'Project not found',
-        };
-    }
+const deleteProject = async (req,id) => {
+    const checkProject = await Project.findOne({ _id: id,status:'deleted'});
+    if(checkProject){
+        const project = await Project.findByIdAndDelete(id);
+        if (!project) {
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Project not found',
+            };
+        }
 
-    return {
-        statusCode: 200,
-        status: 'Success',
-        message: 'Project deleted successfully.',
-    };
+        const rootPath = `${req.user.id}/${id}`;
+        const operationPath = `public/${rootPath}`
+        await removeFolder(operationPath);
+
+        return {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Project successfully deleted.',
+        };
+
+    }else{
+        const casefolderRecyle = await Casefolder.findOne({ 'userId': req.user.id,slag: 'recyclebin' });
+        const catId=casefolderRecyle.id
+        const project = await Project.findByIdAndUpdate(id,{'status':'deleted','catId':catId}, { new: true });
+        if (!project) {
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Project not found',
+            };
+        }
+
+        return {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Project successfully moved to recycle bin',
+        };
+
+    }
+    
 };
+
+async function removeFolder(operationPath) {
+    fsExtra.remove(operationPath, (removeErr) => {
+        if (removeErr) {
+            logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
+        } else {
+            logger.logCreate(`deleteimage: response success`, 'systemlog');
+        }
+    });
+}
 
 const imageCompair = async (req,id) => {
     
@@ -130,8 +170,32 @@ const imageCompair = async (req,id) => {
     };
 };
 
-const projectList = async (req, catId) => {
-    const project = await Project.find({ 'catId': catId }).sort({ updateAt: -1 });
+const projectList = async (req, catId,keyword=null,sort) => {
+    
+    // if(keyword!=''){
+    //     let projects = await Project.find({ 'catId': catId , projectName: { $regex: 'keyword', $options: 'i' } })
+    //     .sort({ updateAt: -1 });
+    // }else{
+    //     let project = await Project.find({ 'catId': catId }).sort({ updateAt: -1 });
+    // }
+    
+    let query = { catId: catId };
+    const sortOrder = sort === 'asc' ? 1 : -1;
+    // Add the "like" query conditionally
+    if (typeof keyword === 'string' && keyword.trim() !== '') {
+        query.projectName = { $regex: keyword, $options: 'i' };
+    }
+
+    const folderDetails = await Casefolder.findById(catId).select('folderName slag');
+    if(folderDetails && folderDetails.slag=='recyclebin')
+    query.status='deleted'
+    else
+    query.status='active'
+
+        
+    let project = await Project.find(query).sort({ updatedAt: sortOrder });
+
+    
     if (!project) {
         return {
             statusCode: 404,
@@ -140,18 +204,115 @@ const projectList = async (req, catId) => {
         };
     }
     let items = [];
-    project.forEach((val) => {
+    let sizes = [];
+    // const folderSize = getFolderSize(folderPath);
+        // console.log(`Total size of folder and subfolders: ${formatSize(folderSize)}`);
+    project.forEach((val, index) => {
+        const formattedUpdatedAt = moment(val.updatedAt).format('YYYY-MM-DD HH:mm:ss');
+        let folderPath = `public/${req.user.id}/${val.id}`;
+        let folderSize = getFolderSize(folderPath);
+        sizes.push(folderSize)
         items.push(
             {
                 'folderId': val.catId,
+                folderName: folderDetails?.folderName === 'anonymous' ? `Case Folder ${index + 1}` : folderDetails?.folderName || 'Unknown Folder',
                 'projectId': val.id,
-                'curFrameId': val.currentFrameId,
+                'projectName':val.projectName,
+                'projectSize':formatSize(folderSize),
+                'currentFrameId': val.currentFrameId,
                 'srcFolType': VideoFolderSet,
                 'srcFolPtr': val.videoFolInPtr,
                 'dstFolType': ImageFolderSet,
                 'dstFolPtr': val.imageFolInPtr,
-                'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
-                'updateAt': project.updateAt,
+                'videoToFrameWarningPopUpFlag': val.videoToFrameWarningPopUpFlag,
+                'updatedAt': formattedUpdatedAt,
+                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
+            }
+        )
+    });
+    return {
+        statusCode: 200,
+        status: 'Success',
+        message: 'Successfully authenticated.',
+        data: {
+            folderId:folderDetails?.id,
+            folderName: folderDetails?.folderName,
+            folderSize: formatSize(sizes.reduce((sum, size) => sum + size, 0)),
+            projectList:items
+        }
+    }
+};
+
+function getFolderSize(folderPath) {
+    let totalSize = 0;
+
+    // Read the contents of the directory
+    const files = fs.readdirSync(folderPath);
+
+    for (const file of files) {
+        const filePath = path.join(folderPath, file);
+        const stats = fs.statSync(filePath);
+
+        // If it's a directory, recursively calculate its size
+        if (stats.isDirectory()) {
+            totalSize += getFolderSize(filePath);
+        } else {
+            // Add file size
+            totalSize += stats.size;
+        }
+    }
+
+    return totalSize;
+}
+
+function formatSize(bytes) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const power = bytes > 0 ? Math.floor(Math.log(bytes) / Math.log(1024)) : 0;
+    const bytesData = (bytes / Math.pow(1024, power)).toFixed(1);
+    if(bytesData > 1 && bytesData < 10 && units[power]=='GB'){
+        return bytesData + ' ' + units[power];
+    }
+    return Math.round((bytes / Math.pow(1024, power)).toFixed(1)) + ' ' + units[power];
+}
+
+const deletedProjectList = async (req, catId,keyword=null,sort) => {
+    
+    let query = { status: 'deleted' };
+    if(catId){
+        query.catId = catId;
+    }
+     
+    const sortOrder = sort === 'asc' ? 1 : -1;
+    // Add the "like" query conditionally
+    if (typeof keyword === 'string' && keyword.trim() !== '') {
+        query.projectName = { $regex: keyword, $options: 'i' };
+    }
+    let project = await Project.find(query).sort({ updatedAt: sortOrder });
+
+    const folderDetails = await Casefolder.findById(catId).select('folderName');
+    if (!project) {
+        return {
+            statusCode: 404,
+            status: 'Failed',
+            message: 'Data not found'
+        };
+    }
+    let items = [];
+    project.forEach((val, index) => {
+        const formattedUpdatedAt = moment(val.updatedAt).format('YYYY-MM-DD HH:mm:ss');
+        items.push(
+            {
+                'folderId': val.catId,
+                folderName: folderDetails?.folderName === 'anonymous' ? `Case Folder ${index + 1}` : folderDetails?.folderName || 'Unknown Folder',
+                'projectId': val.id,
+                'projectName':val.projectName,
+                'currentFrameId': val.currentFrameId,
+                'srcFolType': VideoFolderSet,
+                'srcFolPtr': val.videoFolInPtr,
+                'dstFolType': ImageFolderSet,
+                'dstFolPtr': val.imageFolInPtr,
+                'videoToFrameWarningPopUpFlag': val.videoToFrameWarningPopUpFlag,
+                'updatedAt': formattedUpdatedAt,
                 'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
             }
         )
@@ -164,8 +325,20 @@ const projectList = async (req, catId) => {
     }
 };
 
-const recentprojectList = async (req, userId) => {
-    const project = await Project.find({ 'userId': userId }).sort({ updateAt: -1 });
+const recentprojectList = async (req, userId, keyword, sort) => {
+    // const project = await Project.find({ 'userId': userId }).sort({ updateAt: -1 });
+
+    let query = { userId: userId };
+    const sortOrder = sort === 'asc' ? 1 : -1;
+    // Add the "like" query conditionally
+    if (typeof keyword === 'string' && keyword.trim() !== '') {
+        query.projectName = { $regex: keyword, $options: 'i' };
+    }
+    // query.catName = { $ne: 'Inbox' };
+    query.status='active'
+    let project = await Project.find(query).sort({ updatedAt: sortOrder });
+    
+
     if (!project) {
         return {
             statusCode: 404,
@@ -173,28 +346,43 @@ const recentprojectList = async (req, userId) => {
             message: 'Data not found'
         };
     }
-    let items = [];
-    project.forEach((val) => {
-        items.push(
-            {
-                'folderId': val.catId,
-                'projectId': val.id,
-                'curFrameId': val.currentFrameId,
-                'srcFolType': VideoFolderSet,
-                'srcFolPtr': val.videoFolInPtr,
-                'dstFolType': ImageFolderSet,
-                'dstFolPtr': val.imageFolInPtr,
-                'videoToFrameWarmPopUp': val.videoToFrameWarningPopUp,
-                'updateAt': project.updateAt,
-                'basePath': `${req.user.id}/${val.id}/${VideoFolderSet}/${(val.curDisplayThumbnailFolPtr > 0) ? val.curDisplayThumbnailFolPtr : 1}/${(val.currentFrameId) ? val.currentFrameId : 'frame_000001.jpg'}`
+    const items = await Promise.all(
+        project.map(async (val, index) => {
+            try {
+                const folderDetails = await Casefolder.findById(val.catId).select('folderName');
+                const formattedUpdatedAt = moment(val.updatedAt).format('YYYY-MM-DD HH:mm:ss');
+                let folderPath = `public/${req.user.id}/${val.id}`;
+                let folderSize = getFolderSize(folderPath);
+                return {
+                    folderId: val.catId,
+                    folderName: folderDetails?.folderName === 'anonymous' ? `Case Folder ${index + 1}` : folderDetails?.folderName || 'Unknown Folder',
+                    projectId: val.id,
+                    projectName: val.projectName,
+                    'projectSize':formatSize(folderSize),
+                    currentFrameId: val.currentFrameId,
+                    srcFolType: VideoFolderSet,
+                    srcFolPtr: val.videoFolInPtr,
+                    dstFolType: ImageFolderSet,
+                    dstFolPtr: val.imageFolInPtr,
+                    videoToFrameWarningPopUpFlag: val.videoToFrameWarningPopUpFlag,
+                    updatedAt: formattedUpdatedAt,
+                    basePath: `${req.user.id}/${val.id}/${VideoFolderSet}/${val.curDisplayThumbnailFolPtr > 0 ? val.curDisplayThumbnailFolPtr : 1}/${val.currentFrameId || 'frame_000001.jpg'}`
+                };
+            } catch (error) {
+                console.log(`Error processing project with ID ${val.id}:`, error);
+                return null; // Return null for failed items
             }
-        )
-    });
+        })
+    );
+    
+    // Filter out any null items
+    const validItems = items.filter(item => item !== null);
+
     return {
         statusCode: 200,
         status: 'Success',
         message: 'Successfully authenticated.',
-        data: items
+        data: validItems
     }
 };
 
@@ -236,6 +424,12 @@ const projectDetails = async (req, id) => {
     }
     logger.logCreate(`project details: ${JSON.stringify(projectDetails)}`, 'systemlog');
     logger.changePointer(req.user.id, id, 'JOB 100', 'pointerDetails');
+    const folderDetails = await Casefolder.findById(projectDetails.catId).select('folderName');
+    const formattedUpdatedAt = moment(projectDetails.updatedAt).format('YYYY-MM-DD HH:mm:ss');
+
+    let folderPath = `public/${req.user.id}/${id}`;
+    let folderSize = getFolderSize(folderPath);
+
     return {
         statusCode: 200,
         status: 'Success',
@@ -243,7 +437,11 @@ const projectDetails = async (req, id) => {
         data: {
             'folderId': projectDetails.catId,
             'projectId': projectDetails.id,
-            'curFrameId': (projectDetails.curDisplayPreviewFolType == 'temp') ? projectDetails.currentPreviewFrameId : projectDetails.currentFrameId,
+            'folderName': folderDetails?.folderName === 'anonymous' ? `Case Folder ` : folderDetails?.folderName || 'Unknown Folder',
+            'projectName':projectDetails.projectName,
+            'projectSize':formatSize(folderSize),
+            'updatedAt': formattedUpdatedAt,
+            'currentFrameId': (projectDetails.curDisplayPreviewFolType == 'temp') ? projectDetails.currentPreviewFrameId : projectDetails.currentFrameId,
             'isUndoPossible': isUndoPossible,
             'isRedoPossible': isRedoPossible,
             'isRedoPossible': isRedoPossible,
@@ -261,7 +459,7 @@ const projectDetails = async (req, id) => {
             'curDisplayThumbnailFolPtr': projectDetails.curDisplayThumbnailFolPtr,
             'curDisplayPreviewFolType': projectDetails.curDisplayPreviewFolType,
             'curDisplayPreviewFolPtr': projectDetails.curDisplayPreviewFolPtr,
-            'videoToFrameWarningPopUp': projectDetails.videoToFrameWarningPopUp,
+            'videoToFrameWarningPopUpFlag': projectDetails.videoToFrameWarningPopUpFlag,
             'handoverPossibleImageToVideoFlag': projectDetails.handoverPossibleImageToVideoFlag,
             'videoPossibleRedoCount': projectDetails.videoPossibleRedoCount,
             'videoPossibleUndoCount': projectDetails.videoPossibleUndoCount,
@@ -269,7 +467,7 @@ const projectDetails = async (req, id) => {
             'imagePossibleRedoCount': projectDetails.imagePossibleRedoCount,
             'framePath': `${req.user.id}/${id}/${projectDetails.curDisplayPreviewFolType}/${(projectDetails.curDisplayPreviewFolType && projectDetails.curDisplayPreviewFolPtr > 0) ? projectDetails.curDisplayPreviewFolPtr : 1}`,
             'basePath': `${req.user.id}/${id}/${projectDetails.curDisplayThumbnailFolType}/${(projectDetails.curDisplayThumbnailFolPtr && projectDetails.curDisplayThumbnailFolPtr > 0) ? projectDetails.curDisplayThumbnailFolPtr : 1}`,
-            'projectDetails': JSON.parse(projectDetails.projectDetails),
+            'projectDetails': (projectDetails.projectDetails)?JSON.parse(projectDetails.projectDetails):'',
             'orginalImgPath':`${rootPath}/main`,
             'previousImgPath':`${rootPath}/${projectDetails.curProcessingPreviewSourceFolType}/${projectDetails.curProcessingPreviewSourceFolPtr}`,
             'filesName': (projectDetails.filesName) ? JSON.parse(projectDetails.filesName) : '',
@@ -277,7 +475,7 @@ const projectDetails = async (req, id) => {
     };
 };
 
-const applyUndoAction = async (id, userId, requestObj) => {
+const applyUndoAction = async (id, userId, currentFrameId) => {
     const project = await Project.findById(id);
     if (!project) {
         return ({
@@ -314,7 +512,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
         curProcessingPreviewSourceFolType = ImageFolderSet;
         curProcessingPreviewSourceFolPtr = imageFolInPtr;
 
-        curProcessingPreviewDestinationFolType = TempFolder;
+        curProcessingPreviewDestinationFolType = TempFolderSet;
         curProcessingPreviewDestinationFolPtr = 1;
 
         refreshThumbnailFlag = false;
@@ -334,7 +532,8 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewDestinationFolPtr,
             curDisplayThumbnailFolType,
             curDisplayThumbnailFolPtr,
-            refreshThumbnailFlag
+            refreshThumbnailFlag,
+            currentFrameId
         }, { new: true });
 
     } else if (project.imagePossibleUndoCount == 1) {
@@ -351,7 +550,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewSourceFolType = VideoFolderSet;
             curProcessingPreviewSourceFolPtr = project.videoFolInPtr;
 
-            curProcessingPreviewDestinationFolType = TempFolder;
+            curProcessingPreviewDestinationFolType = TempFolderSet;
             curProcessingPreviewDestinationFolPtr = 1;
 
             operatePossibleOnVideoFlag = true
@@ -368,7 +567,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewSourceFolType = ImageFolderSet;
             curProcessingPreviewSourceFolPtr = imageFolInPtr;
 
-            curProcessingPreviewDestinationFolType = TempFolder;
+            curProcessingPreviewDestinationFolType = TempFolderSet;
             curProcessingPreviewDestinationFolPtr = 1;
             operatePossibleOnVideoFlag = project.operatePossibleOnVideoFlag
             refreshThumbnailFlag = false
@@ -389,7 +588,8 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curDisplayThumbnailFolType,
             curDisplayThumbnailFolPtr,
             operatePossibleOnVideoFlag,
-            refreshThumbnailFlag
+            refreshThumbnailFlag,
+            currentFrameId
         }, { new: true });
     } else {
         if ((project.handoverPossibleImageToVideoFlag) && (project.videoPossibleUndoCount > 0)) {
@@ -406,7 +606,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
             curProcessingPreviewSourceFolType = VideoFolderSet;
             curProcessingPreviewSourceFolPtr = videoFolInPtr;
 
-            curProcessingPreviewDestinationFolType = TempFolder;
+            curProcessingPreviewDestinationFolType = TempFolderSet;
             curProcessingPreviewDestinationFolPtr = 1;
 
             operatePossibleOnVideoFlag = true
@@ -428,16 +628,21 @@ const applyUndoAction = async (id, userId, requestObj) => {
                 curDisplayThumbnailFolType,
                 curDisplayThumbnailFolPtr,
                 operatePossibleOnVideoFlag,
-                refreshThumbnailFlag
+                refreshThumbnailFlag,
+                currentFrameId
             }, { new: true });
         }
     }
+    const totalCountPro = await Imageoperation.countOperation(id);
     const oppData = {
         projectId: id,
         processType: 'undo',
         processName: 'undo',
-        exeDetailsAvailFlag: (requestObj) ? true : false,
-        exeDetails: requestObj? JSON.stringify(requestObj): ''
+        sequenceNum:totalCountPro+1,
+        // exeDetailsAvailFlag: (requestObj) ? true : false,
+        // exeDetails: requestObj? JSON.stringify(requestObj): ''
+        exeDetailsAvailFlag:  false,
+        exeDetails: ''
     }
     await Imageoperation.createOperation(oppData)
     logger.changePointer(userId, id, 'UN', 'pointerDetails');
@@ -448,7 +653,7 @@ const applyUndoAction = async (id, userId, requestObj) => {
     };
 };
 
-const applyRedoAction = async (id, userId, requestObj) => {
+const applyRedoAction = async (id, userId, currentFrameId) => {
     const project = await Project.findById(id);
     if (!project) {
         return {
@@ -487,7 +692,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
 
         curProcessingPreviewSourceFolType = VideoFolderSet
         curProcessingPreviewSourceFolPtr = videoFolInPtr
-        curProcessingPreviewDestinationFolType = TempFolder
+        curProcessingPreviewDestinationFolType = TempFolderSet
         curProcessingPreviewDestinationFolPtr = 1
 
         operatePossibleOnVideoFlag = true
@@ -508,7 +713,8 @@ const applyRedoAction = async (id, userId, requestObj) => {
             curProcessingPreviewDestinationFolType,
             curProcessingPreviewDestinationFolPtr,
             operatePossibleOnVideoFlag,
-            refreshThumbnailFlag
+            refreshThumbnailFlag,
+            currentFrameId
         }, { new: true });
     } else if (project.imagePossibleRedoCount > 0) {
         if (project.handoverPossibleImageToVideoFlag && (project.imagePossibleUndoCount == 0)) {
@@ -522,7 +728,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
 
             curProcessingPreviewSourceFolType = ImageFolderSet
             curProcessingPreviewSourceFolPtr = imageFolInPtr
-            curProcessingPreviewDestinationFolType = TempFolder
+            curProcessingPreviewDestinationFolType = TempFolderSet
             curProcessingPreviewDestinationFolPtr = 1
 
             operatePossibleOnVideoFlag = false
@@ -544,7 +750,8 @@ const applyRedoAction = async (id, userId, requestObj) => {
                 curProcessingPreviewDestinationFolType,
                 curProcessingPreviewDestinationFolPtr,
                 operatePossibleOnVideoFlag,
-                refreshThumbnailFlag
+                refreshThumbnailFlag,
+                currentFrameId
             }, { new: true });
         } else {
             imagePossibleRedoCount = project.imagePossibleRedoCount - 1
@@ -556,7 +763,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
 
             curProcessingPreviewSourceFolType = ImageFolderSet
             curProcessingPreviewSourceFolPtr = imageFolInPtr
-            curProcessingPreviewDestinationFolType = TempFolder
+            curProcessingPreviewDestinationFolType = TempFolderSet
             curProcessingPreviewDestinationFolPtr = 1
 
             operatePossibleOnVideoFlag = false
@@ -578,16 +785,21 @@ const applyRedoAction = async (id, userId, requestObj) => {
                 curProcessingPreviewDestinationFolType,
                 curProcessingPreviewDestinationFolPtr,
                 operatePossibleOnVideoFlag,
-                refreshThumbnailFlag
+                refreshThumbnailFlag,
+                currentFrameId
             }, { new: true });
         }
     }
+    const totalCountPro = await Imageoperation.countOperation(id);
     const oppData = {
         projectId: id,
         processType: 'redo',
         processName: 'redo',
-        exeDetailsAvailFlag: (requestObj) ? true : false,
-        exeDetails: requestObj? JSON.stringify(requestObj): ''
+        sequenceNum:totalCountPro+1,
+        // exeDetailsAvailFlag: (requestObj) ? true : false,
+        // exeDetails: requestObj? JSON.stringify(requestObj): '',
+        exeDetailsAvailFlag: false,
+        exeDetails: ''
     }
     await Imageoperation.createOperation(oppData)
     logger.changePointer(userId, id, 'RE', 'pointerDetails');
@@ -598,7 +810,7 @@ const applyRedoAction = async (id, userId, requestObj) => {
     };
 };
 
-const selectThumbnailFrame = async (req, id, frameId) => {
+const selectThumbnailFrame = async (req, id, frameId) => {          //Select a Frame from Thumbnail
     const project = await Project.findById(id);
     const rootPath = `${req.user.id}/${id}`;
     if (!project) {
@@ -618,7 +830,7 @@ const selectThumbnailFrame = async (req, id, frameId) => {
     let curDisplayPreviewFolPtr = project.videoFolInPtr;
     let curProcessingPreviewSourceFolType = VideoFolderSet;
     let curProcessingPreviewSourceFolPtr = project.videoFolInPtr;
-    let curProcessingPreviewDestinationFolType = TempFolder;
+    let curProcessingPreviewDestinationFolType = TempFolderSet;
     let curProcessingPreviewDestinationFolPtr = 1;
     let operatePossibleOnVideoFlag = true;
     let handoverPossibleImageToVideoFlag = true;
@@ -651,15 +863,15 @@ const selectThumbnailFrame = async (req, id, frameId) => {
         data: {
             'folderId': projectUpdate.catId,
             'projectId': projectUpdate.id,
-            'curFrameId': projectUpdate.currentFrameId,
+            'currentFrameId': projectUpdate.currentFrameId,
             'srcFolType': ImageFolderSet,
             'srcFolPtr': projectUpdate.imageFolInPtr,
-            'videoToFrameWarmPopUp': true,
+            'videoToFrameWarningPopUpFlag': true,
         }
     };
 };
 
-const discardImage = async (id) => {
+const discardImage = async (id) => {                    // Discard Frame operation
     const project = await Project.findById(id);
     if (!project) {
         return {
@@ -678,7 +890,7 @@ const discardImage = async (id) => {
         let curDisplayPreviewFolPtr = project.videoFolInPtr
         let curProcessingPreviewSourceFolType = VideoFolderSet
         let curProcessingPreviewSourceFolPtr = project.videoFolInPtr
-        let curProcessingPreviewDestinationFolType = TempFolder
+        let curProcessingPreviewDestinationFolType = TempFolderSet
         let curProcessingPreviewDestinationFolPtr = 1
         let operatePossibleOnVideoFlag = true
         let handoverPossibleImageToVideoFlag = true
@@ -715,7 +927,7 @@ const discardImage = async (id) => {
     }
 };
 
-const saveImage = async (req, id,image) => {
+const saveImage = async (req, id,image,exeName='jpg') => {              // Save the Frame
     const project = await Project.findById(id);
     if (!project) {
         return {
@@ -724,11 +936,22 @@ const saveImage = async (req, id,image) => {
             message: 'Data not found'
         };
     }
+    
     const rootPath = `${req.user.id}/${id}`;
     if(image && image.length > 0){
         image.forEach((val) => {
+            
+
             const timestamp = Date.now();
-            const newFileName = timestamp + '_frame.jpg';
+            const newFileName = `${timestamp}_frame.${exeName}`;
+
+            const savemedia = new Savemedia({
+                fileName: newFileName,
+                userId: req.user.id,
+                projectId: id
+            })
+             savemedia.save();
+
             fsExtra.copy(`public/${rootPath}/${project.curDisplayPreviewFolType}/${project.curDisplayPreviewFolPtr}/${val}`, `public/${rootPath}/snap/${newFileName}`, (err) => {
                 if (err) {
                     // console.log('Error copying the file:', err);
@@ -760,11 +983,189 @@ const saveImage = async (req, id,image) => {
 function createFolder(folderPath) {
     fs.mkdir(folderPath, { recursive: true }, (err) => {
         if (err) {
-            return console.error(`Error creating folder: ${err.message}`);
+            return console.log(`Error creating folder: ${err.message}`);
         }
     });
 };
 
+
+
+const shareProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
+    const rootPath = `${req.user.id}/${projectId}`;
+    const projectData = await Project.findById(projectId);
+    if(!projectIdTo){
+        const newProjectData = {
+            ...projectData._doc, // Spread the original project's data
+            catId, // Use the new category ID
+            catName: 'Inbox', // Assign 'Inbox' category
+            userId: shareUserId, // Assign to the new user
+        };
+        delete newProjectData._id;
+        const project = new Project(newProjectData);
+        await project.save();
+        projectIdTo= project.id
+    }
+    
+    
+    fsExtra.copy(`public/${rootPath}`, `public/${shareUserId}/${projectIdTo}`, (err) => {
+        if (err) {
+            // console.log('Error copying the file:', err);
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Error copying the file: '+err
+            };
+        } else {
+            console.log('Snap File copied successfully.');
+        }
+    });
+    
+};
+
+const draganddropProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
+    const rootPath = `${req.user.id}/${projectId}`;
+    const projectData = await Project.findById(projectId);
+    if(!projectIdTo){
+        const project = new Project({
+            projectName:projectData.projectName,
+            catId,
+            catName: 'Inbox',
+            userId: shareUserId,
+        })
+        await project.save();
+        projectIdTo= project.id
+    }
+    
+    
+    // const rootPath = `${req.user.id}/${projectId}`;
+    const sourcePath = `public/${rootPath}`;
+    const destinationPath = `public/${shareUserId}/${projectIdTo}`;
+    
+    try {
+       // Copy the folder
+    await fsExtra.copy(sourcePath, destinationPath, { overwrite: true });
+    console.log('Folder copied successfully.');
+
+    // Remove the original folder
+    await fsExtra.remove(sourcePath);
+    console.log('Original folder deleted successfully.');
+
+        return {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Folder moved successfully.',
+        };
+    } catch (err) {
+        console.error('Error moving the folder:', err);
+        return {
+            statusCode: 500,
+            status: 'Failed',
+            message: `Error moving the folder: ${err.message}`,
+        };
+    }
+    
+};
+
+const moveProject = async(req,id,catId) =>{
+    try {
+        const project = await Project.findByIdAndUpdate(id, {'catId':catId}, { new: true });
+
+        return {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Folder moved successfully.',
+        };
+    } catch (err) {
+        console.error('Error moving the folder:', err);
+        return {
+            statusCode: 500,
+            status: 'Failed',
+            message: `Error moving the folder: ${err.message}`,
+        };
+    }
+    
+};
+
+const cleanProject = async(req,id) =>{
+    try {
+        const project = await Project.findById(id);
+        const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
+
+        // await removeFolder(`${basePath}/video/1`);
+        // createFolder(`${basePath}/video/1`);
+
+        // const sourcePath = `${basePath}/video/${project.curDisplayPreviewFolPtr}`;
+        // const destinationPath = `${basePath}/video/1`;
+        // await fsExtra.copy(sourcePath, destinationPath, { overwrite: true });
+
+        const folderPtr1 = project.curDisplayThumbnailFolType + project.curDisplayThumbnailFolPtr
+        const folderPtr2 = project.curDisplayPreviewFolType + project.curDisplayPreviewFolPtr
+        const folderPtr3 = project.curProcessingSourceFolType + project.curProcessingSourceFolPtr
+        
+        for (let i = 1; i <= project.totalVideoFolderSet; i++) {
+            const folder = project.curDisplayThumbnailFolType + i;
+            if(folder != folderPtr1 && folder != folderPtr2 && folder != folderPtr3){
+                const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
+                await removeFolder(dynamicFolderName);
+                createFolder(dynamicFolderName);
+            }
+        }
+
+        for (let i = 1; i <= project.totalImageFolderSet; i++) {
+            const folder = project.curDisplayThumbnailFolType + i;
+            if(folder != folderPtr1 && folder != folderPtr2 && folder != folderPtr3){
+                const dynamicFolderName = `${basePath}/image/${i}`; // Create a folder with the project limit
+                await removeFolder(dynamicFolderName);
+                createFolder(dynamicFolderName);
+            }
+        }
+
+        const projectUpdate = await Project.findByIdAndUpdate(id, {
+            videoPossibleUndoCount : 0,
+            imagePossibleUndoCount : 0,	
+            videoPossibleRedoCount : 0,
+            imagePossibleRedoCount : 0
+
+            // imagePossibleUndoCount:0,
+            // imagePossibleRedoCount:0,
+            // videoPossibleUndoCount:0,
+            // videoPossibleRedoCount:0,
+            // imageFolInPtr:1,
+            // videoFolInPtr:1,
+            // curDisplayPreviewFolType:'video',
+            // curDisplayPreviewFolPtr:1,
+            // curProcessingPreviewSourceFolType:'video',
+            // curProcessingPreviewSourceFolPtr:1,
+            // curProcessingPreviewDestinationFolType:'temp',
+            // curProcessingPreviewDestinationFolPtr:1,
+            // curDisplayThumbnailFolType:'video',
+            // curDisplayThumbnailFolPtr:1,
+            // refreshThumbnailFlag:true,
+            // curProcessingSourceFolType:'video',
+            // curProcessingSourceFolPtr:1,
+            // curProcessingDestinationFolType:'video',
+            // curProcessingDestinationFolPtr:1,
+            // operatePossibleOnVideoFlag:true,
+            // handoverPossibleImageToVideoFlag:true,
+            // processingGoingOnVideoOrFrameFlag:true,
+            // processingGoingOnVideoNotFrameFlag:true,
+        }, { new: true });
+       
+        return {
+            statusCode: 200,
+            status: 'Success',
+            message: 'Cleaned Successfully.',
+        };
+    } catch (err) {
+        console.error('Error moving the folder:', err);
+        return {
+            statusCode: 500,
+            status: 'Failed',
+            message: `Error moving the folder: ${err.message}`,
+        };
+    }
+    
+};
 
 module.exports = {
     createProject,
@@ -779,5 +1180,10 @@ module.exports = {
     saveImage,
     resetPointer,
     imageCompair,
-    recentprojectList
+    recentprojectList,
+    deletedProjectList,
+    shareProject,
+    draganddropProject,
+    moveProject,
+    cleanProject
 };

@@ -21,7 +21,17 @@ const updateUserDetails = async (req, res, next) => {
     }
 };
 
+const getUserList = async (req, res, next) => {
+    try {
+        const response = await userService.getUserList(req);
+        res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+};
+
 module.exports = {
     getUserDetails,
-    updateUserDetails
+    updateUserDetails,
+    getUserList
 };

@@ -22,6 +22,16 @@ const projectsSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    parentProjectId : {
+        type: String,
+        default: null, 
+        required: false,
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'deleted'], // Allowed values
+        default: 'active', // Default value
+    },
     projectDetails: {
         type: String,
     },
@@ -132,7 +142,7 @@ const projectsSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    processingGoingOnVideoNotFrame: {
+    processingGoingOnVideoNotFrameFlag: {
         type: Boolean,
         default: true
     },
@@ -140,9 +150,18 @@ const projectsSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    videoToFrameWarningPopUp: {
+    videoToFrameWarningPopUpFlag: {
         type: Boolean,
         default: false
+    },
+    fps: {
+        type: Number,
+        default: 10,
+    },
+    uploadType: {
+        type: String,
+        enum: ['video', 'image'], // Allowed values
+        default: 'video', // Default value
     },
     isDeleted: {
         type: String

@@ -7,17 +7,21 @@ const path = require('path');
 const fs = require('fs');
 const VideoFolderSet = 'video'
 const ImageFolderSet = 'image'
-const TempFolder = 'temp'
+const TempFolderSet = 'temp'
 
 const getStatus = async (job_id, userId) => {
     const request = { job_id };
     return new Promise((resolve, reject) => {
         channelServiceClient.GetJobStatus(request, async (error, response) => {
             if (error) {
-                console.error("Error fetching job status:", error);
+                console.log("Error fetching job status:", error);
                 return reject({ error: 'Error fetching job status', details: error });
             }
             if (response && response.completed) {
+                const proArr = {
+                    JobStatus: 'complete',
+                }
+                await updateJobDetails(response.job_id, proArr);
                 await updateProjectDetails(response.job_id, userId);
             }
             const jobProjectDetails = await JobProject.findOne({ jobId: response.job_id });
@@ -26,39 +30,13 @@ const getStatus = async (job_id, userId) => {
     });
 };
 
-async function updateJobDetails(jobId) {
+async function updateJobDetails(jobId,proArr) {
     const jobProjectDetails = await JobProject.findOne({ jobId: jobId.toString() });
     if (!jobProjectDetails) {
         return;
     }
     let id = jobProjectDetails.projectId;
-    const proArr = {
-        currentFrameId: jobProjectDetails.currentFrameId,
-        imageFolInPtr: jobProjectDetails.imageFolInPtr,
-        videoFolInPtr: jobProjectDetails.videoFolInPtr,
-        imagePossibleUndoCount: jobProjectDetails.imagePossibleUndoCount,
-        imagePossibleRedoCount: jobProjectDetails.imagePossibleRedoCount,
-        operatePossibleOnVideoFlag: jobProjectDetails.operatePossibleOnVideoFlag,
-        handoverPossibleImageToVideoFlag: jobProjectDetails.handoverPossibleImageToVideoFlag,
-        curProcessingSourceFolType: jobProjectDetails.curProcessingSourceFolType,
-        curProcessingSourceFolPtr: jobProjectDetails.curProcessingSourceFolPtr,
-        curProcessingDestinationFolType: jobProjectDetails.curProcessingDestinationFolType,
-        curProcessingDestinationFolPtr: jobProjectDetails.curProcessingDestinationFolPtr,
-        videoPossibleUndoCount: jobProjectDetails.videoPossibleUndoCount,
-
-        videoToFrameWarningPopUp: jobProjectDetails.videoToFrameWarningPopUp,
-        processingGoingOnVideoOrFrameFlag: jobProjectDetails.processingGoingOnVideoOrFrameFlag,
-        processingGoingOnVideoNotFrame: jobProjectDetails.processingGoingOnVideoNotFrame,
-
-        curDisplayPreviewFolType: jobProjectDetails.curDisplayPreviewFolType,
-        curDisplayPreviewFolPtr: jobProjectDetails.curDisplayPreviewFolPtr,
-
-        curProcessingPreviewSourceFolType: jobProjectDetails.curProcessingPreviewSourceFolType,
-        curProcessingPreviewSourceFolPtr: jobProjectDetails.curProcessingPreviewSourceFolPtr,
-        curProcessingPreviewDestinationFolType: jobProjectDetails.curProcessingPreviewDestinationFolType,
-        curProcessingPreviewDestinationFolPtr: jobProjectDetails.curProcessingPreviewDestinationFolPtr,
-
-    }
+    
 
     await Project.findByIdAndUpdate(id, proArr, { new: true });
 };
@@ -81,22 +59,22 @@ async function updateProjectDetails(jobId, userId) {
     let curDisplayThumbnailFolPtr = projectDetails.videoFolInPtr;
     let refreshThumbnailFlag = projectDetails.refreshThumbnailFlag;
 
-    if (projectDetails.processingGoingOnVideoNotFrame) {
+    if (projectDetails.processingGoingOnVideoNotFrameFlag) {
         refreshThumbnailFlag = true;
     }
 
     if (projectDetails.curDisplayPreviewFolPtr == 2) {
         copyImage(projectDetails.currentFrameId, id, userId, {
-            folderType: TempFolder,
+            folderType: TempFolderSet,
             folderPtr: 2
         }, {
-            folderType: TempFolder,
+            folderType: TempFolderSet,
             folderPtr: 1
         });
-        curDisplayPreviewFolType = TempFolder;
+        curDisplayPreviewFolType = TempFolderSet;
         curDisplayPreviewFolPtr = 1;
     } else {
-        if (projectDetails.processingGoingOnVideoNotFrame == true) {
+        if (projectDetails.processingGoingOnVideoNotFrameFlag == true) {
             curDisplayPreviewFolType = VideoFolderSet;
             curDisplayPreviewFolPtr = projectDetails.videoFolInPtr;
         } else {
@@ -131,7 +109,7 @@ function copyImage(currentFrameId, id, userId, source, destination) {
     // Use fs.copyFile to copy the file
     fs.copyFile(sourcePath, destinationPath, (err) => {
         if (err) {
-            console.error(`Error copying image: ${err.message}`);
+            console.log(`Error copying image: ${err.message}`);
         } else {
             console.log(`Copied image ${currentFrameId} from ${source.folderType} (${source.folderPtr}) to ${destination.folderType} (${destination.folderPtr})`);
         }

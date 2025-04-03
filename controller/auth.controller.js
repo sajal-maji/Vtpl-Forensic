@@ -14,7 +14,7 @@ const verifyUser = async (req, res, next) => {
     const { userName, password } = req.body;
     try {
         const response = await authService.verifyUser(userName, password);
-        res.status(200).json(response);
+        res.status(response.statusCode).json(response);
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
     }

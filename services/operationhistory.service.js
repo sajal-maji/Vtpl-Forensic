@@ -1,6 +1,8 @@
 const Operationhistory = require('../model/operationhistory.model');
 const projects = require('../model/projects.model');
 const Project = require('../model/projects.model');
+const { abortServiceClient } = require('../grpcClient');
+const JobProject = require('../model/jobprojects.model');
 
 const addOrUpdateOperation = async (projectId) => {
     const projectDetails = await Project.findById(projectId);
@@ -26,9 +28,9 @@ const addOrUpdateOperation = async (projectId) => {
         curProcessingDestinationFolPtr: projectDetails.curProcessingDestinationFolPtr,
         videoPossibleUndoCount: projectDetails.videoPossibleUndoCount,
 
-        videoToFrameWarningPopUp: projectDetails.videoToFrameWarningPopUp,
+        videoToFrameWarningPopUpFlag: projectDetails.videoToFrameWarningPopUpFlag,
         processingGoingOnVideoOrFrameFlag: projectDetails.processingGoingOnVideoOrFrameFlag,
-        processingGoingOnVideoNotFrame: projectDetails.processingGoingOnVideoNotFrame,
+        processingGoingOnVideoNotFrameFlag: projectDetails.processingGoingOnVideoNotFrameFlag,
 
         curDisplayPreviewFolType: projectDetails.curDisplayPreviewFolType,
         curDisplayPreviewFolPtr: projectDetails.curDisplayPreviewFolPtr,
@@ -47,7 +49,45 @@ const addOrUpdateOperation = async (projectId) => {
     }
 };
 
-const revertOperation = async (projectId) => {
+const revertOperation = async (jobId,projectId) => {
+   
+
+    return new Promise((resolve, reject) => {
+        const request = { job_id:jobId };
+        console.log('----------------',request)
+        abortServiceClient.AbortProcess(request, async (error, response) => {
+            if (error) {
+                return resolve({
+                    statusCode: 404,
+                    status: 'Failed',
+                    message: error.message || error
+                });
+            }
+
+            const jobDetails = await JobProject.findOne({ jobId }).sort({ createdAt: -1 });
+            if (!jobDetails) {
+                return resolve({
+                    statusCode: 404,
+                    status: 'Failed',
+                    message: 'Data not found'
+                });
+            }
+
+            if (response && response.status_code==200) {
+                await updateProjectDetails(projectId);
+            }
+            const jobProjectDetails = await Operationhistory.findOne({ projectId });
+            resolve({
+                statusCode: response.status_code,
+                message: response.message?response.message:'ok',
+                response,'jobDetails':jobProjectDetails});
+        });
+    });
+
+
+};
+
+async function updateProjectDetails(projectId) {
     const projectDetails = await Project.findById(projectId);
     if (!projectDetails) {
         return {
@@ -74,9 +114,9 @@ const revertOperation = async (projectId) => {
         curProcessingDestinationFolPtr: operationDetails.curProcessingDestinationFolPtr,
         videoPossibleUndoCount: operationDetails.videoPossibleUndoCount,
 
-        videoToFrameWarningPopUp: operationDetails.videoToFrameWarningPopUp,
+        videoToFrameWarningPopUpFlag: operationDetails.videoToFrameWarningPopUpFlag,
         processingGoingOnVideoOrFrameFlag: operationDetails.processingGoingOnVideoOrFrameFlag,
-        processingGoingOnVideoNotFrame: operationDetails.processingGoingOnVideoNotFrame,
+        processingGoingOnVideoNotFrameFlag: operationDetails.processingGoingOnVideoNotFrameFlag,
 
         curDisplayPreviewFolType: operationDetails.curDisplayPreviewFolType,
         curDisplayPreviewFolPtr: operationDetails.curDisplayPreviewFolPtr,
