@@ -114,6 +114,7 @@ const displaySelectedChannels = async (req, res, next) => {
 const generatePdf = async (req, res, next) => {
     try {
         const { projectId,frameName } = req.body;
+        
         if (!projectId) {
             return res.status(400).json({ statusCode: 404,message: 'Project ID is required' });
         }
@@ -168,7 +169,7 @@ const generatePdf = async (req, res, next) => {
     } catch (error) {
         return res.status(500).json({
             error: 'Internal server error',
-            details: error
+            details: error.message
         });
     }
 };

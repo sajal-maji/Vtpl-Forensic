@@ -81,4 +81,7 @@ const { motionDeblur, OpticalDeblur} = require('../controller/deblur.controller'
 router.put('/motion', motionDeblur);
 router.put('/optical', OpticalDeblur);
 
+const { textAnnotation} = require('../controller/annotation.controller');
+router.put('/text-annotation', textAnnotation);
+
 module.exports = router;

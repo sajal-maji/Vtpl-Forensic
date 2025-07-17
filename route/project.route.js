@@ -1,6 +1,8 @@
+const multer = require('multer');
+const upload = multer();
 const router = require('express').Router();
 const { createCasefolder, getFolderAll, updateCasefolder, deleteCaseFolder } = require('../controller/casefolder.controller');
-const { createProject,moveProject,cleanProject,getDeletedProjectByCat,shareProjectToUser,draganddropProject, updateProject,exportProject, deleteProject,getRecentProject, uploadFiles, getProjectByCat, getProjectDetails, imageComparison, getAction, selectFream, discardFream, saveSnapImage, resetPointer, operationHistory, filesList, deleteImage, revertOperation } = require('../controller/project.controller');
+const { createProject,moveProject,soterixUploadFiles,cleanProject,getDeletedProjectByCat,shareProjectToUser,draganddropProject, updateProject,exportProject, deleteProject,getRecentProject, uploadFiles, getProjectByCat, getProjectDetails, imageComparison, getAction, selectFream, discardFream, saveSnapImage, resetPointer, operationHistory, filesList, deleteImage, revertOperation } = require('../controller/project.controller');
 
 router.post('/create-folder', createCasefolder);
 router.put('/update-folder', updateCasefolder);
@@ -11,6 +13,7 @@ router.put('/update-project', updateProject);
 router.delete('/delete-project', deleteProject);
 router.delete('/delete-folder', deleteCaseFolder);
 router.post('/upload-files', uploadFiles);
+router.post('/soterix-upload-files',upload.none(), soterixUploadFiles);
 router.get('/', getProjectByCat);
 router.get('/recent-project', getRecentProject);
 router.get('/project-details', getProjectDetails);

@@ -2,12 +2,17 @@ const Imageoperation = require('../model/imageoperation.model');
 const fs = require('fs');
 const path = require('path');
 
-const getOperationDetails = async (projectId,frameName,req) => {    
+const getOperationDetails = async (projectId,frameName,req) => {
+    if(!frameName)
+        frameName='frame_000001.jpg'    
     const operationDetails = await Imageoperation.find({ projectId: projectId }).sort({ createdAt: -1 });
     const frameNumber = parseInt(frameName.match(/\d+/)[0], 10);
     // console.log('kkkkkkkkkkkkkkkkkk'+JSON.stringify(operationDetails));
     let processes = [];
     let applyToframeFlag = true
+    let folderPath = process.env.PROJECT_FOLDER
+    const rootDir = path.resolve(__dirname, '..', '..');
+    const uploadPdfPath = path.join(rootDir, `${folderPath}`);
     if (operationDetails.length > 0) {
         for (let i = 0; i < operationDetails.length; i++) {
             if(frameNumber >= operationDetails[i].startFrameNumber &&  frameNumber <= operationDetails[i].endFrameNumber){
@@ -16,8 +21,8 @@ const getOperationDetails = async (projectId,frameName,req) => {
                     "process_index": operationDetails[i].processIndex,
                     "process_name": operationDetails[i].processName,
                     "exe_details_avail_flag": operationDetails[i].exeDetailsAvailFlag,
-                    "input_img_path" : operationDetails[i].inputImgPath,
-                    "output_img_path" : operationDetails[i].outImgPath,
+                    "input_img_path" : `${uploadPdfPath}/${operationDetails[i].inputImgPath}`,
+                    "output_img_path" : `${uploadPdfPath}/${operationDetails[i].outImgPath}`,
                     "exe_details": {
                         "details": operationDetails[i].exeDetails ? JSON.parse(operationDetails[i].exeDetails) : ''
                     }
@@ -37,8 +42,8 @@ const getOperationDetails = async (projectId,frameName,req) => {
                     "process_index": operationDetails[i].processIndex,
                     "process_name": operationDetails[i].processName,
                     "exe_details_avail_flag": operationDetails[i].exeDetailsAvailFlag,
-                    "input_img_path" : operationDetails[i].inputImgPath,
-                    "output_img_path" : operationDetails[i].outImgPath,
+                    "input_img_path" : `${uploadPdfPath}/${operationDetails[i].inputImgPath}`,
+                    "output_img_path" : `${uploadPdfPath}/${operationDetails[i].outImgPath}`,
                     "exe_details": {
                         "details": operationDetails[i].exeDetails ? JSON.parse(operationDetails[i].exeDetails) : ''
                     }

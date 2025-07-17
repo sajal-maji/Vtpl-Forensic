@@ -9,6 +9,8 @@ const path = require('path');
 const multer = require('multer');
 const ffmpeg = require('fluent-ffmpeg');
 const fsExtra = require('fs-extra');
+const axios = require('axios');
+const https = require('https');
 const { errorLogger } = require("../config/log.config");
 const { now } = require("mongoose");
 const VideoFolderSet = 'video'
@@ -16,6 +18,8 @@ const ImageFolderSet = 'image'
 const TempFolderSet = 'temp'
 const moment = require('moment');
 const logger = require("../helpers/logEvents");
+
+
 
 const createProject = async (req, res, next) => {
     const { projectName, catId } = req.body;
@@ -495,6 +499,190 @@ const uploadFiles = async (req, res, next) => {
     });
 };
 
+const soterixUploadFiles = async (req, res) => {
+    createFolder(`public/logs`);
+    createFolder(`public/uploads`);
+    createFolder(`public/uploads/crop`);
+    createFolder(`public/uploads/images`);
+    createFolder(`public/downloads`);
+
+    const { url: videoUrl,startTime,endTime } = req.body;
+    console.log('Tapan--------',endTime)
+    if (!videoUrl) {
+        return res.status(400).json({statusCode: 400, message: 'Missing video URL' });
+    }
+
+    if (!startTime) {
+        return res.status(400).json({statusCode: 400, message: 'Missing startTime' });
+    }
+
+    if (!endTime) {
+        return res.status(400).json({statusCode: 400, message: 'Missing endTime' });
+    }
+
+    const filename = 'downloaded-video.mp4';
+    const videoPath = path.resolve(__dirname, '../public/downloads', filename);
+    // const frameOutputDir = path.resolve(__dirname, '../public/uploads/images');
+
+    const agent = new https.Agent({ rejectUnauthorized: false });
+
+    try {
+        // Ensure directory exists
+        fs.mkdirSync(path.dirname(videoPath), { recursive: true });
+
+        // Download the video
+        const response = await axios({
+            method: 'GET',
+            url: videoUrl,
+            responseType: 'stream',
+            httpsAgent: agent
+        });
+
+        const writer = fs.createWriteStream(videoPath);
+        response.data.pipe(writer);
+
+        writer.on('finish', async () => {
+            try {
+
+                    if (!req.user || !req.user.id) {
+                        return res.status(401).json({ 
+                            statusCode: 401, 
+                            status: 'Failed', 
+                            message: 'Unauthorized: User ID missing' 
+                        });
+                    }
+                
+                    var casefolder = await Casefolder.findOne({ slag: 'default', userId: req.user.id });
+    
+    
+                const totalCountPro = await Project.countDocuments({ userId: req.user.id });
+                const project = new Project({
+                    projectName: `Project ${totalCountPro + 1}`,
+                    catId: casefolder.id,
+                    catName: casefolder.folderName,
+                    userId: req.user.id,
+                })
+                await project.save();
+                const basePath = `${process.env.MEDIA_BASE_PATH}/${req.user.id}/${project.id}`;
+            const rootPath = `${req.user.id}/${project.id}`;
+            const baseUrl = `${process.env.BASE_URL}:${process.env.PORT}/`;
+
+            // createFolder(`${basePath}/uploads`);
+            createFolder(`${basePath}/main`);
+            createFolder(`${basePath}/snap`);
+            createFolder(`${basePath}/temp/1`);
+            createFolder(`${basePath}/temp/2`);
+            createFolder(`${basePath}/report_image`);
+
+
+            for (let i = 1; i <= project.totalVideoFolderSet; i++) {
+                const dynamicFolderName = `${basePath}/video/${i}`; // Create a folder with the project limit
+                createFolder(dynamicFolderName);
+            }
+
+
+            for (let i = 1; i <= project.totalImageFolderSet; i++) {
+                const dynamicFolderNameImg = `${basePath}/image/${i}`; // Create a folder with the project limit
+                createFolder(dynamicFolderNameImg);
+            }
+
+            const duration = await getDuration(startTime, endTime);
+            console.log(`Duration: ${duration} seconds`);
+
+            let fps = 10;
+            // const frameOutputDir = `${basePath}/main/frame_%06d.jpg`;
+            const frameOutputDir = path.resolve(__dirname, `../${basePath}/main/frame_%06d.jpg`);
+                // Extract 10 FPS frames from 00:00:05 to 00:00:10
+                await extractFrames(videoPath, frameOutputDir, startTime, duration, fps);
+
+                const dataFiles = await getTotalFiles(`${basePath}/main`);
+
+                fsExtra.copy(`${basePath}/main`, `${basePath}/video/1`, (err) => {
+                    if (err) { console.log('Error copying the file:', err); }
+                    // console.log('File copied successfully.');
+                });
+
+                const fileMetadata = await getVideoDuration(videoPath);
+
+                let projectDetails = {
+                    "fileName": path.basename(fileMetadata.format.filename),
+                    "fileSize":  fileMetadata.format.size,
+                    "fileResolution":fileMetadata.format.bit_rate,
+                    "fileDuration": fileMetadata.format.duration,
+                    "fileFrameRate": '',
+                    "fileAspectRatio": '',
+                    "createOn": ''
+                }
+                console.log('File copied successfully.');
+              
+
+
+                fs.unlink(videoPath, (err) => {
+                    if (err) {
+                        console.error('Error deleting video file:', err);
+                    } else {
+                        console.log('Video file deleted successfully');
+                    }
+                });
+
+                const updateproject = await Project.findByIdAndUpdate(project.id,
+                    {
+                        'filesName': JSON.stringify(dataFiles.filesName),
+                        'currentFrameId': 'frame_000001.jpg',
+                        'projectDetails': projectDetails ? JSON.stringify(projectDetails) : null,
+                        'uploadType': 'video',
+                        'fps': fps ? fps : 0
+                    }, { new: true });
+    
+                res.status(200).json({
+                    statusCode: 200,
+                    status: 'Success',
+                    message: 'Video uploaded and processed successfully.',
+                    data: {
+                        'totalFiles': dataFiles.totalFiles,
+                        'folderId': updateproject.catId,
+                        'projectId': updateproject.id,
+                        'currentFrameId': updateproject.currentFrameId,
+                        'srcFolType': VideoFolderSet,
+                        'srcFolPtr': updateproject.videoFolInPtr,
+                        'videoToFrameWarningPopUpFlag': true,
+                        'filesName': dataFiles.filesName,
+                        'projectDetails': projectDetails
+                    }
+    
+                });
+
+                // return res.status(200).json({
+                //     message: 'Video downloaded and frames extracted',
+                //     savedTo: frameOutputDir
+                // });
+            } catch (err) {
+                console.error('Frame extraction failed:', err);
+                return res.status(500).json({ error: 'Frame extraction failed' });
+            }
+        });
+
+        writer.on('error', err => {
+            console.error('Video write error:', err);
+            return res.status(500).json({ error: 'Failed to save video' });
+        });
+
+    } catch (error) {
+        console.error('Download failed:', error.message);
+        return res.status(500).json({ error: 'Video download failed' });
+    }
+};
+
+const getDuration = async(start, end) =>{
+    const toSeconds = time => {
+      const [hh, mm, ss] = time.split(':').map(Number);
+      return hh * 3600 + mm * 60 + ss;
+    };
+  
+    const durationInSeconds = toSeconds(end) - toSeconds(start);
+    return durationInSeconds;
+  }
+
 const fixVideoHeaders = async (inputPath, outputPath) => {
     return new Promise((resolve, reject) => {
         if (`${process.env.NODE_ENV}` === 'development') {
@@ -678,6 +866,45 @@ async function cutVideo(inputPath, outputPath, startTime, duration) {
     });
 };
 
+async function extractFrames(videoPath, outputDir, startTime, duration, fps = 10) {
+    return new Promise((resolve, reject) => {
+        if (`${process.env.NODE_ENV}` == 'development')
+            ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
+        ffmpeg(videoPath)
+            .setStartTime(startTime)      // e.g., "00:00:05"
+            .duration(duration)           // e.g., 5 seconds
+            .outputOptions([
+                `-vf fps=${fps}`
+            ])
+            .output(outputDir)
+            .on('end', resolve)
+            .on('error', reject)
+            .run();
+    });
+};
+
+// async function extractFrame(videoPath, timestamp, outputImagePath) {
+//     return new Promise((resolve, reject) => {
+//         if (`${process.env.NODE_ENV}` == 'development')
+//          ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
+//       ffmpeg(videoPath)
+//         .on('end', () => {
+//           console.log('Frame extracted successfully');
+//           resolve(outputImagePath);
+//         })
+//         .on('error', (err) => {
+//           console.error('Error extracting frame:', err.message);
+//           reject(err);
+//         })
+//         .screenshots({
+//           timestamps: [timestamp], // e.g. '00:00:05.000'
+//           filename: path.basename(outputImagePath),
+//           folder: path.dirname(outputImagePath),
+//           size: '640x?'
+//         });
+//     });
+//   };
+
 async function convertVideo(inputPath, outputDir, fps) {
     return new Promise((resolve, reject) => {
         if (`${process.env.NODE_ENV}` == 'development')
@@ -828,7 +1055,7 @@ const filesList = async (req, res, next) => {
                     }
                 }   
             });
-
+            //  return res.status(200).json({ message: 'No Files are found222', data:filesArr });
             // files.forEach(file => {
             //     let fPath = `${rootPath}/snap/${file}`
                 
@@ -851,6 +1078,7 @@ const filesList = async (req, res, next) => {
             }
         });
 
+        // return res.status(200).json({ message: 'No Files are found2', data:filesArr });
 
 
     } catch (error) {
@@ -991,6 +1219,7 @@ module.exports = {
     updateProject,
     deleteProject,
     uploadFiles,
+    soterixUploadFiles,
     getProjectByCat,
     imageComparison,
     getProjectDetails,

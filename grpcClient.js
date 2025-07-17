@@ -84,6 +84,12 @@ const DeblurServiceClient = new grpcPackage.DeblurService(
     grpc.credentials.createInsecure() // Use insecure credentials for local testing
 );
 
+// Create the gRPC client for AnnotationService
+const AnnotationServiceClient = new grpcPackage.AnnotationService(
+    grpc_port,  
+    grpc.credentials.createInsecure() // Use insecure credentials for local testing
+);
+
 // Export the clients
 module.exports = {
     channelServiceClient,
@@ -96,5 +102,6 @@ module.exports = {
     DenoiseServiceClient,
     StablizationServiceClient,
     abortServiceClient,
-    DeblurServiceClient
+    DeblurServiceClient,
+    AnnotationServiceClient
 };
