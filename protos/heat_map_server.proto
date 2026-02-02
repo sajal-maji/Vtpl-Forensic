@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.heatmap.models";
+option java_outer_classname = "HeatMapServerProto";
+option objc_class_prefix = "HeatMapServer";
+
+// gRPC Service Definition
+service HeatMapServer {
+    rpc getHeatMapData (HeatMapRequest) returns (HeatMapResponse);    
+}
+
+// Request Message
+message HeatMapRequest {
+	HeatMapRequestModel heatmap_request_model = 1;
+}
+
+// Response Message
+message HeatMapResponse {
+	int64 error_code = 1;
+    HeatMapResponseModel heatmap_response_model = 2;
+}
+
+message HeatMapRequestModel {
+	string job_id = 1;
+    int64 site_id = 2;
+    int32 channel_id = 3;
+    repeated HeatMapZoneModel heatmap_zone = 4;
+    string category = 5;
+	HeatMapDescriptionModel heatmap_description = 6;
+	string heatmap_color_code = 7;
+	int64 dwell_time = 8;
+	int64 start_time = 9;
+	int64 end_time = 10;
+}
+
+message HeatMapDescriptionModel {
+	// Person
+	string gender = 1;
+	string clothing_top = 2;
+	repeated string clothing_top_color = 3;
+	string clothing_bottom = 4;
+	repeated string clothing_bottom_color = 5;
+	repeated string attribute = 6;
+	
+	// Vehicle
+	repeated string vehicle_type = 7;
+	repeated string vehicle_color = 8;
+}
+
+message HeatMapZoneModel {
+    repeated HeatMapZonePoint zone_points = 1;
+	int32 ref_width = 2;
+	int32 ref_height = 3;
+}
+
+message HeatMapZonePoint {
+	int32 x = 1;
+    int32 y = 2;
+}
+
+message HeatMapResponseModel {
+	string job_id = 1;
+    int64 site_id = 2;
+    int32 channel_id = 3;
+    bytes alpha_image = 4;
+    bytes rgb_image = 5;
+    repeated double alpha_matrix = 6;
+    repeated int32 rgb_matrix = 7;
+    int32 ref_width = 8;
+	int32 ref_height = 9;
+}

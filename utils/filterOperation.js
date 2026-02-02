@@ -187,10 +187,11 @@ async function callGrpcService(grpcServiceName, processName, request, req, res, 
                     response
                 });
             } catch (saveError) {
+                logger.logCreate(`gRPC Error:  ${JSON.stringify(saveError)}`, 'systemlog');
                 reject({
                     statusCode: 500,
                     error: 'Failed to save image filter',
-                    details: saveError.message
+                    details: saveError
                 });
             }
         });

@@ -10,6 +10,7 @@ const ImageFolderSet = 'image'
 const TempFolderSet = 'temp'
 const logger = require("../helpers/logEvents");
 const operationHistoryService = require("../services/operationhistory.service");
+const { channelServiceClient } = require('../grpcClient');
 
 const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
     try {
@@ -125,13 +126,14 @@ const folderPath = async (id, isApplyToAll, isPreview, proDetails, req, res) => 
         const rootDir = path.resolve(__dirname, '..', '..');
         let imgBasePathFrom = ''
         let imgBasePathTo = ''
-        imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
-        imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
+        let folderPath = process.env.PROJECT_FOLDER
+        imgBasePathFrom = path.join(rootDir, `${folderPath}/public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`);
+        imgBasePathTo = path.join(rootDir, `${folderPath}/public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`);
 
         if (isPreview) {
             // imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/video/1`);
-            imgBasePathFrom = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
-            imgBasePathTo = path.join(rootDir, `forensic_be/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
+            imgBasePathFrom = path.join(rootDir, `${folderPath}/public/${rootPath}/${proDetails.curProcessingPreviewSourceFolType}/${proDetails.curProcessingPreviewSourceFolPtr}`);
+            imgBasePathTo = path.join(rootDir, `${folderPath}/public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`);
         }
 
         return ({ imgBasePathFrom, imgBasePathTo })
@@ -259,7 +261,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
     // }else{
 
     if (isPreview) {
-        await new Promise((resolve) => setTimeout(resolve, 20));
+        
         const rootPath = `${req.user.id}/${id}`;
         const timestamp = Date.now();
         // if (proDetails.curProcessingPreviewSourceFolType == 'temp') {
@@ -280,25 +282,50 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         //         console.log(`File renamed successfully from ${frameName} to ${newFileName}`);
         //     }
         // });
+        // await new Promise((resolve) => setTimeout(resolve, 300));
+        // fsExtra.copy(oldFilePath, newFilePath, (err) => {
+        //     if (err) {
+        //         logger.logCreate(`copyimage: response ${err}`, 'systemlog');
+        //         console.log('Error copying the file:', err);
+        //     } else {
+        //         logger.logCreate(`copyimage: response success`, 'systemlog');
+        //         const deletedImagePath = `public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}/${proDetails.currentPreviewFrameId}`;
+        //         fsExtra.remove(deletedImagePath, (removeErr) => {
+        //             if (removeErr) {
+        //                 logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
+        //                 console.log('Error deleting the old file:', removeErr);
+        //             } else {
+        //                 logger.logCreate(`deleteimage: response success`, 'systemlog');
+        //                 console.log('Old file deleted successfully.');
+        //             }
+        //         });
+        //     }
+        // });
+        // await new Promise((resolve) => setTimeout(resolve, 100));
+        //  fsExtra.remove(oldFilePath);
+        let ptime =''
+        if(operationName != 'measure_1d' && operationName != 'measure_2d' && operationName != 'measure_3d'){
+            const result = await checkJobStatus(response.job_id);
+            ptime = result.takeTime
+        }
+        
+        // console.log('Job completed successfully:', result);
+        await copyAndDeleteWithRetry(oldFilePath, newFilePath, proDetails, rootPath);
 
-        fsExtra.copy(oldFilePath, newFilePath, (err) => {
-            if (err) {
-                logger.logCreate(`copyimage: response ${err}`, 'systemlog');
-                console.log('Error copying the file:', err);
-            } else {
-                logger.logCreate(`copyimage: response success`, 'systemlog');
-                const deletedImagePath = `public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}/${proDetails.currentPreviewFrameId}`;
-                fsExtra.remove(deletedImagePath, (removeErr) => {
-                    if (removeErr) {
-                        logger.logCreate(`deleteimage: response ${removeErr}`, 'systemlog');
-                        console.log('Error deleting the old file:', removeErr);
-                    } else {
-                        logger.logCreate(`deleteimage: response success`, 'systemlog');
-                        console.log('Old file deleted successfully.');
-                    }
-                });
+        return {
+            'colData': {
+                job_id: response.job_id,
+                percentage: response.percentage,
+                'currentFrameId': (proDetails.currentFrameId) ? proDetails.currentFrameId : '',
+                total_input_images: response.total_input_images,
+                processed_image_count: response.processed_image_count,
+                status_message: response.status_message,
+                objectLength:(response.object_length)?response.object_length:'',
+                takeTime:ptime,
+                // basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
+                basePath: `${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}/${frameName}`,
             }
-        });
+        }
     } else {
 
         
@@ -312,6 +339,7 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         const firstFrame = parseInt(frame[0].match(/\d+/)[0], 10);
         const endFrame = parseInt(frame[frame.length - 1].match(/\d+/)[0], 10);
         const middleFrame = `frame_${String(Math.floor((firstFrame + endFrame) / 2)).padStart(6, "0")}.jpg`;
+        // const middleFrame = `frame_${String(Math.floor((firstFrame + firstFrame) / 2)).padStart(6, "0")}.jpg`;
 
         const fromInFilePath = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${middleFrame}`;
         fsExtra.copy(fromInFilePath, toInFilePath, (err) => { });
@@ -340,9 +368,23 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
             await imageope.save();
             // await Imageoperation.createOperation(oppData)
         }
+
+        return {
+            'colData': {
+                job_id: response.job_id,
+                percentage: response.percentage,
+                'currentFrameId': (proDetails.currentFrameId) ? proDetails.currentFrameId : '',
+                total_input_images: response.total_input_images,
+                processed_image_count: response.processed_image_count,
+                status_message: response.status_message,
+                objectLength:(response.object_length)?response.object_length:'',
+                // basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
+                basePath: `${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}/${frameName}`,
+            }
+        }
     }
 
-   
+    
 
     // for (var i = 1; i <= project.totalImageFolderSet; i++) {
     //     const sourcePath = `public/${rootPath}/${proDetails.srcFolType}/${i}/${frame[0]}`;
@@ -365,20 +407,76 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
 
     // Proceed with logic to manage pointer if the filter exists
     // Your pointer management logic goes here...
-    return {
-        'colData': {
-            job_id: response.job_id,
-            percentage: response.percentage,
-            'currentFrameId': (proDetails.currentFrameId) ? proDetails.currentFrameId : '',
-            total_input_images: response.total_input_images,
-            processed_image_count: response.processed_image_count,
-            status_message: response.status_message,
-            objectLength:(response.object_length)?response.object_length:'',
-            // basePath: `${rootPath}/${proDetails.curDisplayPreviewFolType}/${proDetails.curDisplayPreviewFolPtr}/${frameName}`,
-            basePath: `${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}/${frameName}`,
+    
+};
+
+const checkJobStatus = async (job_id, maxRetries = 10, delayMs = 200, attempt = 1) => {
+    const request = { job_id };
+
+    return new Promise((resolve, reject) => {
+        channelServiceClient.GetJobStatus(request, async (error, response) => {
+            if (error) {
+                console.log(`Attempt ${attempt} - Error fetching job status:`, error);
+                return reject({ error: 'Error fetching job status', details: error });
+            }
+
+            console.log(`Attempt ${attempt} - Job status:`, response);
+
+            if (response.completed) {
+                return resolve({
+                    response,
+                    jobDetails: response,
+                    takeTime: attempt * 200, // total wait time in ms
+                });
+            }
+
+            if (attempt >= maxRetries) {
+                return reject({ error: 'Max retries reached', lastResponse: response });
+            }
+
+            // Retry after delay
+            setTimeout(() => {
+                checkJobStatus(job_id, maxRetries, delayMs, attempt + 1)
+                    .then(resolve)
+                    .catch(reject);
+            }, delayMs);
+        });
+    });
+};
+
+
+const MAX_RETRIES = 10;
+const RETRY_DELAY = 50; // ms
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const copyAndDeleteWithRetry = async (oldFilePath, newFilePath, proDetails, rootPath, attempt = 1) => {
+    try {
+        await fsExtra.copy(oldFilePath, newFilePath);
+        logger.logCreate(`copyimage: attempt ${attempt} success`, 'systemlog');
+
+        const deletedImagePath = `public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}/${proDetails.currentPreviewFrameId}`;
+        
+        await fsExtra.remove(deletedImagePath);
+        logger.logCreate(`deleteimage: attempt ${attempt} success`, 'systemlog');
+        console.log(`File copied and old file deleted successfully. attempt ${attempt}`);
+
+    } catch (err) {
+        const action = err.path && err.path.includes('copy') ? 'copyimage' : 'deleteimage';
+        logger.logCreate(`${action}: attempt ${attempt} failed - ${err}`, 'systemlog');
+        console.error(`${action} error on attempt ${attempt}:`, err);
+
+        if (attempt < MAX_RETRIES) {
+            await delay(RETRY_DELAY);
+            return copyAndDeleteWithRetry(oldFilePath, newFilePath, proDetails, rootPath, attempt + 1);
+        } else {
+            logger.logCreate(`${action}: failed after ${MAX_RETRIES} attempts`, 'systemlog');
+            console.log(`${action} permanently failed after ${MAX_RETRIES} attempts.`);
         }
     }
 };
+
+
 
 const cloneImage = async (id, isApplyToAll, frame, req, res) => {
     try {

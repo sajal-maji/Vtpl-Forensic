@@ -113,65 +113,176 @@ const displaySelectedChannels = async (req, res, next) => {
 
 const generatePdf = async (req, res, next) => {
     try {
-        const { projectId,frameName } = req.body;
+        const { projectId, frameName } = req.body;
+
         if (!projectId) {
-            return res.status(400).json({ statusCode: 404,message: 'Project ID is required' });
+            return res.status(400).json({
+                statusCode: 400,
+                message: 'Project ID is required'
+            });
         }
 
-        const operationDetails = await pdfService.getOperationDetails(projectId,frameName,req);
-        // return res.status(200).json({operationDetails
-        // });
+        // Fetch raw operation history
+        const operationDetails = await pdfService.getOperationDetails(
+            projectId,
+            frameName,
+            req
+        );
 
-        if (operationDetails && operationDetails.length > 0) {
-            const rootPath = `${req.user.id}/${projectId}`;
-           
-            let pdfDir = `public/${rootPath}/pdf`;
-            if (!fs.existsSync(pdfDir)) {
-                fs.mkdirSync(pdfDir, { recursive: true });
+        if (!operationDetails || operationDetails.length === 0) {
+            return res.status(404).json({
+                statusCode: 404,
+                message: 'No operation details found for the provided project ID'
+            });
+        }
+
+        // ✅ Resolve Undo / Redo → legal operations only
+        const legalOperations = resolveLegalOperations(operationDetails);
+        console.log('--------Operation-----------',legalOperations)
+        if (legalOperations.length === 0) {
+            return res.status(400).json({
+                statusCode: 400,
+                message: 'No valid operations available after Undo/Redo resolution'
+            });
+        }
+
+        const rootPath = `${req.user.id}/${projectId}`;
+        const pdfDir = `public/${rootPath}/pdf`;
+
+        if (!fs.existsSync(pdfDir)) {
+            fs.mkdirSync(pdfDir, { recursive: true });
+        }
+
+        const rootDir = path.resolve(__dirname, '..', '..');
+        const folderPath = process.env.PROJECT_FOLDER;
+        const uploadPdfPath = path.join(rootDir, `${folderPath}/${pdfDir}`);
+
+        // ✅ Send ONLY legal operations to PDF service
+        const requestObj = {
+            processes: legalOperations,
+            processes_meta: {
+                input_output_image_show_report: true
+            },
+            out_docs_path: uploadPdfPath
+        };
+
+        PDFGenerateServiceClient.PDFGeneretion(requestObj, (error, response) => {
+            if (error) {
+                return res.status(500).json({
+                    statusCode: 500,
+                    message: 'PDF generation failed',
+                    details: error
+                });
             }
 
-            const rootDir = path.resolve(__dirname, '..', '..');
-            const uploadPdfPath = path.join(rootDir, `forensic_be/${pdfDir}`);
-
-
-            const requestObj = {
-                processes: operationDetails,
-                processes_meta: {
-                    input_output_image_show_report: true
-                },
-                out_docs_path: uploadPdfPath
-            };
-
-
-            PDFGenerateServiceClient.PDFGeneretion(requestObj, (error, response) => {
-                if (error) {
-                    // console.error("gRPC error:", error);
-                    return res.status(404).json({ statusCode: 404,message: 'gRPC call failed', details: error });
+            return res.status(200).json({
+                message: 'PDF generated successfully',
+                data: {
+                    pdfUrl: `${rootPath}/pdf/report.pdf`,
+                    docUrl: `${rootPath}/pdf/report.docx`
                 }
-    
-                // Respond with the gRPC response
-                return res.status(200).json({
-                    message: 'Processing successfully Done',
-                    data:{
-                            pdfUrl:`${rootPath}/pdf/report.pdf`,
-                            docUrl:`${rootPath}/pdf/report.docx`
-                        },
-                        requestObj
-                    // response
-                });
             });
-           
-        } else {
-            return res.status(404).json({ statusCode: 404,message: 'No operation details found for the provided project ID' });
-        }
+        });
 
     } catch (error) {
         return res.status(500).json({
-            error: 'Internal server error',
-            details: error
+            statusCode: 500,
+            message: 'Internal server error',
+            details: error.message
         });
     }
 };
+
+
+const resolveLegalOperations = (operations = []) => {
+    const appliedStack = [];
+    const redoStack = [];
+
+    for (const op of operations) {
+        const action = op?.process_name || op; // support object or string
+console.log(action)
+        if (action === 'undo') {
+            if (appliedStack.length > 0) {
+                redoStack.push(appliedStack.pop());
+            }
+        } 
+        else if (action === 'redo') {
+            if (redoStack.length > 0) {
+                appliedStack.push(redoStack.pop());
+            }
+        } 
+        else {
+            appliedStack.push(op);
+            redoStack.length = 0; // clear redo on new action
+        }
+    }
+
+    return appliedStack;
+};
+
+
+// const generatePdf = async (req, res, next) => {
+//     try {
+//         const { projectId,frameName } = req.body;
+        
+//         if (!projectId) {
+//             return res.status(400).json({ statusCode: 404,message: 'Project ID is required' });
+//         }
+
+//         const operationDetails = await pdfService.getOperationDetails(projectId,frameName,req);
+//         // return res.status(200).json({operationDetails
+//         // });
+//         console.log('ppppppppppppp'+JSON.stringify(operationDetails));
+//         if (operationDetails && operationDetails.length > 0) {
+//             const rootPath = `${req.user.id}/${projectId}`;
+           
+//             let pdfDir = `public/${rootPath}/pdf`;
+//             if (!fs.existsSync(pdfDir)) {
+//                 fs.mkdirSync(pdfDir, { recursive: true });
+//             }
+//             let folderPath = process.env.PROJECT_FOLDER
+//             const rootDir = path.resolve(__dirname, '..', '..');
+//             const uploadPdfPath = path.join(rootDir, `${folderPath}/${pdfDir}`);
+
+
+//             const requestObj = {
+//                 processes: operationDetails,
+//                 processes_meta: {
+//                     input_output_image_show_report: true
+//                 },
+//                 out_docs_path: uploadPdfPath
+//             };
+
+
+//             PDFGenerateServiceClient.PDFGeneretion(requestObj, (error, response) => {
+//                 if (error) {
+//                     // console.error("gRPC error:", error);
+//                     return res.status(404).json({ statusCode: 404,message: 'gRPC call failed', details: error });
+//                 }
+    
+//                 // Respond with the gRPC response
+//                 return res.status(200).json({
+//                     message: 'Processing successfully Done',
+//                     data:{
+//                             pdfUrl:`${rootPath}/pdf/report.pdf`,
+//                             docUrl:`${rootPath}/pdf/report.docx`
+//                         },
+//                         requestObj
+//                     // response
+//                 });
+//             });
+           
+//         } else {
+//             return res.status(404).json({ statusCode: 404,message: 'No operation details found for the provided project ID' });
+//         }
+
+//     } catch (error) {
+//         return res.status(500).json({
+//             error: 'Internal server error',
+//             details: error.message
+//         });
+//     }
+// };
 
 
 module.exports = {

@@ -8,7 +8,7 @@ log4js.configure({
             filename: 'logs/access/access',
             pattern: 'yyyy-MM-dd.log',
             compress: true,
-            daysToKeep: 7,//config.keepLogDays,
+            numBackups: 7,//config.keepLogDays,
             keepFileExt: true,
             alwaysIncludePattern: true,
         },
@@ -17,7 +17,7 @@ log4js.configure({
             filename: 'logs/error/error',
             pattern: 'yyyy-MM-dd.log',
             compress: true,
-            daysToKeep: 7,//config.keepLogDays,
+            numBackups: 7,//config.keepLogDays,
             keepFileExt: true,
             alwaysIncludePattern: true
         },
