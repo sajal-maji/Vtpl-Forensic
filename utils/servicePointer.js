@@ -338,8 +338,8 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
 
         const firstFrame = parseInt(frame[0].match(/\d+/)[0], 10);
         const endFrame = parseInt(frame[frame.length - 1].match(/\d+/)[0], 10);
-        // const middleFrame = `frame_${String(Math.floor((firstFrame + endFrame) / 2)).padStart(6, "0")}.jpg`;
-        const middleFrame = `frame_${String(Math.floor((firstFrame + firstFrame) / 2)).padStart(6, "0")}.jpg`;
+        const middleFrame = `frame_${String(Math.floor((firstFrame + endFrame) / 2)).padStart(6, "0")}.jpg`;
+        // const middleFrame = `frame_${String(Math.floor((firstFrame + firstFrame) / 2)).padStart(6, "0")}.jpg`;
 
         const fromInFilePath = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${middleFrame}`;
         fsExtra.copy(fromInFilePath, toInFilePath, (err) => { });

@@ -55,6 +55,15 @@ const deleteProject = async (req, res, next) => {
     }
 };
 
+const deleteAllProjects = async (req, res, next) => {
+    try {
+        const response = await projectService.deleteAllProjects(req);
+        res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error.message });
+    }
+};
+
 const exportProject = async (req, res, next) => {
     const { projectId: id, exeName } = req.query;
     const projectDetails = await Project.findById(id);
@@ -79,7 +88,7 @@ const exportProject = async (req, res, next) => {
             statusCode: 200,
             status: 'Success',
             message: 'Successfully authenticated.',
-            vodeoUrl: `${req.user.id}/${id}/exportvideo/video_${timestamp}.${exe}`
+            videoUrl: `${req.user.id}/${id}/exportvideo/video_${timestamp}.${exe}`
         });
     } catch (error) {
         return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error.message });
@@ -166,6 +175,7 @@ const convertVideoToFrameRate = (inputPath, outputPath, frameRate) => {
 const uploadFiles = async (req, res, next) => {
     createFolder(`public/logs`);
     createFolder(`public/uploads`);
+    createFolder(`public/uploads/zips`);
     createFolder(`public/uploads/crop`);
     createFolder(`public/uploads/images`);
     const upload = multer({
@@ -390,6 +400,18 @@ const uploadFiles = async (req, res, next) => {
                 //     console.log('Video is 2 minutes or less, no cutting needed.');
                 // }
 
+                let inPath = path.resolve(`public/uploads/${videoDetails ? videoDetails.filename : null}`);
+
+                console.log(`inPath: ${inPath}`);
+                if (!fs.existsSync(inPath)) {
+                return res.status(400).json({
+                        statusCode: 400,
+                        status: 'Failed',
+                        message: 'Uploaded video file not found',
+                    });
+                }
+
+
 
                 fsExtra.copy(`${inputPath}`, `${outputPath}`, (err) => {
                     if (err) { console.log('Error copying the file:', err); }
@@ -398,9 +420,9 @@ const uploadFiles = async (req, res, next) => {
 
                 const frameNumber = 0; // Example frame number
                 // const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
-                console.log('Project Details....', req.file)
+                // console.log('Project Details....', req.file)
                 const frameOutputDir = `${basePath}/main/frame_%06d.jpg`; // %d will be replaced by frame number
-                const videoCon = await convertVideo(outputPath, frameOutputDir, fps);  // Await async function
+                const videoCon = await convertVideo(inputPath, frameOutputDir, fps);  // Await async function
                 fsExtra.unlink(inputPath, (unlinkErr) => {
                     console.log('Video file deleted successfully.');
                 });
@@ -414,6 +436,8 @@ const uploadFiles = async (req, res, next) => {
                     "fileAspectRatio": '',
                     "createOn": ''
                 }
+
+                console.log('Project Details....', projectDetails)
 
             } else {
                 let inputPath = `public/uploads/images`
@@ -946,7 +970,7 @@ function imagesToMp4(imageDir, outputPath, frameRate = 10) {
                 '-pix_fmt yuv420p', // Pixel format
                 '-preset veryfast', // Encoding speed/efficiency trade-off
                 '-r 30',           // Fixed frame rate
-
+                '-vf scale=1280:720' // Resize all to 720p
             ])
             .output(outputPath)
             .on('end', () => {
@@ -1218,6 +1242,7 @@ module.exports = {
     createProject,
     updateProject,
     deleteProject,
+    deleteAllProjects,
     uploadFiles,
     soterixUploadFiles,
     getProjectByCat,

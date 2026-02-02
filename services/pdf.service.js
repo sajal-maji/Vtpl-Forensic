@@ -5,7 +5,7 @@ const path = require('path');
 const getOperationDetails = async (projectId,frameName,req) => {
     if(!frameName)
         frameName='frame_000001.jpg'    
-    const operationDetails = await Imageoperation.find({ projectId: projectId }).sort({ createdAt: -1 });
+    const operationDetails = await Imageoperation.find({ projectId: projectId }).sort({ createdAt: 1 });//.sort({ createdAt: -1 });
     const frameNumber = parseInt(frameName.match(/\d+/)[0], 10);
     // console.log('kkkkkkkkkkkkkkkkkk'+JSON.stringify(operationDetails));
     let processes = [];
@@ -28,14 +28,16 @@ const getOperationDetails = async (projectId,frameName,req) => {
                     }
                     
                 }
-                if(operationDetails[i].processType=='apply_to_all'){
-                    applyToframeFlag = false
-                    processes.push(data);
-                }else if(operationDetails[i].processType!='apply_to_all' && applyToframeFlag){
-                    processes.push(data);
-                }
+                // if(operationDetails[i].processType=='apply_to_all'){
+                //     applyToframeFlag = false
+                //     processes.push(data);
+                // }else if(operationDetails[i].processType!='apply_to_all' && applyToframeFlag){
+                //     processes.push(data);
+                // }
+
+                processes.push(data);
                     
-            } else if(operationDetails[i].processType=='apply_to_all'){
+            } else {    //if(operationDetails[i].processType=='apply_to_all'){
 
                 let data = {
                     "process" : "copy",

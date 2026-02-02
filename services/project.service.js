@@ -2,6 +2,9 @@ const Project = require('../model/projects.model');
 const User = require('../model/user.model');
 const Casefolder = require('../model/casefolder.model');
 const Savemedia = require('../model/savemedia.model');
+const ImageoperationModel = require('../model/imageoperation.model');
+const Operationhistory = require('../model/operationhistory.model');
+const Jobprojects = require('../model/jobprojects.model');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
@@ -136,6 +139,44 @@ const deleteProject = async (req,id) => {
     }
     
 };
+
+const deleteAllProjects = async (req) => {
+  try {
+    const projects = await Project.find({ status: 'deleted' });
+
+    if (!projects || projects.length === 0) {
+      return {
+        statusCode: 404,
+        status: 'Failed',
+        message: 'No deleted projects found.',
+      };
+    }
+
+    for (const project of projects) {
+      // Delete project from DB
+      await Project.findByIdAndDelete(project._id);
+
+      // Remove related folder
+      const rootPath = `${req.user.id}/${project._id}`;
+      const operationPath = `public/${rootPath}`;
+      await removeFolder(operationPath);
+    }
+
+    return {
+      statusCode: 200,
+      status: 'Success',
+      message: `${projects.length} deleted project(s) removed successfully.`,
+    };
+  } catch (err) {
+    return {
+      statusCode: 500,
+      status: 'Failed',
+      message: 'Internal server error while deleting projects.',
+      error: err.message,
+    };
+  }
+};
+
 
 async function removeFolder(operationPath) {
     fsExtra.remove(operationPath, (removeErr) => {
@@ -938,11 +979,12 @@ const saveImage = async (req, id,image,exeName='jpg') => {              // Save 
     }
     
     const rootPath = `${req.user.id}/${id}`;
+    const timestamp = Date.now();
     if(image && image.length > 0){
         image.forEach((val) => {
             
 
-            const timestamp = Date.now();
+            
             const newFileName = `${timestamp}_frame.${exeName}`;
 
             const savemedia = new Savemedia({
@@ -969,7 +1011,8 @@ const saveImage = async (req, id,image,exeName='jpg') => {              // Save 
             return {
                 statusCode: 200,
                 status: 'Success',
-                message: 'Successfully authenticated.'
+                message: 'Successfully authenticated.',
+                filePath: `${rootPath}/snap/${timestamp}_frame.${exeName}`
             };
     }
     
@@ -993,18 +1036,44 @@ function createFolder(folderPath) {
 const shareProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
     const rootPath = `${req.user.id}/${projectId}`;
     const projectData = await Project.findById(projectId);
-    if(!projectIdTo){
+    // if(!projectIdTo){
+    //     const newProjectData = {
+    //         ...projectData._doc, // Spread the original project's data
+    //         catId, // Use the new category ID
+    //         catName: 'Inbox', // Assign 'Inbox' category
+    //         userId: shareUserId, // Assign to the new user
+    //     };
+    //     delete newProjectData._id;
+    //     const project = new Project(newProjectData);
+    //     await project.save();
+    //     projectIdTo= project.id
+    // }
+
+    if (!projectIdTo) {
+        let baseName = projectData.projectName; // original name
+        let newName = baseName;
+        let counter = 1;
+
+        // Check if project with the same name already exists
+        while (await Project.findOne({ projectName: newName, userId: shareUserId })) {
+            newName = `${baseName}_${counter}`;
+            counter++;
+        }
+
         const newProjectData = {
             ...projectData._doc, // Spread the original project's data
             catId, // Use the new category ID
             catName: 'Inbox', // Assign 'Inbox' category
             userId: shareUserId, // Assign to the new user
+            projectName: newName, // set unique name
         };
+
         delete newProjectData._id;
+
         const project = new Project(newProjectData);
         await project.save();
-        projectIdTo= project.id
-    }
+        projectIdTo = project.id;
+        }
     
     
     fsExtra.copy(`public/${rootPath}`, `public/${shareUserId}/${projectIdTo}`, (err) => {
@@ -1020,6 +1089,125 @@ const shareProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
         }
     });
     
+};
+
+
+// Helper function to update projectId in bulk
+const replaceProjectId = (items = [], newId) =>
+  items.map(item => ({ ...item, _id: undefined, projectId: newId }));
+
+const exportProject = async(req,imgPath,jsonData) =>{
+    const { project, casefolderInbox, imageOperation, savemedia, operationhistory, jobprojects } = jsonData;
+    
+    // const rootPath = `${req.user.id}/${projectId}`;
+    // const projectData = await Project.findById(projectId);
+    const casefolderData = await Casefolder.findOne({ 'userId': req.user.id, 'status': 'active', slag: 'default' });
+    const catId = casefolderData.id
+    if(project){
+
+        // Generate base name
+    const baseName = project.projectName;
+
+    // Find all existing projects with similar names
+    const regex = new RegExp(`^${baseName}(_\\d+)?$`, 'i');
+    const existingProjects = await Project.find({ projectName: regex }).select('projectName');
+
+    // Determine the next suffix
+    let newProjectName = baseName;
+    if (existingProjects.length > 0) {
+        const suffixes = existingProjects
+            .map(p => {
+                const match = p.projectName.match(/_(\d+)$/);
+                return match ? parseInt(match[1], 10) : 0;
+            })
+            .sort((a, b) => a - b);
+
+        const nextSuffix = suffixes.length ? suffixes[suffixes.length - 1] + 1 : 1;
+        newProjectName = `${baseName}_${String(nextSuffix).padStart(2, '0')}`;
+    }
+
+        const newProjectData = {
+            ...project._doc, // Spread the original project's data
+            projectName: newProjectName,  // ✅ Set unique project name
+            currentFrameId:project.currentFrameId,
+            currentPreviewFrameId:project.currentPreviewFrameId,
+            projectDetails:project.projectDetails,
+             filesName:project.filesName,
+            catId, // Use the new category ID
+            catName: 'Default', // Assign 'Inbox' category
+            userId: req.user.id, // Assign to the new user
+        };
+        delete newProjectData._id;
+        console.log(newProjectData);
+        const nwproject = new Project(newProjectData);
+        await nwproject.save();
+        console.log('✅ Data restored to MongoDB',nwproject.id);
+       const projectIdTo= nwproject.id
+    
+
+        const cleanedImageOperations = imageOperation.map(doc => {
+        const { _id, ...rest } = doc;
+        return { ...rest, projectId: nwproject._id }; // Add new projectId if needed
+        });
+
+       if (Array.isArray(imageOperation) && imageOperation.length > 0) {
+        await ImageoperationModel.insertMany(cleanedImageOperations);
+        console.log('Data restored to Imageoperation',cleanedImageOperations);
+        }
+
+
+        
+
+        // Usage:
+        // await insertWithNewProjectId(ImageoperationModel, savemedia, nwproject._id);
+        await insertWithNewProjectId(Savemedia, savemedia, nwproject._id);
+        await insertWithNewProjectId(Operationhistory, operationhistory, nwproject._id);
+        await insertWithNewProjectId(Jobprojects, jobprojects, nwproject._id);
+
+    // logger.logCreate(`Explore Image: Data Insertion done`, 'systemlog');
+
+    console.log('File Copy Start',projectIdTo);
+    fsExtra.copy(`${imgPath}/project_media/`, `public/${req.user.id}/${projectIdTo}`, (err) => {
+        if (err) {
+            // logger.logCreate(`Error copying the file: ${err}`, 'systemlog');
+            return {
+                statusCode: 404,
+                status: 'Failed',
+                message: 'Error copying the file: '+err
+            };
+        } else {
+            return {
+                statusCode: 200,
+                status: 'Success',
+                message: 'File uploded successfully',
+                projectId : projectIdTo
+            };
+            // console.log('File uploded successfully.');
+        }
+    });
+    // logger.logCreate(`Explore Image: Image Copy Done`, 'systemlog');
+    console.log('File Copy End',projectIdTo);
+    return {
+                statusCode: 200,
+                status: 'Success',
+                message: 'File uploded successfully',
+                projectId : projectIdTo
+            };
+
+    }
+    
+};
+
+// Helper function to clean and insert documents
+const insertWithNewProjectId = async (Model, dataArray, newProjectId) => {
+    if (!Array.isArray(dataArray) || dataArray.length === 0) return;
+
+    const cleanedData = dataArray.map(({ _id, ...rest }) => ({
+        ...rest,
+        projectId: newProjectId
+    }));
+
+    await Model.insertMany(cleanedData);
 };
 
 const draganddropProject = async(req,shareUserId,projectId,catId,projectIdTo=null) =>{
@@ -1171,6 +1359,7 @@ module.exports = {
     createProject,
     updateProject,
     deleteProject,
+    deleteAllProjects,
     projectList,
     projectDetails,
     selectThumbnailFrame,
@@ -1185,5 +1374,6 @@ module.exports = {
     shareProject,
     draganddropProject,
     moveProject,
-    cleanProject
+    cleanProject,
+    exportProject
 };
