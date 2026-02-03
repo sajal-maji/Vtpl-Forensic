@@ -37,7 +37,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_KEY }}
           script: |
-            cd /home/vadmin/vtpl-forensic-fe
+            cd /home/vadmin/forensic_be
             git pull origin dev
             npm install
             pm2 restart vtplapi
