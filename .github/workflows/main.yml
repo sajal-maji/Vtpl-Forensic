@@ -30,8 +30,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Debug host
-        run: echo "Host is set"
+      - name: Check SERVER_IP secret
+        run: |
+          if [ -z "${{ secrets.SERVER_IP }}" ]; then
+            echo "❌ SERVER_IP is NOT set"
+            exit 1
+          else
+            echo "✅ SERVER_IP is set"
+          fi
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.0
@@ -44,3 +50,4 @@ jobs:
             git pull origin dev
             npm install
             pm2 restart vtplapi
+
