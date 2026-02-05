@@ -23,7 +23,6 @@ const textAnnotation = async (req, res, next) => {
         // res.status(200).json({ message: 'Image saved successfully','whiteImg':whiteImg });
 
 
-
         const requestObj = {
             white_img_path : whiteImg,
             black_img_path : blackImg
