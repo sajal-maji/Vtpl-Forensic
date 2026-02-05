@@ -1,53 +1,48 @@
-name: GitHub Action - Deploy Backend
+name: CI-CD Pipeline (Private Server)
 
 on:
   push:
     branches:
       - dev
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  deploy:
+    runs-on: self-hosted
 
     steps:
-      - name: Checkout code
+      # 1️⃣ Checkout repo to runner workspace
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm install
-
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check SERVER_IP secret
+      # 3️⃣ Copy code to fixed application directory
+      - name: Sync code to app directory
         run: |
-          if [ -z "${{ secrets.SERVER_IP }}" ]; then
-            echo "SERVER_IP is NOT set"
-            exit 1
+          sudo mkdir -p /home/vadmin/forensic_be
+          sudo rsync -av --delete ./ /home/vadmin/forensic_be/
+
+      # 4️⃣ Install dependencies
+      - name: Install dependencies
+        run: |
+          cd /home/vadmin/forensic_be
+          npm install
+
+      # 5️⃣ Build (optional – safe check)
+      - name: Build project (if exists)
+        run: |
+          cd /home/vadmin/forensic_be
+          if npm run | grep -q build; then
+            npm run build
           else
-            echo "✅ SERVER_IP is set"
+            echo "No build script found"
           fi
 
-      - name: Deploy to server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_KEY }}
-          script: |
-            cd /home/vadmin/forensic_be
-            git pull origin dev
-            npm install
-            pm2 restart vtplapi
-
+      # 6️⃣ Restart application with PM2
+      - name: Restart PM2 service
+        run: |
+          pm2 restart vtplapi || pm2 start npm --name vtplapi -- start
