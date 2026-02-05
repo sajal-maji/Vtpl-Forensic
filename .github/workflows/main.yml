@@ -1,4 +1,4 @@
-name: CI-CD Pipeline
+name: GitHub Action - Deploy Backend
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
       - name: Check SERVER_IP secret
         run: |
           if [ -z "${{ secrets.SERVER_IP }}" ]; then
-            echo "❌ SERVER_IP is NOT set"
+            echo "SERVER_IP is NOT set"
             exit 1
           else
             echo "✅ SERVER_IP is set"
