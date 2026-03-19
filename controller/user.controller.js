@@ -15,13 +15,32 @@ const getUserDetails = async (req, res, next) => {
 };
 
 const updateUserDetails = async (req, res, next) => {
-    const { email, userName, profileImage } = req.body;
+    const { email, userName, profileImage,name,phoneNumber,password} = req.body;
     const userId = req.user.id;
     try {
-        const response = await userService.updateDetails(userId, email, userName, profileImage);
+        const response = await userService.updateDetails(userId, email, userName, profileImage,name,phoneNumber,password);
         res.status(200).json(response);
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error', details: error });
+    }
+};
+
+const getSetting = async (req, res, next) => {
+    try {
+        const response = await userService.getSetting();
+        res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+};
+
+const updateSetting = async (req, res, next) => {
+    const {undoVideoLimit,undoImageLimit,siteName,siteLogo,siteUrl,version } = req.body;
+    try {
+        const response = await userService.updateSetting(undoVideoLimit,undoImageLimit,siteName,siteLogo,siteUrl,version);
+        res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 };
 
@@ -62,6 +81,8 @@ const geSpeedMonitor = async (req, res, next) => {
 module.exports = {
     getUserDetails,
     updateUserDetails,
+    updateSetting,
     getUserList,
+    getSetting,
     geSpeedMonitor
 };

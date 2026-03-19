@@ -56,7 +56,8 @@ const createUser = async (name, email, password, userName) => {
         },
         jwtSecret,
         {
-            expiresIn: `${jwtExpiryMin} min`
+            // expiresIn: `${jwtExpiryMin} min`
+            expiresIn: `${jwtExpiryMin}m`
         }
     );
 
@@ -127,7 +128,8 @@ const verifyUser = async (userName, password) => {
         },
         jwtSecret,
         {
-            expiresIn: `${jwtExpiryMin} min`
+            // expiresIn: `${jwtExpiryMin} min`
+            expiresIn: `${jwtExpiryMin}m`
         }
     )
 

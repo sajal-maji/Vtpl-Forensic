@@ -1,7 +1,7 @@
 const { channelServiceClient } = require('../grpcClient');
 const JobProject = require('../model/jobprojects.model');
 const Operationhistory = require('../model/operationhistory.model');
-
+const projectService = require("../services/project.service");
 const Project = require('../model/projects.model');
 const path = require('path');
 const fs = require('fs');
@@ -13,9 +13,14 @@ const getStatus = async (job_id, userId) => {
     const request = { job_id };
     return new Promise((resolve, reject) => {
         channelServiceClient.GetJobStatus(request, async (error, response) => {
-            if (error) {
+            if (error && job_id) {
+                const jobProjectDetails = await JobProject.findOne({ jobId: job_id.toString() });
+                const projectDetails = await Project.findById(jobProjectDetails.projectId).currentFrameId;
+
+                await projectService.applyUndoAction(jobProjectDetails.projectId, userId,projectDetails.currentFrameId);
+                
                 console.log("Error fetching job status:", error);
-                return reject({ error: 'Error fetching job status', details: error });
+                return reject({isPageReload:true, error: 'Error fetching job status.Please reload the page', details: error });
             }
             if (response && response.completed) {
                 const proArr = {

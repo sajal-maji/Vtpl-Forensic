@@ -8,7 +8,7 @@ const getJobStatus = async (req, res, next) => {
         }
         const response = await jobService.getStatus(job_id, req.user.id);
         res.status(200).json(response);
-    } catch (error) {
+    } catch (error) {   
         return res.status(500).json({ statusCode: 500, error: 'Internal server error', details: error });
     }
 };

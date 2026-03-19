@@ -7,7 +7,10 @@ const altertableRoutes = require('./altertable.route');
 const verifyUser = require('../middleware/verifyUser');
 const filtersRoutes = require('./filters.route');
 
+
 router.use('/auth', authRoutes);
+// router.use("/forgot-password", authRoutes);
+// router.use("/reset-password/:token", authRoutes);
 router.use('/user', verifyUser, userRoutes);
 router.use('/project', verifyUser, projectRoutes);
 router.use('/filters',verifyUser,channelRoutes);

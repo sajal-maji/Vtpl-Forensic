@@ -11,6 +11,7 @@ const TempFolderSet = 'temp'
 const logger = require("../helpers/logEvents");
 const operationHistoryService = require("../services/operationhistory.service");
 const { channelServiceClient } = require('../grpcClient');
+const projectService = require("../services/project.service");
 
 const managePointer = async (id, isApplyToAll, isPreview, frame, req, res) => {
     try {
@@ -582,10 +583,12 @@ const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
             //     'videoFolInPtr': (proDetails.curProcessingSourceFolType == 'video' && (proDetails.curProcessingSourceFolPtr > 1)) ? proDetails.curProcessingSourceFolPtr - 1 : proDetails.curProcessingSourceFolPtr,
 
             // }, { new: true });
-
+            await projectService.applyUndoAction(id, req.user.id,frameId);
             return {
+                isPageReload:true,
                 errStatus: true,
-                message: `Image file not found: public/${rootPath}/${srcType}/${srcPtr}/${frameId}`
+                message: `Image file not found, Please reload the page`
+                // message: `Image file not found: public/${rootPath}/${srcType}/${srcPtr}/${frameId}`
             };
 
         } else {
