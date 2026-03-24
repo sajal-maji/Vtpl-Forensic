@@ -15,12 +15,12 @@ const getStatus = async (job_id, userId) => {
         channelServiceClient.GetJobStatus(request, async (error, response) => {
             if (error && job_id) {
                 const jobProjectDetails = await JobProject.findOne({ jobId: job_id.toString() });
-                const projectDetails = await Project.findById(jobProjectDetails.projectId).currentFrameId;
+                const projectDetails = await Project.findById(jobProjectDetails.projectId);
 
-                await projectService.applyUndoAction(jobProjectDetails.projectId, userId,projectDetails.currentFrameId);
+                await projectService.applyUndoAction(jobProjectDetails.projectId, userId,'frame_000001.jpg');
                 
                 console.log("Error fetching job status:", error);
-                return reject({isPageReload:true, error: 'Error fetching job status.Please reload the page', details: error });
+                return reject({isPageReload: true, error: 'Error fetching job status.Please reload the page', details: error });
             }
             if (response && response.completed) {
                 const proArr = {

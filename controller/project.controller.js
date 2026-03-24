@@ -420,24 +420,23 @@ const uploadFiles = async (req, res, next) => {
 
                 const frameNumber = 0; // Example frame number
                 // const formattedFileName = `frame_${formatFrameNumber(frameNumber)}`;
-                // console.log('Project Details....', req.file)
                 const frameOutputDir = `${basePath}/main/frame_%06d.jpg`; // %d will be replaced by frame number
                 const videoCon = await convertVideo(inputPath, frameOutputDir, fps);  // Await async function
                 fsExtra.unlink(inputPath, (unlinkErr) => {
                     console.log('Video file deleted successfully.');
                 });
-
+                const stream = fileMetadata.streams.find(s => s.codec_type === 'video');
                 projectDetails = {
                     "fileName": videoDetails ? videoDetails.filename : '',
-                    "fileSize": videoDetails ? fileMetadata.format.size : '',
-                    "fileResolution": videoDetails ? fileMetadata.format.bit_rate : '',
+                    "fileSize": videoDetails ? formatSize(fileMetadata.format.size) : '',
+                    "fileResolution": stream ? `${stream.width}x${stream.height}` : '',
                     "fileDuration": videoDetails ? fileMetadata.format.duration : '',
-                    "fileFrameRate": '',
+                    "fileFrameRate": videoDetails ? formatBitrate(fileMetadata.format.bit_rate) : '',
                     "fileAspectRatio": '',
                     "createOn": ''
                 }
 
-                console.log('Project Details....', projectDetails)
+                // console.log('Project Details....', projectDetails)
 
             } else {
                 let inputPath = `public/uploads/images`
@@ -503,24 +502,22 @@ const uploadFiles = async (req, res, next) => {
 
             });
 
-            // res.status(200).json({
-            //     statusCode: 200,
-            //     status: 'Success',
-            //     message: 'Files uploaded successfully.',
-            //     data: {
-            //         video: videoDetails,
-            //         images: imageDetails.map(image => ({
-            //             fileName: image.filename,
-            //             filePath: image.path,
-            //         })),
-            //         basePath
-            //     },
-            // });
         } catch (error) {
              logger.logCreate(`deleteimage: response ${error}`, 'systemlog');
             res.status(500).json({ statusCode: 500, message: 'Server error', error:error.message });
         }
     });
+};
+
+
+
+const formatBitrate = (bits) => {
+    if (!bits) return '';
+
+    const units = ['bps', 'Kbps', 'Mbps', 'Gbps'];
+    const i = Math.floor(Math.log(bits) / Math.log(1000));
+
+    return (bits / Math.pow(1000, i)).toFixed(2) + ' ' + units[i];
 };
 
 const soterixUploadFiles = async (req, res) => {
@@ -906,28 +903,6 @@ async function extractFrames(videoPath, outputDir, startTime, duration, fps = 10
             .run();
     });
 };
-
-// async function extractFrame(videoPath, timestamp, outputImagePath) {
-//     return new Promise((resolve, reject) => {
-//         if (`${process.env.NODE_ENV}` == 'development')
-//          ffmpeg.setFfmpegPath('C:\\Users\\barik\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe');
-//       ffmpeg(videoPath)
-//         .on('end', () => {
-//           console.log('Frame extracted successfully');
-//           resolve(outputImagePath);
-//         })
-//         .on('error', (err) => {
-//           console.error('Error extracting frame:', err.message);
-//           reject(err);
-//         })
-//         .screenshots({
-//           timestamps: [timestamp], // e.g. '00:00:05.000'
-//           filename: path.basename(outputImagePath),
-//           folder: path.dirname(outputImagePath),
-//           size: '640x?'
-//         });
-//     });
-//   };
 
 async function convertVideo(inputPath, outputDir, fps) {
     return new Promise((resolve, reject) => {

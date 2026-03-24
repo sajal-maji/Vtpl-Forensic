@@ -40,13 +40,14 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         };
     }
 
-    const { errStatus, message } = await checkFile(id, isApplyToAll, isPreview, proDetails, req, res);
+    const { errStatus, message,isPageReload} = await checkFile(id, isApplyToAll, isPreview, proDetails, req, res);
     logger.logCreate(`checkFile: response status - ${errStatus} and response message - ${message}`, 'systemlog');
 
     if (errStatus) {
         return {
             statusCode: 404,
             status: 'Failed',
+            isPageReload,
             message
         };
     }
@@ -113,6 +114,11 @@ const filterOperation = async (req, res, next, requestObj, grpcServiceName, proc
         const sourceFolder = `public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}`;
         const destinationFolder = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`;
         await copyFolderExcluding(sourceFolder, destinationFolder, frame);
+    }
+    if(!isApplyToAll && !isPreview){
+        const operationPath = `public/${rootPath}/${proDetails.curProcessingDestinationFolType}/${proDetails.curProcessingDestinationFolPtr}`
+        await removeAndCreateFolder(operationPath);
+
     }
 
     // Make the gRPC request to the grayscale method (modify according to your method name)

@@ -211,8 +211,21 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         refreshThumbnailFlag:proDetails.refreshThumbnailFlag,
 
     }
-    logger.logCreate(`savepointer: response ${JSON.stringify(proArr)}`, 'systemlog');
+        // let frameArr = {};
 
+        // if (!isPreview) {
+        //     frameArr = {
+        //         currentFrameId: frameName
+        //     };
+        // }
+
+        // const proArr = {
+        //     ...finalObj,
+        //     ...frameArr
+        // };
+
+    logger.logCreate(`savepointer: response ${JSON.stringify(proArr)}`, 'systemlog');
+    
 
     let project = ''
     if (isPreview) {
@@ -274,6 +287,8 @@ const savePointer = async (id, isApplyToAll, isPreview, frame, req, res, proDeta
         const newFilePath = path.join(`public/${rootPath}/${proDetails.curProcessingPreviewDestinationFolType}/${proDetails.curProcessingPreviewDestinationFolPtr}`, newFileName);
         frameName = newFileName
         project = await Project.findByIdAndUpdate(id, { 'currentPreviewFrameId': frameName }, { new: true });
+       
+    //    console.log('------------Tapan---------------',project)
         // Rename the file
 
         // fs.rename(oldFilePath, newFilePath, (err) => {
@@ -583,9 +598,9 @@ const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
             //     'videoFolInPtr': (proDetails.curProcessingSourceFolType == 'video' && (proDetails.curProcessingSourceFolPtr > 1)) ? proDetails.curProcessingSourceFolPtr - 1 : proDetails.curProcessingSourceFolPtr,
 
             // }, { new: true });
-            await projectService.applyUndoAction(id, req.user.id,frameId);
+            await projectService.applyUndoAction(id, req.user.id,'frame_000001.jpg');
             return {
-                isPageReload:true,
+                isPageReload: true,
                 errStatus: true,
                 message: `Image file not found, Please reload the page`
                 // message: `Image file not found: public/${rootPath}/${srcType}/${srcPtr}/${frameId}`
@@ -594,7 +609,7 @@ const checkFile = async (id, isApplyToAll, isPreview, proDetails, req, res) => {
         } else {
             return {
                 status: false,
-                message: `Image file not found: public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${frameId}`
+                message: `Image file: public/${rootPath}/${proDetails.curProcessingSourceFolType}/${proDetails.curProcessingSourceFolPtr}/${frameId}`
             };
         }
 
